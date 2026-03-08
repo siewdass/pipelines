@@ -43,6 +43,7 @@ Esta lista de tareas (TODO) ayuda a visualizar qué componentes están terminado
 - [ ] **Dashboard / Vistas de Gestión**: Construir la interfaz para consumir las rutas genéricas de `/inquiry` y `/management`.
 - [ ] Construir la interfaz para manejar Mutaciones (`/mutation/upsert`, `/mutation/purge`).
 - [ ] Manejo centralizado de errores, alertas y notificaciones (Toast de PrimeReact) para respuestas fallidas o exitosas de la API.
+- [ ] Implementar catálogos dependientes (países, estados, ciudades) con IDs para relacionar datos en los formularios.
 
 ---
 
