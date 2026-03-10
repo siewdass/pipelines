@@ -13,7 +13,7 @@ interface NumberInputProps {
   className?: string;
 }
 
-export const NumberInput = ({ 
+export const NumberInput = ({
   value, 
   onChange, 
   onIncrement, 

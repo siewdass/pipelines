@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import Select from 'react-select';
 import { Base } from './base';
@@ -53,9 +54,22 @@ export const ReactSelectRenderer = withJsonFormsControlProps(
       : controlSchema?.enum ?? [];
     const options = enumValues.map((v) => ({ value: v, label: v }));
 
+    const [menuIsOpen, setMenuIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
     const value = isMulti
       ? (data as string[] | undefined)?.map((v) => ({ value: v, label: v })) ?? []
       : options.find((o) => o.value === data) ?? null;
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+          setMenuIsOpen(false);
+        }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleSelectChange = (selected: any) => {
       if (isMulti) {
@@ -67,16 +81,21 @@ export const ReactSelectRenderer = withJsonFormsControlProps(
 
     return (
       <Base label={label} errors={errors} hasValue={isMulti ? (Array.isArray(data) && data.length > 0) : (data !== undefined && data !== null && data !== '')}>
-        <Select
-          isMulti={isMulti}
-          options={options}
-          value={value}
-          onChange={handleSelectChange}
-          isClearable
-          placeholder=""
-          styles={selectStyles}
-          isSearchable={true}
-        />
+        <div ref={containerRef} style={{ width: '100%' }}>
+          <Select
+            isMulti={isMulti}
+            options={options}
+            value={value}
+            onChange={handleSelectChange}
+            menuIsOpen={menuIsOpen}
+            onMenuOpen={() => setMenuIsOpen(true)}
+            onMenuClose={() => setMenuIsOpen(false)}
+            isClearable
+            placeholder=""
+            styles={selectStyles}
+            isSearchable={true}
+          />
+        </div>
       </Base>
     );
   }
