@@ -5,3 +5,18 @@ build
 
 # environment variables
 .env*
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows system files
+Desktop.ini
+Thumbs.db
+
+# Other
+.Spotlight-V100
+.Trashes

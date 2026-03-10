@@ -4,6 +4,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import './index.css';
 import { Base } from './base';
+import { NumberInput } from './number';
 
 const CustomTimeInput = ({ date, onChange }: { date?: Date | null, onChange?: (time: string) => void }) => {
   const safeDate = date || new Date();
@@ -35,77 +36,49 @@ const CustomTimeInput = ({ date, onChange }: { date?: Date | null, onChange?: (t
 
   return (
     <div className="custom-time-input">
+      {/* Hours */}
       <div className="time-field">
-        <input 
-          type="number" 
-          value={hours12} 
-          onChange={(e) => handleTimeChange('h', e.target.value)} 
-          onFocus={(e) => e.target.select()} 
-          onWheel={(e) => {
-            e.currentTarget.blur();
-            const delta = e.deltaY < 0 ? 1 : -1;
-            handleTimeChange('h', (hours12 + delta).toString());
-          }}
-          min={1} 
-          max={12} 
+        <NumberInput
+          value={hours12}
+          onChange={(val) => handleTimeChange('h', val)}
+          onIncrement={() => handleTimeChange('h', (hours12 === 12 ? 1 : hours12 + 1).toString())}
+          onDecrement={() => handleTimeChange('h', (hours12 === 1 ? 12 : hours12 - 1).toString())}
+          style={{ width: '90px' }}
         />
         <span>HORA</span>
       </div>
-      <div className="time-separator">:</div>
+
+      <div className="time-separator" style={{ marginTop: '0' }}>:</div>
+
+      {/* Minutes */}
       <div className="time-field">
-        <input 
-          type="number" 
-          value={minutes} 
-          onChange={(e) => handleTimeChange('m', e.target.value)} 
-          onFocus={(e) => e.target.select()} 
-          onWheel={(e) => {
-            e.currentTarget.blur();
-            const delta = e.deltaY < 0 ? 1 : -1;
-            const next = (parseInt(minutes, 10) + delta + 60) % 60;
+        <NumberInput
+          value={minutes}
+          onChange={(val) => handleTimeChange('m', val)}
+          onIncrement={() => {
+            const next = (parseInt(minutes, 10) + 1) % 60;
             handleTimeChange('m', next.toString());
           }}
-          min={0} 
-          max={59} 
+          onDecrement={() => {
+            const next = (parseInt(minutes, 10) + 59) % 60;
+            handleTimeChange('m', next.toString());
+          }}
+          style={{ width: '90px' }}
         />
         <span>MIN</span>
       </div>
-      <div className="time-field" style={{ position: 'relative' }}>
-        <input 
-          type="number" 
-          min={0} 
-          max={1} 
-          value={period === 'AM' ? 0 : 1}
-          onChange={(e) => handleTimeChange('p', parseInt(e.target.value, 10) === 0 ? 'AM' : 'PM')}
-          onKeyDown={(e) => {
-            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-              e.preventDefault();
-              handleTimeChange('p', period === 'AM' ? 'PM' : 'AM');
-            }
-          }}
-          onWheel={(e) => {
-            e.preventDefault();
-            handleTimeChange('p', period === 'AM' ? 'PM' : 'AM');
-          }}
-          className="period-input" 
-          style={{ 
-            color: 'transparent', 
-            caretColor: 'transparent', 
-            cursor: 'pointer',
-            paddingLeft: '0px',
-            height: '32px',
-            width: '55px'
-          }}
-        />
-        <span style={{ 
-          position: 'absolute', 
-          top: '35%', 
-          left: '50%', 
-          transform: 'translate(-100%, -50%)', 
-          pointerEvents: 'none',
-          fontSize: '14px',
-          color: '#fff',
-          fontWeight: 500
-        }}>{period}</span>
+
+      {/* Period */}
+      <div className="time-field">
+        <div 
+          className="datepicker-wrapper" 
+          style={{ width: '60px', cursor: 'pointer' }}
+          onClick={() => handleTimeChange('p', period === 'AM' ? 'PM' : 'AM')}
+        >
+          <div className="datepicker-input period-input" style={{ textAlign: 'left', paddingRight: '0', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+            {period}
+          </div>
+        </div>
         <span>AM/PM</span>
       </div>
     </div>
@@ -162,8 +135,6 @@ export const DateTimeRenderer = withJsonFormsControlProps(({ data, handleChange,
             />
           ) : undefined}
           showTimeSelect={isDateTime}
-          //showMonthDropdown={!isTime}
-          //showYearDropdown={!isTime}
           showPopperArrow={false}
           timeFormat="HH:mm"
           timeIntervals={15}

@@ -54,7 +54,9 @@ import {
   HiSparkles as ShootingStarIcon,
   HiCurrencyDollar as DollarLineIcon,
   HiOutlineShieldExclamation as AlertHexaIcon,
-  HiOutlineHandRaised as ErrorHexaIcon
+  HiOutlineHandRaised as ErrorHexaIcon,
+  HiMiniChevronUp as MiniChevronUpIcon,
+  HiMiniChevronDown as MiniChevronDownIcon
 } from "react-icons/hi2";
 
 export {
@@ -114,4 +116,6 @@ export {
   HorizontaLDots,
   ChevronUpIcon,
   ChatIcon,
+  MiniChevronUpIcon,
+  MiniChevronDownIcon,
 };
