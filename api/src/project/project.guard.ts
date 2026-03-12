@@ -7,7 +7,7 @@ import { Model } from 'mongoose'
 
 @Injectable()
 export class ProjectGuard implements CanActivate {
-	constructor(@InjectModel(Project.name, 'admin') private readonly projectModel: Model<Project & mongoose.Document>) {}
+	constructor(@InjectModel(Project.name, 'default') private readonly projectModel: Model<Project & mongoose.Document>) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const request = context.switchToHttp().getRequest<Request & { projectId?: string }>()
@@ -21,7 +21,7 @@ export class ProjectGuard implements CanActivate {
 		}
 
 		try {
-			// Use the injected model bound to the 'admin' connection
+			// Use the injected model bound to the 'default' connection
 			const doc = await this.projectModel.findOne({ token: projectToken }).lean().exec()
 			if (!doc) {
 				throw new BadRequestException('Invalid project-token')
@@ -30,7 +30,7 @@ export class ProjectGuard implements CanActivate {
 			// También podemos asegurarnos de que el controller pueda leerlo por inyección normal si usan el header
 			request.headers['project-id'] = request.projectId
 			return true
-		} catch (err) {
+		} catch {
 			throw new BadRequestException('Invalid or missing project-token')
 		}
 	}

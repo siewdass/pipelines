@@ -4,13 +4,11 @@ import { ProjectService } from '../project/project.service'
 import { InquiryService } from './inquiry.service'
 import { ApiBody, ApiOkResponse } from '@nestjs/swagger'
 import { RetrieveRequestDoc, RetrieveResponseDoc } from './inquiry.doc'
-import { UserAuthGuard } from '../authorization/user.guard'
+import { AccountAuthGuard } from '../authorization/account.guard'
 import { ProjectGuard } from '../project/project.guard'
 
-// hara falta listar por users cosas que el mismo usuario haya creado
-
 @Controller('inquiry')
-@UseGuards(UserAuthGuard, ProjectGuard)
+@UseGuards(AccountAuthGuard, ProjectGuard)
 export class InquiryController {
 	constructor(
     private readonly projectService: ProjectService,

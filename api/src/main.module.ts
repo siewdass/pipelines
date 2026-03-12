@@ -14,7 +14,7 @@ import { ConfigModule } from '@nestjs/config'
 	imports: [
 		ConfigModule.forRoot({ isGlobal: true }),
 		MongooseModule.forRootAsync({
-			connectionName: 'admin',
+			connectionName: 'default',
 			useFactory: () => ({
 				uri: process.env.MONGO_URI || 'mongodb://localhost:27017/default',
 			}),

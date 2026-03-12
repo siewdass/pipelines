@@ -6,11 +6,11 @@ import { Doc } from './mutation.type'
 import { ApiOkResponse, ApiBody } from '@nestjs/swagger'
 import { UpsertRequestDoc, UpsertResponseDoc, PurgedRequestDoc, PurgeResponseDoc } from './mutation.doc'
 import { MutationRequestDto, MutationResponseDto } from './mutation.dto'
-import { UserAuthGuard } from '../authorization/user.guard'
+import { AccountAuthGuard } from '../authorization/account.guard'
 import { ProjectGuard } from '../project/project.guard'
 
 @Controller('mutation')
-@UseGuards(UserAuthGuard, ProjectGuard)
+@UseGuards(AccountAuthGuard, ProjectGuard)
 export class MutationController {
 	constructor(
     private readonly projectService: ProjectService,

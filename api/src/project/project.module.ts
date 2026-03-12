@@ -8,7 +8,7 @@ import { ProjectGuard } from './project.guard'
 
 @Module({
 	imports: [
-		MongooseModule.forFeature([ { name: Project.name, schema: ProjectSchema } ], 'admin'),
+		MongooseModule.forFeature([ { name: Project.name, schema: ProjectSchema } ], 'default'),
 	],
 	providers: [ ProjectService, ProjectGuard ],
 	controllers: [ ProjectController ],

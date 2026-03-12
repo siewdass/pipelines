@@ -13,6 +13,9 @@ export class Project extends Document {
   @Prop({ required: true })
   projectId: string
 
+  @Prop({ required: true })
+  accountId: string
+
   @Prop()
   origin: string
 }
