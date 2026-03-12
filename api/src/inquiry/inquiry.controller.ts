@@ -1,23 +1,26 @@
-import { Controller, Post, Body, Headers } from '@nestjs/common'
+import { Controller, Post, Body, Headers, UseGuards } from '@nestjs/common'
 import { InquiryRequestDto, InquiryResponseDto } from './inquiry.dto'
-import { DatabaseService } from '../database/database.service'
+import { ProjectService } from '../project/project.service'
 import { InquiryService } from './inquiry.service'
 import { ApiBody, ApiOkResponse } from '@nestjs/swagger'
 import { RetrieveRequestDoc, RetrieveResponseDoc } from './inquiry.doc'
+import { UserAuthGuard } from '../authorization/user.guard'
+import { ProjectGuard } from '../project/project.guard'
 
 // hara falta listar por users cosas que el mismo usuario haya creado
 
 @Controller('inquiry')
+@UseGuards(UserAuthGuard, ProjectGuard)
 export class InquiryController {
 	constructor(
-    private readonly dbService: DatabaseService,
+    private readonly projectService: ProjectService,
     private readonly service: InquiryService
 	) {}
 
 	@Post('index')
-	async index(@Body() { source, output, options }: InquiryRequestDto, @Headers('db-name') dbName: string
+	async index(@Body() { source, output, options }: InquiryRequestDto, @Headers('project-id') projectId: string
 	): Promise<InquiryResponseDto> {
-		const { db } = this.dbService.getDbContext(dbName)
+		const { db } = this.projectService.getProjectContext(projectId)
 
 		const col = db.collection(source)
 		// Use the filter parsed from options (getOptions) to find a single document
@@ -43,8 +46,8 @@ export class InquiryController {
 	@ApiBody(RetrieveRequestDoc)
 	@ApiOkResponse(RetrieveResponseDoc)
 	@Post('retrieve')
-	async retrieve(@Body() { source, output, options }: InquiryRequestDto, @Headers('db-name') dbName: string): Promise<InquiryResponseDto> {
-		const { db } = this.dbService.getDbContext(dbName)
+	async retrieve(@Body() { source, output, options }: InquiryRequestDto, @Headers('project-id') projectId: string): Promise<InquiryResponseDto> {
+		const { db } = this.projectService.getProjectContext(projectId)
 
 		const col = db.collection(source)
 		const { filter, sort, pagination } = this.service.getOptions(options ?? {})

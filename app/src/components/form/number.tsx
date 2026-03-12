@@ -24,24 +24,24 @@ export const NumberInput = ({
   className 
 }: NumberInputProps) => {
   return (
-    <div className={`datepicker-wrapper ${className || ''}`} style={style}>
+    <div className={`flex w-full ${className || ''}`} style={style}>
       <input
         type="number"
         step={isInteger ? "1" : "any"}
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value)}
         onFocus={(e) => e.target.select()}
-        className="datepicker-input no-spin"
+        className="w-full px-3 py-2 bg-transparent text-sm text-gray-900 dark:text-white/90 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         placeholder=""
         style={inputStyle}
       />
-      <div className="datepicker-indicators" style={{ right: '0' }}>
-        <span className="indicator-separator" />
-        <div className="number-indicators-vertical">
-          <button type="button" onClick={onIncrement} className="number-step-btn">
+      <div className="flex items-center px-1">
+        <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-800 mx-1" />
+        <div className="flex flex-col justify-center">
+          <button type="button" onClick={onIncrement} className="p-0.5 text-gray-400 hover:text-brand-500 transition-colors">
             <MiniChevronUpIcon className="w-3 h-3" />
           </button>
-          <button type="button" onClick={onDecrement} className="number-step-btn">
+          <button type="button" onClick={onDecrement} className="p-0.5 text-gray-400 hover:text-brand-500 transition-colors">
             <MiniChevronDownIcon className="w-3 h-3" />
           </button>
         </div>

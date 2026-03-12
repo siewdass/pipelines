@@ -3,6 +3,7 @@ import { JsonForms } from '@jsonforms/react';
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { renderers } from './index';
 import Button from '../ui/button/Button';
+import { ValidationContext } from './ValidationContext';
 
 interface SchemaItem {
   type: string;
@@ -108,8 +109,11 @@ export const Form = ({ schema, initial = {}, onSubmit, className, submitLabel = 
     return { jsonSchema: json, uiSchema: ui };
   }, [schema]);
 
+  const [showValidation, setShowValidation] = useState(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setShowValidation(true);
     if (isValid) {
       onSubmit(formData);
     }
@@ -117,22 +121,23 @@ export const Form = ({ schema, initial = {}, onSubmit, className, submitLabel = 
 
   return (
     <form onSubmit={handleSubmit} className={className}>
-      <JsonForms
-        schema={jsonSchema}
-        uischema={uiSchema}
-        data={formData}
-        renderers={renderers}
-        onChange={({ data, errors }) => {
-          setFormData(data);
-          setIsValid(errors?.length === 0);
-        }}
-      />
+      <ValidationContext.Provider value={{ showValidation }}>
+        <JsonForms
+          schema={jsonSchema}
+          uischema={uiSchema}
+          data={formData}
+          renderers={renderers}
+          onChange={({ data, errors }) => {
+            setFormData(data);
+            setIsValid(errors?.length === 0);
+          }}
+        />
+      </ValidationContext.Provider>
       <div className="mt-6">
         <Button 
           type="submit" 
           size="sm" 
-          className="w-full sm:w-auto"
-          disabled={!isValid}
+          className={`w-full sm:w-auto transition-all ${showValidation && !isValid ? 'animate-shake border-error-500 text-error-500' : ''}`}
         >
           {submitLabel}
         </Button>

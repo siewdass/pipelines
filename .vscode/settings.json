@@ -3,7 +3,7 @@
 		"source.fixAll.eslint": "always"
 	},
 	"editor.formatOnSave": false,
-	"editor.hover.enabled": "off",
+	"editor.hover.enabled": "on",
 	"editor.insertSpaces": true,
 	"editor.tabSize": 2,
 	"files.exclude": {

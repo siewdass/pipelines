@@ -1,12 +1,8 @@
 import { IsOptional, IsString } from 'class-validator'
 
-export class CreateDatabaseDto {
+export class CreateProjectDto {
 	@IsString()
-	dbName!: string
-
-	@IsOptional()
-	@IsString()
-	projectId?: string
+	projectId!: string
 
 	@IsOptional()
 	@IsString()

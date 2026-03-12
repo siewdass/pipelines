@@ -21,16 +21,13 @@ export const FieldRenderer = withJsonFormsControlProps(
 
     return (
       <Base label={label} errors={errors} hasValue={data !== undefined && data !== null && data !== ''}>
-        <div className="datepicker-wrapper">
-          <input
-            type={inputType}
-            value={data ?? ''}
-            onChange={onChange}
-            placeholder=""
-            className="datepicker-input"
-            style={{ paddingRight: '12px' }} // Standard fields don't need huge right padding
-          />
-        </div>
+        <input
+          type={inputType}
+          value={data ?? ''}
+          onChange={onChange}
+          placeholder=""
+          className="w-full px-3 py-2 bg-transparent text-sm text-gray-900 dark:text-white/90 outline-none"
+        />
       </Base>
     );
   }

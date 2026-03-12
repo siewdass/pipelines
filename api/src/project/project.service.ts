@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common'
 import * as mongoose from 'mongoose'
 
 @Injectable()
-export class DatabaseService {
+export class ProjectService {
 	private baseConnection: mongoose.Connection
 
 	/*async onModuleInit() {
@@ -10,12 +10,12 @@ export class DatabaseService {
 		this.baseConnection = await mongoose.createConnection('mongodb://localhost:27017')
 	}*/
 
-	getDbContext(dbName: string) {
+	getProjectContext(projectId: string) {
 		// Lazy-init the base connection if another module called us before onModuleInit finished
 		if (!this.baseConnection) {
-			this.baseConnection = mongoose.createConnection('mongodb://localhost:27017') as unknown as mongoose.Connection
+			this.baseConnection = mongoose.createConnection(process.env.MONGO_URI || 'mongodb://localhost:27017') as unknown as mongoose.Connection
 		}
-		const connection = this.baseConnection.useDb(dbName)
+		const connection = this.baseConnection.useDb(projectId)
 		return {
 			connection,
 			db: connection.db!,
@@ -23,8 +23,8 @@ export class DatabaseService {
 		}
 	}
 
-	getDbModel(dbName: string, schema: any, modelName: string): any {
-		const { connection } = this.getDbContext(dbName)
+	getProjectModel(projectId: string, schema: any, modelName: string): any {
+		const { connection } = this.getProjectContext(projectId)
 		// If the model already exists on this connection, reuse it.
 		if (connection && connection.models && connection.models[modelName]) {
 			return connection.models[modelName]

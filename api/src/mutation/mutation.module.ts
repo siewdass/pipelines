@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common'
-import { DatabaseModule } from '../database/database.module'
+import { ProjectModule } from '../project/project.module'
 import { MutationController } from './mutation.controller'
 import { MutationService } from './mutation.service'
 
 @Module({
-	imports: [ DatabaseModule ],
+	imports: [ ProjectModule ],
 	controllers: [ MutationController ],
 	providers: [ MutationService ],
 })

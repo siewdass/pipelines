@@ -14,8 +14,12 @@ export class AuthenticationService {
 		return user as any
 	}
 
-	generateToken(payload: any) {
-		const secret = process.env.JWT_SECRET || 'dev-secret'
-		return jwt.sign(payload, secret, { expiresIn: '7d' })
+	generateToken(payload: any, type: 'user' | 'client') {
+		const secret = type === 'user' 
+			? process.env.USER_JWT_SECRET || 'dev-user-secret'
+			: process.env.CLIENT_JWT_SECRET || 'dev-client-secret'
+			
+		const enrichedPayload = { ...payload, type }
+		return jwt.sign(enrichedPayload, secret, { expiresIn: '7d' })
 	}
 }

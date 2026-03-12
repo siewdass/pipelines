@@ -1,24 +1,27 @@
-import { Controller, Post, Body, Headers } from '@nestjs/common'
+import { Controller, Post, Body, Headers, UseGuards } from '@nestjs/common'
 import { v4 as uuidv4 } from 'uuid'
-import { DatabaseService } from '../database/database.service'
+import { ProjectService } from '../project/project.service'
 import { MutationService } from './mutation.service'
 import { Doc } from './mutation.type'
 import { ApiOkResponse, ApiBody } from '@nestjs/swagger'
 import { UpsertRequestDoc, UpsertResponseDoc, PurgedRequestDoc, PurgeResponseDoc } from './mutation.doc'
 import { MutationRequestDto, MutationResponseDto } from './mutation.dto'
+import { UserAuthGuard } from '../authorization/user.guard'
+import { ProjectGuard } from '../project/project.guard'
 
 @Controller('mutation')
+@UseGuards(UserAuthGuard, ProjectGuard)
 export class MutationController {
 	constructor(
-    private readonly dbService: DatabaseService,
+    private readonly projectService: ProjectService,
     private readonly mutateService: MutationService
 	) {}
 
 	@ApiBody(UpsertRequestDoc)
 	@ApiOkResponse(UpsertResponseDoc)
   @Post('upsert')
-	async update(@Body() { source, input, options }: MutationRequestDto, @Headers('db-name') dbName: string): Promise<MutationResponseDto> {
-  	const { db, startSession } = this.dbService.getDbContext(dbName)
+	async update(@Body() { source, input, options }: MutationRequestDto, @Headers('project-id') projectId: string): Promise<MutationResponseDto> {
+  	const { db, startSession } = this.projectService.getProjectContext(projectId)
   	const session = await startSession()
 
 		try {
@@ -50,8 +53,8 @@ export class MutationController {
 	@ApiBody(PurgedRequestDoc)
 	@ApiOkResponse(PurgeResponseDoc)
 	@Post('purge')
-	async purge(@Body() { source, input }: MutationRequestDto, @Headers('db-name') dbName: string): Promise<MutationResponseDto> {
-		const { db, startSession } = this.dbService.getDbContext(dbName)
+	async purge(@Body() { source, input }: MutationRequestDto, @Headers('project-id') projectId: string): Promise<MutationResponseDto> {
+		const { db, startSession } = this.projectService.getProjectContext(projectId)
 		const session = await startSession()
 
 		try {

@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common'
-import { DatabaseService } from '../database/database.service'
+import { ProjectService } from '../project/project.service'
 
 @Injectable()
 export class ManagementService {
 	constructor(
-    private readonly dbService: DatabaseService
+    private readonly projectService: ProjectService
 	) {}
 
 	// Accept plain HTTP JSON bodies (no gRPC JsonValue decoding)
@@ -16,8 +16,8 @@ export class ManagementService {
 		}
 	}
 
-	async fetch(dbName: string, collection: string, query: any = {}, association?: any, doc?: any): Promise<any> {
-		const dbContext = this.dbService.getDbContext(dbName)
+	async fetch(projectId: string, collection: string, query: any = {}, association?: any, doc?: any): Promise<any> {
+		const dbContext = this.projectService.getProjectContext(projectId)
 		let associations = {}
 		let colName = collection
 		let filter = query

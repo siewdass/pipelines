@@ -4,46 +4,81 @@ import Select from 'react-select';
 import { Base } from './base';
 
 const selectStyles = {
-  control: (base: any, state: any) => ({
+  control: (base: any) => ({
     ...base,
-    backgroundColor: '#1a1a1a',
-    borderColor: state.isFocused ? '#646cff' : '#444',
-    color: '#fff',
-    fontSize: '.8rem',
-    '&:hover': { borderColor: '#646cff' },
-    boxShadow: state.isFocused ? '0 0 0 1px #646cff' : 'none',
-    minHeight: '38px',
+    backgroundColor: 'transparent',
+    border: 'none',
+    boxShadow: 'none',
+    minHeight: '44px',
+    cursor: 'pointer',
+  }),
+  valueContainer: (base: any) => ({
+    ...base,
+    padding: '0 12px',
   }),
   menu: (base: any) => ({
     ...base,
-    backgroundColor: '#1a1a1a',
-    border: '1px solid #444',
+    backgroundColor: 'var(--color-white, #fff)',
+    border: '1px solid var(--color-gray-200, #eee)',
+    borderRadius: '12px',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    overflow: 'hidden',
     zIndex: 10,
+    '.dark &': {
+      backgroundColor: 'var(--color-gray-900, #101828)',
+      borderColor: 'var(--color-gray-800, #1d2939)',
+    }
   }),
   option: (base: any, state: any) => ({
     ...base,
-    backgroundColor: state.isFocused ? '#646cff' : 'transparent',
-    color: state.isFocused ? '#fff' : 'rgba(255,255,255,0.87)',
-    fontSize: '.8rem',
-    '&:active': { backgroundColor: '#535bf2' },
+    backgroundColor: state.isSelected 
+      ? 'var(--color-brand-500, #465fff)' 
+      : state.isFocused 
+        ? 'var(--color-brand-50, #f2f7ff)' 
+        : 'transparent',
+    color: state.isSelected 
+      ? '#fff' 
+      : 'var(--color-gray-900, #101828)',
+    fontSize: '.875rem',
+    cursor: 'pointer',
+    '.dark &': {
+      backgroundColor: state.isSelected 
+        ? 'var(--color-brand-500, #465fff)' 
+        : state.isFocused 
+          ? 'rgba(70, 95, 255, 0.1)' 
+          : 'transparent',
+      color: state.isSelected ? '#fff' : 'rgba(255, 255, 255, 0.9)',
+    },
+    '&:active': { backgroundColor: 'var(--color-brand-600, #3641f5)' },
   }),
-  singleValue: (base: any) => ({ ...base, color: 'rgba(255,255,255,0.87)', textIndent: '3px' }),
+  singleValue: (base: any) => ({ 
+    ...base, 
+    color: 'var(--color-gray-900, #101828)',
+    '.dark &': { color: 'rgba(255, 255, 255, 0.9)' }
+  }),
   multiValue: (base: any) => ({
     ...base,
-    backgroundColor: '#646cff',
-    borderRadius: '4px',
+    backgroundColor: 'var(--color-brand-500, #465fff)',
+    borderRadius: '6px',
+    color: '#fff',
   }),
   multiValueLabel: (base: any) => ({ ...base, color: '#fff' }),
   multiValueRemove: (base: any) => ({
     ...base,
     color: '#fff',
-    '&:hover': { backgroundColor: '#535bf2', color: '#fff' },
+    borderTopRightRadius: '6px',
+    borderBottomRightRadius: '6px',
+    '&:hover': { backgroundColor: 'var(--color-brand-600, #3641f5)', color: '#fff' },
   }),
-  input: (base: any) => ({ ...base, color: 'rgba(255,255,255,0.87)', textIndent: '3px' }),
-  placeholder: (base: any) => ({ ...base, color: '#888', textIndent: '3px' }),
-  indicatorSeparator: (base: any) => ({ ...base, backgroundColor: '#444' }),
-  dropdownIndicator: (base: any) => ({ ...base, color: '#888' }),
-  clearIndicator: (base: any) => ({ ...base, color: '#888' }),
+  input: (base: any) => ({ 
+    ...base, 
+    color: 'var(--color-gray-900, #101828)',
+    '.dark &': { color: 'rgba(255, 255, 255, 0.9)' }
+  }),
+  placeholder: (base: any) => ({ ...base, color: 'var(--color-gray-400, #98a2b3)' }),
+  indicatorSeparator: () => ({ display: 'none' }),
+  dropdownIndicator: (base: any) => ({ ...base, color: 'var(--color-gray-400, #98a2b3)' }),
+  clearIndicator: (base: any) => ({ ...base, color: 'var(--color-gray-400, #98a2b3)' }),
 };
 
 export const ReactSelectRenderer = withJsonFormsControlProps(

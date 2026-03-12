@@ -1,17 +1,17 @@
 import { Controller, Get, Post, Body, Headers } from '@nestjs/common'
 import { ManagementService } from './management.service'
-import { DatabaseService } from '../database/database.service'
+import { ProjectService } from '../project/project.service'
 
 @Controller('management')
 export class ManagementController {
 	constructor(
     private readonly managementService: ManagementService,
-    private readonly dbService: DatabaseService
+    private readonly projectService: ProjectService
 	) {}
 
   @Get('collections')
-	async collections(@Headers('db-name') dbName: string): Promise<any> {
-		const dbContext = this.dbService.getDbContext(dbName)
+	async collections(@Headers('project-id') projectId: string): Promise<any> {
+		const dbContext = this.projectService.getProjectContext(projectId)
 		const col = dbContext.db.collection('schemas')
 		const schemas = await col.find({}, { projection: { _id: 0 } }).toArray()
 		return { collections: schemas }
@@ -19,8 +19,8 @@ export class ManagementController {
 
   // pull
   @Post('fetch')
-  async fetch(@Body() data: any, @Headers('db-name') dbName: string): Promise<any> {
-  	const dbContext = this.dbService.getDbContext(dbName)
+  async fetch(@Body() data: any, @Headers('project-id') projectId: string): Promise<any> {
+  	const dbContext = this.projectService.getProjectContext(projectId)
   	const { collection, doc, association } = this.managementService.prepare(data)
   	let associations = {}
   	let colName = collection

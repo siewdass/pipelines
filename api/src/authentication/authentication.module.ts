@@ -3,11 +3,11 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { AuthenticationController } from './authentication.controller'
 import { AuthenticationService } from './authentication.service'
 import { User, UserSchema } from './user.schema'
-import { DatabaseModule } from '../database/database.module'
+import { ProjectModule } from '../project/project.module'
 
 @Module({
 	imports: [
-		DatabaseModule,
+		ProjectModule,
 	],
 	controllers: [ AuthenticationController ],
 	providers: [ AuthenticationService ],
