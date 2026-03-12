@@ -66,7 +66,7 @@ export class MutationController {
 
 				await Promise.all((docs as Doc[]).map(async (doc) => {
 					if (!doc.id) throw new Error('id required for purge')
-					// pass the client-provided id to mutateService; it may map or handle it
+					// pass the account-provided id to mutateService; it may map or handle it
 					await this.mutateService.download(db, doc, source, doc.id, {}, session, 'delete')
 				}))
 

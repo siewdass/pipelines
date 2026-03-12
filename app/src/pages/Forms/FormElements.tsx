@@ -1,7 +1,8 @@
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import { Form } from "../../components/form";
 import ComponentCard from "../../components/common/ComponentCard";
+import { useForm } from "../../hooks/useForm";
+import Button from "../../components/ui/button/Button";
 
 const SCHEMA = {
   type: 'vertical',
@@ -33,8 +34,10 @@ export default function FormElements() {
     country: "Argentina"
   };
 
-  const handleSubmit = (formData: Record<string, unknown>) => {
-    console.log("Form Submitted:", formData);
+  const [onSubmit, Form] = useForm<Record<string, unknown>>(SCHEMA);
+
+  const handleSave = (formData: any) => {
+    console.log("Form perfectly validated and Submitted:", formData);
   };
 
   return (
@@ -47,12 +50,19 @@ export default function FormElements() {
       
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <ComponentCard title="Dynamic Form Generation">
-          <div className="p-4 bg-white dark:bg-gray-900 rounded-lg">
+          <div className="p-4 bg-white dark:bg-gray-900 rounded-lg space-y-6">
             <Form 
-              schema={SCHEMA}
               initial={initial}
-              onSubmit={handleSubmit}
             />
+            <div className="flex w-full mt-6">
+              <Button 
+                onClick={() => onSubmit(handleSave)}
+                size="sm" 
+                className="w-full sm:w-auto transition-all"
+              >
+                Save Form
+              </Button>
+            </div>
           </div>
         </ComponentCard>
       </div>

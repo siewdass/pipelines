@@ -11,13 +11,13 @@ export class AuthenticationService {
 	async validateUser(userModel: Model<User>, email: string, password: string) {
 		const user = await userModel.findOne({ email, password }).lean().exec()
 		if (!user) throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED)
-		return user as any
+		return user as Record<string, unknown>
 	}
 
-	generateToken(payload: any, type: 'user' | 'client') {
+	generateToken(payload: Record<string, unknown>, type: 'user' | 'account') {
 		const secret = type === 'user' 
 			? process.env.USER_JWT_SECRET || 'dev-user-secret'
-			: process.env.CLIENT_JWT_SECRET || 'dev-client-secret'
+			: process.env.ACCOUNT_JWT_SECRET || 'dev-account-secret'
 			
 		const enrichedPayload = { ...payload, type }
 		return jwt.sign(enrichedPayload, secret, { expiresIn: '7d' })

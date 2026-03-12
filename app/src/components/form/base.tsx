@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 interface BaseProps {
   label?: string;
   errors?: string;
+  path?: string;
   hasValue?: boolean;
   children: ReactNode;
 }
@@ -21,10 +22,16 @@ const formatError = (err: string) => {
 
 import { useValidation } from './ValidationContext';
 
-export function Base({ label, errors, hasValue, children }: BaseProps) {
-  const { showValidation } = useValidation();
+export function Base({ label, errors, path, hasValue, children }: BaseProps) {
+  const { showValidation, customErrors } = useValidation();
+  
+  let finalError = errors;
+  if (path && customErrors[path]) {
+    finalError = customErrors[path];
+  }
+
   // Only show error if globally asked to show (on submit) or if the field was already interacted with (hasValue)
-  const displayError = (errors && (showValidation || hasValue)) ? formatError(errors) : undefined;
+  const displayError = (finalError && (showValidation || hasValue)) ? formatError(finalError) : undefined;
   
   return (
     <div className={`relative mb-4 text-left group w-full ${hasValue ? 'has-value' : ''} ${displayError ? 'has-error' : ''}`}>

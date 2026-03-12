@@ -14,7 +14,7 @@ export const CheckRenderer = withJsonFormsControlProps(
     };
 
     return (
-      <Base label={label} errors={errors} hasValue={!isNull}>
+      <Base label={label} errors={errors} path={path} hasValue={!isNull}>
         <div 
           tabIndex={0}
           className="flex flex-1 items-center justify-between w-full h-full cursor-pointer select-none px-3 py-2.5 outline-none rounded-lg"

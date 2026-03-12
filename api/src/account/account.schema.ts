@@ -2,8 +2,8 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Document } from 'mongoose'
 import { v4 as uuidv4 } from 'uuid'
 
-@Schema({ collection: 'client' })
-export class Client extends Document {
+@Schema({ collection: 'account' })
+export class Account extends Document {
   @Prop({ type: String, default: () => uuidv4() })
 	declare _id: string
 
@@ -17,4 +17,4 @@ export class Client extends Document {
   name?: string
 }
 
-export const ClientSchema = SchemaFactory.createForClass(Client)
+export const AccountSchema = SchemaFactory.createForClass(Account)

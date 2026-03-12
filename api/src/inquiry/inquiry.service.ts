@@ -171,7 +171,7 @@ export class InquiryService {
 				if (op == null) continue
 				if (!this.isRecord(op)) continue
 				const obj = op as Record<string, unknown>
-				// normalize common misspellings/aliases so clients with typos still work
+				// normalize common misspellings/aliases so accounts with typos still work
 				if ('constains' in obj && !('contains' in obj)) {
 					obj['contains'] = obj['constains']
 					delete obj['constains']

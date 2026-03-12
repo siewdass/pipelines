@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { JsonForms } from '@jsonforms/react';
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { renderers } from './index';
-import Button from '../ui/button/Button';
 import { ValidationContext } from './ValidationContext';
+
+export interface FormValues extends Record<string, any> {
+  [key: string]: any;
+}
 
 interface SchemaItem {
   type: string;
@@ -14,20 +17,24 @@ interface SchemaItem {
   min?: number;
   max?: number;
   pattern?: string;
+  onValidate?: (values: FormValues) => boolean;
 }
 
-interface FormProps {
+export interface FormProps<T> {
   schema: SchemaItem;
-  initial?: Record<string, unknown>;
-  onSubmit: (data: Record<string, unknown>) => void;
+  data: T;
+  onChange: (data: T, isValid: boolean) => void;
+  showValidation?: boolean;
   className?: string;
-  submitLabel?: string;
 }
 
-export const Form = ({ schema, initial = {}, onSubmit, className, submitLabel = "Guardar" }: FormProps) => {
-  const [formData, setFormData] = useState<Record<string, unknown>>(initial);
-  // Start as invalid if it's a new form, or we'll let JsonForms tell us on first render
-  const [isValid, setIsValid] = useState(false);
+export const BaseForm = <T extends Record<string, unknown>>({
+  schema,
+  data,
+  onChange,
+  showValidation = false,
+  className = "",
+}: FormProps<T>) => {
 
   const { jsonSchema, uiSchema } = useMemo(() => {
     const properties: { [property: string]: JsonSchema } = {};
@@ -57,6 +64,7 @@ export const Form = ({ schema, initial = {}, onSubmit, className, submitLabel = 
             
             if (item.max) jsonField.maxLength = item.max;
             if (item.pattern === 'email') jsonField.format = 'email';
+            if (item.pattern === 'password') jsonField.format = 'password';
             if (item.items) jsonField.enum = item.items;
             break;
           case 'number':
@@ -109,39 +117,56 @@ export const Form = ({ schema, initial = {}, onSubmit, className, submitLabel = 
     return { jsonSchema: json, uiSchema: ui };
   }, [schema]);
 
-  const [showValidation, setShowValidation] = useState(false);
+  const validators = useMemo(() => {
+    const map: Record<string, (values: FormValues) => boolean> = {};
+    const traverse = (item: SchemaItem) => {
+      if (item.name && item.onValidate) {
+        map[item.name] = item.onValidate;
+      }
+      if (item.items) {
+        item.items.forEach(child => {
+          if (typeof child !== 'string') traverse(child);
+        });
+      }
+    };
+    traverse(schema);
+    return map;
+  }, [schema]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setShowValidation(true);
-    if (isValid) {
-      onSubmit(formData);
-    }
+  const customErrors = useMemo(() => {
+    const map: Record<string, string> = {};
+    Object.entries(validators).forEach(([name, validate]) => {
+      // Validate using the current data prop
+      if (!validate(data)) {
+        map[name] = 'Invalid';
+      }
+    });
+    return map;
+  }, [validators, data]);
+
+  const handleJsonFormsChange = ({ data: newData, errors: ajvErrors }: { data: any, errors?: any[] }) => {
+    // Determine custom validity for the NEW data to pass correct isValid to parent
+    let customValid = true;
+    Object.values(validators).forEach((validate) => {
+      if (!validate(newData)) {
+        customValid = false;
+      }
+    });
+
+    onChange(newData, (ajvErrors?.length === 0) && customValid);
   };
 
   return (
-    <form onSubmit={handleSubmit} className={className}>
-      <ValidationContext.Provider value={{ showValidation }}>
+    <div className={className}>
+      <ValidationContext.Provider value={{ showValidation, customErrors }}>
         <JsonForms
           schema={jsonSchema}
           uischema={uiSchema}
-          data={formData}
+          data={data}
           renderers={renderers}
-          onChange={({ data, errors }) => {
-            setFormData(data);
-            setIsValid(errors?.length === 0);
-          }}
+          onChange={handleJsonFormsChange}
         />
       </ValidationContext.Provider>
-      <div className="mt-6">
-        <Button 
-          type="submit" 
-          size="sm" 
-          className={`w-full sm:w-auto transition-all ${showValidation && !isValid ? 'animate-shake border-error-500 text-error-500' : ''}`}
-        >
-          {submitLabel}
-        </Button>
-      </div>
-    </form>
+    </div>
   );
 };

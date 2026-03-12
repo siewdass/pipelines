@@ -13,7 +13,7 @@ import {
   JsonSchema,
 } from '@jsonforms/core';
 import { vanillaRenderers } from '@jsonforms/vanilla-renderers';
-export { Form } from './Form';
+export { BaseForm } from './Form';
 
 import { ReactSelectRenderer } from './select';
 import { FieldRenderer } from './field';

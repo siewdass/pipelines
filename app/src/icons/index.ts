@@ -56,8 +56,11 @@ import {
   HiOutlineShieldExclamation as AlertHexaIcon,
   HiOutlineHandRaised as ErrorHexaIcon,
   HiMiniChevronUp as MiniChevronUpIcon,
-  HiMiniChevronDown as MiniChevronDownIcon
+  HiMiniChevronDown as MiniChevronDownIcon,
+  HiOutlineAdjustmentsHorizontal as FilterIcon
 } from "react-icons/hi2";
+import { FcGoogle as GoogleIcon } from "react-icons/fc";
+import { FaXTwitter as XIcon } from "react-icons/fa6";
 
 export {
   ErrorHexaIcon,
@@ -118,4 +121,7 @@ export {
   ChatIcon,
   MiniChevronUpIcon,
   MiniChevronDownIcon,
+  FilterIcon,
+  GoogleIcon,
+  XIcon,
 };

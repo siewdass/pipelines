@@ -1,10 +1,20 @@
 import { NestFactory } from '@nestjs/core'
 import { MainModule } from './main.module'
-import { ValidationPipe } from '@nestjs/common'
+import { ValidationPipe, ConsoleLogger } from '@nestjs/common'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 
 async function bootstrap() {
-	const app = await NestFactory.create(MainModule)
+	const app = await NestFactory.create(MainModule, {
+		logger: new ConsoleLogger({
+			prefix: 'PIPELINES',
+		}),
+	})
+	app.enableCors({
+		origin: '*',
+		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+		preflightContinue: false,
+		optionsSuccessStatus: 204,
+	})
 	app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }))
 
 	const config = new DocumentBuilder()
