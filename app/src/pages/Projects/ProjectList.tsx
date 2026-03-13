@@ -61,8 +61,14 @@ export default function ProjectList() {
                 <span className="text-[10px] uppercase font-bold text-gray-400">
                   ID: {item._id.substring(0, 8)}...
                 </span>
-                <button className="text-sm font-semibold text-brand-500 hover:text-brand-600 transition-colors">
-                  Configure
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/projects/projectdata/${item._id}`);
+                  }}
+                  className="text-sm font-semibold text-brand-500 hover:text-brand-600 transition-colors"
+                >
+                  Database
                 </button>
               </div>
             </div>

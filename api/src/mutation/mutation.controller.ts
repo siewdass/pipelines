@@ -1,4 +1,5 @@
-import { Controller, Post, Body, Headers, UseGuards } from '@nestjs/common'
+import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common'
+import { Request } from 'express'
 import { v4 as uuidv4 } from 'uuid'
 import { ProjectService } from '../project/project.service'
 import { MutationService } from './mutation.service'
@@ -6,11 +7,11 @@ import { Doc } from './mutation.type'
 import { ApiOkResponse, ApiBody } from '@nestjs/swagger'
 import { UpsertRequestDoc, UpsertResponseDoc, PurgedRequestDoc, PurgeResponseDoc } from './mutation.doc'
 import { MutationRequestDto, MutationResponseDto } from './mutation.dto'
-import { AccountAuthGuard } from '../authorization/account.guard'
+import { UserAuthGuard } from '../authorization/user.guard'
 import { ProjectGuard } from '../project/project.guard'
 
 @Controller('mutation')
-@UseGuards(AccountAuthGuard, ProjectGuard)
+@UseGuards(UserAuthGuard, ProjectGuard)
 export class MutationController {
 	constructor(
     private readonly projectService: ProjectService,
@@ -20,26 +21,30 @@ export class MutationController {
 	@ApiBody(UpsertRequestDoc)
 	@ApiOkResponse(UpsertResponseDoc)
   @Post('upsert')
-	async update(@Body() { source, input, options }: MutationRequestDto, @Headers('project-id') projectId: string): Promise<MutationResponseDto> {
-  	const { db, startSession } = this.projectService.getProjectContext(projectId)
+	async update(@Body() { source, input, options }: MutationRequestDto, @Req() req: Request & { projectId: string }): Promise<MutationResponseDto> {
+		const projectId = req.projectId
+  	const { db, startSession } = await this.projectService.getProjectContext(projectId)
   	const session = await startSession()
 
 		try {
 			return await session.withTransaction(async () => {
 				// Ensure input is an array of docs for the required source collection
 				const docs = Array.isArray(input) ? input as any[] : [ input ]
+				const settings = this.mutateService.getOptions(options || {})
 				const collection = db.collection(source)
+
+				if (settings.uniques) {
+					await this.mutateService.uniques(collection, docs, settings.uniques, session)
+				}
+
 				await Promise.all(docs.map(async (doc: any) => {
-					// this.mutateService.timestamp(doc, false, false)
+					if (!doc || typeof doc !== 'object') return
 					if (!doc._id) {
-						// create path: genera id antes de nested para que los hijos reciban parentId
 						doc._id = uuidv4()
-						// optionally: this.mutateService.timestamp(doc, false, true) // si activas luego
-						await this.mutateService.download(db, doc, source, doc._id, {}, session, 'upsert')
+						await this.mutateService.download(db, doc, source, doc._id, settings, session, 'upsert')
 						await collection.insertOne(doc, { session })
 					} else {
-						// update path: id ya existe
-						await this.mutateService.download(db, doc, source, doc._id, {}, session, 'upsert')
+						await this.mutateService.download(db, doc, source, doc._id, settings, session, 'upsert')
 						await collection.updateOne({ _id: doc._id }, { $set: doc }, { session })
 					}
 				}))
@@ -53,8 +58,9 @@ export class MutationController {
 	@ApiBody(PurgedRequestDoc)
 	@ApiOkResponse(PurgeResponseDoc)
 	@Post('purge')
-	async purge(@Body() { source, input }: MutationRequestDto, @Headers('project-id') projectId: string): Promise<MutationResponseDto> {
-		const { db, startSession } = this.projectService.getProjectContext(projectId)
+	async purge(@Body() { source, input }: MutationRequestDto, @Req() req: Request & { projectId: string }): Promise<MutationResponseDto> {
+		const projectId = req.projectId
+		const { db, startSession } = await this.projectService.getProjectContext(projectId)
 		const session = await startSession()
 
 		try {

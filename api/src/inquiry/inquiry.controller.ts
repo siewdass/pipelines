@@ -1,14 +1,15 @@
-import { Controller, Post, Body, Headers, UseGuards } from '@nestjs/common'
+import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common'
+import { Request } from 'express'
 import { InquiryRequestDto, InquiryResponseDto } from './inquiry.dto'
 import { ProjectService } from '../project/project.service'
 import { InquiryService } from './inquiry.service'
 import { ApiBody, ApiOkResponse } from '@nestjs/swagger'
 import { RetrieveRequestDoc, RetrieveResponseDoc } from './inquiry.doc'
-import { AccountAuthGuard } from '../authorization/account.guard'
+import { UserAuthGuard } from '../authorization/user.guard'
 import { ProjectGuard } from '../project/project.guard'
 
 @Controller('inquiry')
-@UseGuards(AccountAuthGuard, ProjectGuard)
+@UseGuards(UserAuthGuard, ProjectGuard)
 export class InquiryController {
 	constructor(
     private readonly projectService: ProjectService,
@@ -16,9 +17,10 @@ export class InquiryController {
 	) {}
 
 	@Post('index')
-	async index(@Body() { source, output, options }: InquiryRequestDto, @Headers('project-id') projectId: string
+	async index(@Body() { source, output, options }: InquiryRequestDto, @Req() req: Request & { projectId: string }
 	): Promise<InquiryResponseDto> {
-		const { db } = this.projectService.getProjectContext(projectId)
+		const projectId = req.projectId
+		const { db } = await this.projectService.getProjectContext(projectId)
 
 		const col = db.collection(source)
 		// Use the filter parsed from options (getOptions) to find a single document
@@ -44,8 +46,9 @@ export class InquiryController {
 	@ApiBody(RetrieveRequestDoc)
 	@ApiOkResponse(RetrieveResponseDoc)
 	@Post('retrieve')
-	async retrieve(@Body() { source, output, options }: InquiryRequestDto, @Headers('project-id') projectId: string): Promise<InquiryResponseDto> {
-		const { db } = this.projectService.getProjectContext(projectId)
+	async retrieve(@Body() { source, output, options }: InquiryRequestDto, @Req() req: Request & { projectId: string }): Promise<InquiryResponseDto> {
+		const projectId = req.projectId
+		const { db } = await this.projectService.getProjectContext(projectId)
 
 		const col = db.collection(source)
 		const { filter, sort, pagination } = this.service.getOptions(options ?? {})

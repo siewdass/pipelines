@@ -9,7 +9,7 @@ export class UserController {
 
 	@Post()
 	async create(@Headers('project-id') projectId: string, @Body() body: CreateUserDto) {
-		const UserModel = this.projectService.getProjectModel(projectId, UserSchema, User.name)
+		const UserModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
 		try {
 			const exists = await UserModel.findOne({ email: body.email }).select('_id').lean().exec()
 			if (exists) throw new HttpException('User already exists', HttpStatus.CONFLICT)
@@ -24,7 +24,7 @@ export class UserController {
 
 	@Patch(':id')
 	async update(@Headers('project-id') projectId: string, @Param('id') id: string, @Body() body: UpdateUserDto) {
-		const UserModel = this.projectService.getProjectModel(projectId, UserSchema, User.name)
+		const UserModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
 		try {
 			const updated = await UserModel.findByIdAndUpdate(id, { $set: body }, { new: true }).select('-password').lean().exec()
 			if (!updated) throw new HttpException('User not found', HttpStatus.NOT_FOUND)
@@ -37,7 +37,7 @@ export class UserController {
 
 	@Get(':id')
 	async getById(@Headers('project-id') projectId: string, @Param('id') id: string) {
-		const UserModel = this.projectService.getProjectModel(projectId, UserSchema, User.name)
+		const UserModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
 		const found = await UserModel.findById(id).select('-password').lean().exec()
 		if (!found) throw new HttpException('User not found', HttpStatus.NOT_FOUND)
 		return { success: true, user: found }
@@ -45,7 +45,7 @@ export class UserController {
 
 	@Get()
 	async getAll(@Headers('project-id') projectId: string) {
-		const UserModel = this.projectService.getProjectModel(projectId, UserSchema, User.name)
+		const UserModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
 		const list = await UserModel.find().select('-password').lean().exec()
 		return { success: true, users: list }
 	}
@@ -53,7 +53,7 @@ export class UserController {
 	@Post('roles')
 	async createRole(@Headers('project-id') projectId: string, @Body() body: { name: string; description?: string }) {
 		try {
-			const RoleModel = this.projectService.getProjectModel(projectId, RoleSchema, Role.name)
+			const RoleModel = await this.projectService.getProjectModel(projectId, RoleSchema, Role.name)
 			const exists = await RoleModel.findOne({ name: body.name }).select('_id').lean().exec()
 			if (exists) throw new HttpException('Role already exists', HttpStatus.CONFLICT)
 			const created = new RoleModel({ name: body.name, description: body.description })
@@ -68,7 +68,7 @@ export class UserController {
 	@Post('roles/permissions')
 	async createPermission(@Headers('project-id') projectId: string, @Body() body: { name: string; description?: string }) {
 		try {
-			const PermissionModel = this.projectService.getProjectModel(projectId, PermissionSchema, Permission.name	)
+			const PermissionModel = await this.projectService.getProjectModel(projectId, PermissionSchema, Permission.name	)
 			const exists = await PermissionModel.findOne({ name: body.name }).select('_id').lean().exec()
 			if (exists) throw new HttpException('Permission already exists', HttpStatus.CONFLICT)
 			const created = new PermissionModel({ name: body.name, description: body.description })

@@ -7,7 +7,7 @@ export class MutationService {
 
 	async uniques(collection: any, docs: any[], uniques: string[], session: any): Promise<void> {
 		for (const field of uniques) {
-			const values = docs.map(d => d[field]).filter(v => v !== undefined)
+			const values = docs.filter(d => d && d[field] !== undefined).map(d => d[field])
 			if (values.length > 0) {
 				const existingDocs = await collection.find({ [field]: { $in: values } }, { session }).toArray()
 				if (existingDocs.length > 0) {
@@ -56,7 +56,7 @@ export class MutationService {
 	async download(db: Db, doc: any, name: string, parentId: string, settings: any, session?: any, mode: 'delete' | 'upsert' = 'upsert'): Promise<void> {
 		for (const [ key, value ] of Object.entries(doc)) {
 			if (Array.isArray(value)) {
-				if (false/* bridge */) {
+				if (settings?.bridge?.[key]) {
 					// Many-to-many
 					await this.manyToMany(db, name, key, parentId, value as any[], session, mode)
 					// remove pivot array from parent params so it isn't persisted
@@ -67,7 +67,7 @@ export class MutationService {
 					// remove nested array from parent params so children are not embedded
 					delete doc[key]
 				}
-			} else if (value && typeof value === 'object' && !Array.isArray(value) && (value.constructor === Object)) {
+			} else if (value && typeof value === 'object' && value !== null && !Array.isArray(value) && (value.constructor === Object)) {
 				// One-to-one — upsert the child first so it gets an id, then process its nested relations
 				await this.oneToOne(db, value, key, name, parentId, false, mode, session)
 				// After upsert, compute the child's id and recurse into its nested fields

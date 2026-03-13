@@ -12,7 +12,7 @@ const payload = {
         content: 'This is a test post to demonstrate associations.',
         author: 'user123',
         comments: [
-            { type: 'commenter1', text: 'Great post!', testing: { nested: 'xd' } },
+            { type: 'commenter1', text: 'Great post! ', testing: { nested: 'xd' } },
             { type: 'commenter2', text: 'I agree with this.' },
             { type: 'commenter3', text: 'Thanks for sharing.', testing: { nested: 'data' } },
         ],

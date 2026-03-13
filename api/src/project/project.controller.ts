@@ -2,10 +2,13 @@ import { Controller, Post, Body, BadRequestException, UseGuards, Req, Get, Param
 import { InjectModel } from '@nestjs/mongoose'
 import * as mongoose from 'mongoose'
 import { Model } from 'mongoose'
+import { ProjectService } from './project.service'
+import { User, UserSchema } from '../user/user.schema'
 import { Project } from './project.schema'
 import { CreateProjectDto } from './project.dto'
 import { AccountAuthGuard } from '../authorization/account.guard'
 import { Request } from 'express'
+import * as jwt from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
 
 import { Origin } from './origin.schema'
@@ -15,20 +18,33 @@ import { Origin } from './origin.schema'
 export class ProjectController {
 	constructor(
 		@InjectModel(Project.name, 'default') private readonly projectModel: Model<Project & mongoose.Document>,
-		@InjectModel(Origin.name, 'default') private readonly originModel: Model<Origin & mongoose.Document>
+		@InjectModel(Origin.name, 'default') private readonly originModel: Model<Origin & mongoose.Document>,
+		private readonly projectService: ProjectService
 	) {}
 
 	@Post('create')
 	async createProject(@Req() req: Request & { accountId: string }, @Body() body: CreateProjectDto) {
 		const { accountId } = req
-		const token = uuidv4()
+		const _id = uuidv4()
+		const secret = process.env.USER_JWT_SECRET || 'dev-user-secret'
+		// Include project id in token for traceability
+		const token = jwt.sign({ id: _id, accountId }, secret)
 
 		try {
 			const project = await this.projectModel.create({
 				...body,
+				_id,
 				accountId,
 				token,
 				status: 'active'
+			})
+
+			// Create anonymous user in the new project database
+			const userModel = await this.projectService.getProjectModel(_id, UserSchema, User.name)
+			await userModel.create({
+				email: 'anonymous@anonymous.com',
+				name: 'Anonymous',
+				firstLogin: false
 			})
 
 			return { ...project.toObject(), message: 'Project created successfully' }
@@ -60,7 +76,9 @@ export class ProjectController {
 	@Patch(':id/token')
 	async regenerateToken(@Req() req: Request & { accountId: string }, @Param('id') id: string) {
 		const { accountId } = req
-		const token = uuidv4()
+		const secret = process.env.USER_JWT_SECRET || 'dev-user-secret'
+		// Include project id in token for traceability
+		const token = jwt.sign({ id, accountId }, secret)
 		const project = await this.projectModel.findOneAndUpdate(
 			{ _id: id, accountId },
 			{ $set: { token } },

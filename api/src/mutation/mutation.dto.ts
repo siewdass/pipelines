@@ -7,9 +7,8 @@ export class MutationRequestDto {
   @ApiProperty({ description: 'Source collection name to retrieve from (root collection).' })
   source: string
 
-  @IsObject()
   @ApiProperty({ description: 'Input projection per collection (fields, embedded).' })
-  input: Record<string, unknown>
+  input: Record<string, unknown> | Array<Record<string, unknown>>
 
   @IsOptional()
   @IsObject()

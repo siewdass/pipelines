@@ -1,17 +1,22 @@
-import { Controller, Get, Post, Body, Headers } from '@nestjs/common'
-import { ManagementService } from './management.service'
+import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common'
+import { Request } from 'express'
+import { DatabaseService } from './database.service'
 import { ProjectService } from '../project/project.service'
+import { UserAuthGuard } from '../authorization/user.guard'
+import { ProjectGuard } from '../project/project.guard'
 
-@Controller('management')
-export class ManagementController {
+@Controller('database')
+@UseGuards(UserAuthGuard, ProjectGuard)
+export class DatabaseController {
 	constructor(
-    private readonly managementService: ManagementService,
+    private readonly databaseService: DatabaseService,
     private readonly projectService: ProjectService
 	) {}
 
-  @Get('collections')
-	async collections(@Headers('project-id') projectId: string): Promise<any> {
-		const dbContext = this.projectService.getProjectContext(projectId)
+  @Get('tables')
+	async collections(@Req() req: Request & { projectId: string }): Promise<any> {
+		const projectId = req.projectId
+		const dbContext = await this.projectService.getProjectContext(projectId)
 		const col = dbContext.db.collection('schemas')
 		const schemas = await col.find({}, { projection: { _id: 0 } }).toArray()
 		return { collections: schemas }
@@ -19,9 +24,10 @@ export class ManagementController {
 
   // pull
   @Post('fetch')
-  async fetch(@Body() data: any, @Headers('project-id') projectId: string): Promise<any> {
-  	const dbContext = this.projectService.getProjectContext(projectId)
-  	const { collection, doc, association } = this.managementService.prepare(data)
+  async fetch(@Body() data: any, @Req() req: Request & { projectId: string }): Promise<any> {
+  	const projectId = req.projectId
+  	const dbContext = await this.projectService.getProjectContext(projectId)
+  	const { collection, doc, association } = this.databaseService.prepare(data)
   	let associations = {}
   	let colName = collection
   	let filter = {}
@@ -54,7 +60,7 @@ export class ManagementController {
   	const col = dbContext.db.collection(colName)
   	const docs = await col.find(filter).toArray()
   	for (const d of docs) {
-  		await this.managementService.expandDoc(dbContext.db, d, associations)
+  		await this.databaseService.expandDoc(dbContext.db, d, associations)
   	}
   	return {
   		collection: colName,

@@ -24,13 +24,13 @@ export class AuthenticationController {
 		private readonly authService: AuthenticationService,
 	) {}
 
-	private get accountModel() {
-		return this.projectService.getProjectModel('default', AccountSchema, Account.name)
+	private async getAccountModel() {
+		return await this.projectService.getProjectModel('default', AccountSchema, Account.name)
 	}
 
 	@Post('register')
 	async register(@Headers('project-id') projectId: string, @Body() { email, password, name }: RegisterRequestDto): Promise<RegisterResponseDto> {
-		const userModel = this.projectService.getProjectModel(projectId, UserSchema, User.name)
+		const userModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
 		const existingUser = await userModel.findOne({ email }).lean().exec()
 		if (existingUser) throw new HttpException('User already exists', HttpStatus.CONFLICT)
 		const newUser = new userModel({ email, password, name })
@@ -40,7 +40,7 @@ export class AuthenticationController {
 
 	@Post('login')
 	async login(@Headers('project-id') projectId: string, @Body() { email, password }: LoginRequestDto): Promise<LoginResponseDto> {
-		const userModel = this.projectService.getProjectModel(projectId, UserSchema, User.name)
+		const userModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
 		const foundUser = await this.authService.validateUser(userModel, email, password)
 		const token = this.authService.generateToken({ id: foundUser._id, email: foundUser.email }, 'user')
 		return { success: true, message: 'Login success', token }
@@ -67,11 +67,12 @@ export class AuthenticationController {
 	@Post('account/register')
 	async accountRegister(@Body() { email, password, name }: RegisterRequestDto): Promise<RegisterResponseDto> {
 		try {
-			const found = await this.accountModel.findOne({ email }).lean().exec()
+			const accountModel = await this.getAccountModel()
+			const found = await accountModel.findOne({ email }).lean().exec()
 			if (found) throw new HttpException('Account already exists', HttpStatus.CONFLICT)
 			const rounds = 10
 			const hashed = await bcrypt.hash(password, rounds)
-			const created = new this.accountModel({ email, password: hashed, name })
+			const created = new accountModel({ email, password: hashed, name })
 			await created.save()
 		} catch (err: unknown) {
 			this.logger.error('[AUTH] Account Register Error:', err)
@@ -85,7 +86,8 @@ export class AuthenticationController {
 	async accountLogin(@Body() { email, password }: LoginRequestDto): Promise<LoginResponseDto> {
 		let token
 		try {
-			const found = await this.accountModel.findOne({ email }).exec()
+			const accountModel = await this.getAccountModel()
+			const found = await accountModel.findOne({ email }).exec()
 			if (!found) throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED)
 			const match = await bcrypt.compare(password, found.password)
 			if (!match) throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED)

@@ -5,7 +5,7 @@ import { ProjectModule } from './project/project.module'
 import { MongooseModule } from '@nestjs/mongoose'
 import { InquiryModule } from './inquiry/inquiry.module'
 import { AuthenticationModule } from './authentication/authentication.module'
-import { ManagementModule } from './management/management.module'
+import { DatabaseModule } from './database/database.module'
 import { AuthorizationModule } from './authorization/authorization.module'
 
 import { ConfigModule } from '@nestjs/config'
@@ -23,7 +23,7 @@ import { ConfigModule } from '@nestjs/config'
 		MutationModule,
 		InquiryModule,
 		AuthenticationModule,
-		ManagementModule,
+		DatabaseModule,
 		AuthorizationModule,
 	],
 	providers: [],

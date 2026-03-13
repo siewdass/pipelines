@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { ProjectService } from '../project/project.service'
 
 @Injectable()
-export class ManagementService {
+export class DatabaseService {
 	constructor(
     private readonly projectService: ProjectService
 	) {}
@@ -17,7 +17,7 @@ export class ManagementService {
 	}
 
 	async fetch(projectId: string, collection: string, query: any = {}, association?: any, doc?: any): Promise<any> {
-		const dbContext = this.projectService.getProjectContext(projectId)
+		const dbContext = await this.projectService.getProjectContext(projectId)
 		let associations = {}
 		let colName = collection
 		let filter = query
@@ -73,8 +73,15 @@ export class ManagementService {
 				const parentId = doc._id
 				const related = await db.collection(collection).find({ [key]: parentId }).toArray()
 				doc[key] = related
+			} else if (type === 'many-to-many') {
+				const ids = doc[key]
+				if (Array.isArray(ids) && ids.length > 0) {
+					const related = await db.collection(collection).find({ _id: { $in: ids } }).toArray()
+					doc[key] = related
+				} else {
+					doc[key] = []
+				}
 			}
-			// many-to-many no implementado
 		}
 	}
 }
