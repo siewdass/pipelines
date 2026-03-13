@@ -128,14 +128,16 @@
 }
 
 /* JSON Forms layouts */
+.vertical-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .horizontal-layout {
   display: flex;
   gap: 1.25rem;
-}
-
-.horizontal-layout > * {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
 }
 
 /* Fix for browser autofill background */

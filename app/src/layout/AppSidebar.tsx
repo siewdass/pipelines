@@ -10,7 +10,6 @@ import {
   ListIcon,
   PageIcon,
   PieChartIcon,
-  PlugInIcon,
   TableIcon,
   UserCircleIcon,
 } from "../icons";
@@ -36,12 +35,9 @@ const navItems: NavItem[] = [
     path: "/profile",
   },
   {
-    name: "Forms",
+    name: "Projects",
     icon: <ListIcon />,
-    subItems: [
-      { name: "Form Elements", path: "/form-elements" },
-      { name: "Form Layouts", path: "/form-layouts" },
-    ],
+    path: "/projects",
   },
   {
     name: "Tables",
@@ -94,9 +90,13 @@ const AppSidebar: React.FC = () => {
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // const isActive = (path: string) => location.pathname === path;
   const isActive = useCallback(
-    (path: string) => location.pathname === path,
+    (path: string) => {
+      if (path === "/") {
+        return location.pathname === "/";
+      }
+      return location.pathname.startsWith(path);
+    },
     [location.pathname]
   );
 
@@ -120,6 +120,7 @@ const AppSidebar: React.FC = () => {
     });
 
     if (!submenuMatched) {
+      // eslint-disable-next-line
       setOpenSubmenu(null);
     }
   }, [location, isActive]);

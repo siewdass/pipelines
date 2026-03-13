@@ -1,4 +1,4 @@
-import { Controller, Post, Body, BadRequestException, UseGuards, Req, Get } from '@nestjs/common'
+import { Controller, Post, Body, BadRequestException, UseGuards, Req, Get, Param, Patch, NotFoundException, Delete } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import * as mongoose from 'mongoose'
 import { Model } from 'mongoose'
@@ -6,28 +6,34 @@ import { Project } from './project.schema'
 import { CreateProjectDto } from './project.dto'
 import { AccountAuthGuard } from '../authorization/account.guard'
 import { Request } from 'express'
+import { v4 as uuidv4 } from 'uuid'
+
+import { Origin } from './origin.schema'
 
 @Controller('project')
 @UseGuards(AccountAuthGuard)
 export class ProjectController {
-	constructor(@InjectModel(Project.name, 'default') private readonly projectModel: Model<Project & mongoose.Document>) {}
+	constructor(
+		@InjectModel(Project.name, 'default') private readonly projectModel: Model<Project & mongoose.Document>,
+		@InjectModel(Origin.name, 'default') private readonly originModel: Model<Origin & mongoose.Document>
+	) {}
 
 	@Post('create')
 	async createProject(@Req() req: Request & { accountId: string }, @Body() body: CreateProjectDto) {
-		const { projectId, token, origin } = body
 		const { accountId } = req
+		const token = uuidv4()
 
 		try {
-			if (token) {
-				await this.projectModel.updateOne(
-					{ token }, 
-					{ $set: { token, projectId, origin, accountId } }, 
-					{ upsert: true }
-				)
-			}
+			const project = await this.projectModel.create({
+				...body,
+				accountId,
+				token,
+				status: 'active'
+			})
 
-			return { ok: true }
-		} catch {
+			return { ...project.toObject(), message: 'Project created successfully' }
+		} catch (error) {
+			console.error(error)
 			throw new BadRequestException('failed to create project')
 		}
 	}
@@ -41,5 +47,72 @@ export class ProjectController {
 		} catch {
 			throw new BadRequestException('failed to list projects')
 		}
+	}
+
+	@Get(':id')
+	async getProject(@Req() req: Request & { accountId: string }, @Param('id') id: string) {
+		const { accountId } = req
+		const project = await this.projectModel.findOne({ _id: id, accountId }).lean().exec()
+		if (!project) throw new NotFoundException('project not found')
+		return project
+	}
+
+	@Patch(':id/token')
+	async regenerateToken(@Req() req: Request & { accountId: string }, @Param('id') id: string) {
+		const { accountId } = req
+		const token = uuidv4()
+		const project = await this.projectModel.findOneAndUpdate(
+			{ _id: id, accountId },
+			{ $set: { token } },
+			{ new: true }
+		).lean().exec()
+		if (!project) throw new NotFoundException('project not found')
+		return { token, message: 'Token regenerated successfully' }
+	}
+
+	@Patch(':id/status')
+	async updateStatus(@Req() req: Request & { accountId: string }, @Param('id') id: string, @Body() body: { status: string }) {
+		const { accountId } = req
+		const project = await this.projectModel.findOneAndUpdate(
+			{ _id: id, accountId },
+			{ $set: { status: body.status } },
+			{ new: true }
+		).lean().exec()
+		if (!project) throw new NotFoundException('project not found')
+		return { status: project.status, message: 'Status updated successfully' }
+	}
+
+	@Get(':id/origins')
+	async listOrigins(@Req() req: Request & { accountId: string }, @Param('id') id: string) {
+		const { accountId } = req
+		// Verify project ownership
+		const project = await this.projectModel.findOne({ _id: id, accountId }).exec()
+		if (!project) throw new NotFoundException('project not found')
+
+		return this.originModel.find({ projectId: id }).lean().exec()
+	}
+
+	@Post(':id/origins')
+	async addOrigin(@Req() req: Request & { accountId: string }, @Param('id') id: string, @Body() body: { url: string }) {
+		const { accountId } = req
+		const project = await this.projectModel.findOne({ _id: id, accountId }).exec()
+		if (!project) throw new NotFoundException('project not found')
+
+		const origin = await this.originModel.create({
+			url: body.url,
+			projectId: id,
+			status: 'active'
+		})
+		return { ...origin.toObject(), message: 'Origin added successfully' }
+	}
+
+	@Delete(':id/origins/:originId')
+	async removeOrigin(@Req() req: Request & { accountId: string }, @Param('id') id: string, @Param('originId') originId: string) {
+		const { accountId } = req
+		const project = await this.projectModel.findOne({ _id: id, accountId }).exec()
+		if (!project) throw new NotFoundException('project not found')
+
+		await this.originModel.deleteOne({ _id: originId, projectId: id })
+		return { ok: true, message: 'Origin removed successfully' }
 	}
 }

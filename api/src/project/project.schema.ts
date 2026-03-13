@@ -11,13 +11,16 @@ export class Project extends Document {
   token: string
 
   @Prop({ required: true })
-  projectId: string
+  name: string
+
+  @Prop()
+  description: string
+
+  @Prop({ default: 'active' })
+  status: string
 
   @Prop({ required: true })
   accountId: string
-
-  @Prop()
-  origin: string
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project)

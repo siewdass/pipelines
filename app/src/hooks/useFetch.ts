@@ -44,14 +44,15 @@ export function useMutate<TData = any, TVariables = any, TError = any>(
 ) {
   const queryClient = useQueryClient();
 
-  const mutation = useMutation<TData, TError, TVariables>({
-    mutationFn: async (body: TVariables) => {
+  const mutation = useMutation<TData, TError, TVariables & { overrideUrl?: string }>({
+    mutationFn: async ({ overrideUrl, ...body }: any) => {
+      const targetUrl = overrideUrl || url;
       let response;
       switch (method) {
-        case 'post': response = await api.post(url, body); break;
-        case 'put': response = await api.put(url, body); break;
-        case 'patch': response = await api.patch(url, body); break;
-        case 'delete': response = await api.delete(url, { data: body }); break;
+        case 'post': response = await api.post(targetUrl, body); break;
+        case 'put': response = await api.put(targetUrl, body); break;
+        case 'patch': response = await api.patch(targetUrl, body); break;
+        case 'delete': response = await api.delete(targetUrl, { data: body }); break;
         default: throw new Error(`Unsupported method: ${method}`);
       }
       return response.data;
