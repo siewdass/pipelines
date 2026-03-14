@@ -6,16 +6,18 @@ import { toast } from 'sonner';
  * Generic Fetch Hook (GET)
  * @param key Unique string identifier for the query
  * @param url API endpoint
+ * @param params Optional URL query parameters
  */
 export function useQuery<TData = any, TError = any>(
   key: string,
-  url: string
+  url: string,
+  params?: any
 ) {
   const query = useQueryHook<TData, TError>({
-    queryKey: [key, url], // URL is part of the key for uniqueness
+    queryKey: params ? [key, url, params] : [key, url],
     queryFn: async () => {
       try {
-        const { data } = await api.get(url);
+        const { data } = await api.get(url, { params });
         return data;
       } catch (err: any) {
         toast.error(err.response?.data?.message || 'Error fetching data');
@@ -61,17 +63,19 @@ export function useMutate<TData = any, TVariables = any, TError = any>(
       if (keys) {
         const keysArray = Array.isArray(keys) ? keys : [keys];
         keysArray.forEach(k => {
-          // Fuzzy match: will invalidate all queries starting with [k]
-          // e.g., if query key is ['projects', '/list'], invalidating ['projects'] works.
           queryClient.invalidateQueries({ queryKey: [k], exact: false });
         });
       }
-      toast.success(data?.message || 'Action successfully');
+      if (data?.message) toast.success(data.message);
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Action failed');
     },
   });
 
-  return [mutation.mutate, mutation.isPending] as [typeof mutation.mutate, boolean];
+  const execute = (variables: TVariables & { overrideUrl?: string }) => {
+    mutation.mutate(variables);
+  };
+
+  return [execute, mutation.isPending, mutation.data] as [typeof execute, boolean, TData | undefined];
 }

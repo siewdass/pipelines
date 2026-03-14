@@ -34,7 +34,6 @@ export class MutationService {
 			if (Array.isArray(u)) out.uniques = u.filter(x => typeof x === 'string')
 		}
 
-		// Bridge expected as object mapping childKey -> bridgeName, e.g. { comments: 'another' }
 		if ('bridge' in options) {
 			const b = options['bridge']
 			if (b && typeof b === 'object') {
@@ -54,49 +53,102 @@ export class MutationService {
 	}
 
 	async download(db: Db, doc: any, name: string, parentId: string, settings: any, session?: any, mode: 'delete' | 'upsert' = 'upsert'): Promise<void> {
+		// Aseguramos que la colección principal se registre
+		if (mode === 'upsert') {
+			await this.registerCollection(db, name, session)
+		}
+
 		for (const [ key, value ] of Object.entries(doc)) {
 			if (Array.isArray(value)) {
-				if (settings?.bridge?.[key]) {
+				const target = settings?.bridge?.[key]
+				if (target) {
 					// Many-to-many
-					await this.manyToMany(db, name, key, parentId, value as any[], session, mode)
-					// remove pivot array from parent params so it isn't persisted
+					if (mode === 'upsert') {
+						await this.registerAssociation(db, name, key, {
+							name: key,
+							collection: target,
+							type: 'many-to-many',
+							bridge: target
+						}, session)
+					}
+					await this.manyToMany(db, name, target, parentId, value as any[], session, mode)
 					delete doc[key]
 				} else {
 					// One-to-many
+					if (mode === 'upsert') {
+						await this.registerAssociation(db, name, key, {
+							name: key,
+							collection: key,
+							type: 'one-to-many'
+						}, session)
+					}
 					await this.oneToMany(db, name, key, parentId, value as any[], [], false, settings, session, mode)
-					// remove nested array from parent params so children are not embedded
 					delete doc[key]
 				}
 			} else if (value && typeof value === 'object' && value !== null && !Array.isArray(value) && (value.constructor === Object)) {
-				// One-to-one — upsert the child first so it gets an id, then process its nested relations
+				// One-to-one
+				if (mode === 'upsert') {
+					await this.registerAssociation(db, name, key, {
+						name: key,
+						collection: key,
+						type: 'one-to-one'
+					}, session)
+				}
 				await this.oneToOne(db, value, key, name, parentId, false, mode, session)
-				// After upsert, compute the child's id and recurse into its nested fields
 				const childId = (value as any).id || (value as any)._id || ''
 				if (childId) {
 					await this.download(db, value, key, childId, settings, session, mode)
 				}
-				// remove nested object from parent params so it won't be embedded
 				delete doc[key]
 			}
 		}
 	}
 
-	async manyToMany(db: Db, name: string, key: string, parentId: string, values: any[], session: any, mode: 'delete' | 'upsert') {
-		const pivotCollection = `${name}_${key}`
+	private async registerCollection(db: Db, name: string, session?: any) {
+		const schemas = db.collection('schemas')
+		await schemas.updateOne(
+			{ _id: name as any },
+			{ $set: { name } },
+			{ upsert: true, session }
+		)
+	}
+
+	private async registerAssociation(db: Db, source: string, key: string, details: any, session?: any) {
+		const schemas = db.collection('schemas')
+		
+		// 1. Registrar la asociación en la fuente
+		await schemas.updateOne(
+			{ _id: source as any },
+			{ 
+				$set: { 
+					name: source,
+					[`associations.${key}`]: details 
+				} 
+			},
+			{ upsert: true, session }
+		)
+
+		// 2. Asegurar que la colección destino también exista en schemas
+		if (details.collection) {
+			await this.registerCollection(db, details.collection, session)
+		}
+	}
+
+	async manyToMany(db: Db, name: string, target: string, parentId: string, values: any[], session: any, mode: 'delete' | 'upsert') {
+		const pivotCollection = `${name}_${target}`
 		if (mode === 'delete') {
 			await db.collection(pivotCollection).deleteMany({ [name]: parentId }, { session })
 		} else if (mode === 'upsert') {
-			// upsert: sincroniza los ids en la tabla pivote usando bulkWrite
 			const currentIds = (await db.collection(pivotCollection)
 				.find({ [name]: parentId }, { session })
-				.project({ [key]: 1, _id: 0 })
+				.project({ [target]: 1, _id: 0 })
 				.toArray())
-				.map(doc => doc[key])
+				.map(doc => doc[target])
 			const currentIdsSet = new Set(currentIds)
 			const valuesSet = new Set(values)
 			const bulkOps: any[] = [
-				...currentIds.filter(id => !valuesSet.has(id)).map(id => ({ deleteOne: { filter: { [name]: parentId, [key]: id } } })),
-				...values.filter(id => !currentIdsSet.has(id)).map(id => ({ insertOne: { document: { [name]: parentId, [key]: id } } }))
+				...currentIds.filter(id => !valuesSet.has(id)).map(id => ({ deleteOne: { filter: { [name]: parentId, [target]: id } } })),
+				...values.filter(id => !currentIdsSet.has(id)).map(id => ({ insertOne: { document: { [name]: parentId, [target]: id } } }))
 			]
 			if (bulkOps.length > 0) {
 				await db.collection(pivotCollection).bulkWrite(bulkOps, { session })
@@ -111,15 +163,11 @@ export class MutationService {
 			const sentIds = value.filter((item: any) => item && item?.id).map((item: any) => item?.id)
 			const existingIds = (await childCol.find({ [name]: parentId }, { session }).toArray()).map(doc => doc._id)
 			const toDeleteIds = existingIds.filter(id => !sentIds.includes(id))
-			// Prepare delete ops to include in the same bulkWrite as updates/inserts
 			const deleteOps: any[] = toDeleteIds.length ? [ { deleteMany: { filter: { _id: { $in: toDeleteIds } } } } ] : []
 
-			// Build and execute bulk operations
 			const opsFromItems: any[] = value.map(item => {
 				if (!item || typeof item !== 'object') return null
 				const params = { ...item, [name]: parentId }
-
-				// Build the document that will be written to the DB, but strip nested objects/arrays
 				const writeDoc: any = { ...params }
 				for (const k of Object.keys(writeDoc)) {
 					const v = writeDoc[k]
@@ -140,7 +188,6 @@ export class MutationService {
 					return { updateOne: { filter: { _id: params.id }, update: { $set: childParams } } }
 				} else {
 					writeDoc._id = uuidv4()
-					// set the generated id back onto the original item so later nested calls see it
 					item.id = writeDoc._id
 					return { insertOne: { document: writeDoc } }
 				}
@@ -149,32 +196,14 @@ export class MutationService {
 			const bulkOps: any[] = [ ...deleteOps, ...opsFromItems ]
 			if (bulkOps.length > 0) await childCol.bulkWrite(bulkOps, { session })
 
-			const idsToProcess = value
-				.map((it: any) => it && (it.id || it._id))
-				.filter(Boolean)
-				.map(id => (typeof id === 'object' ? String(id) : id))
-			if (idsToProcess.length) {
-				// Process nested relations using the original items (so nested fields are available)
-				// saved children already exist in DB; use original `value` entries to recurse into nested fields
-				for (const item of value) {
-					if (!item || typeof item !== 'object') continue
-					const childId = item.id || item._id || ''
-					if (!childId) continue
-					const childIdStr = typeof childId === 'object' ? String(childId) : childId
-					await this.download(db, item, childCollectionName, childIdStr, settingsOrMap, session, 'upsert')
-				}
-			} else {
-				// fallback: process items in-memory (should be rare)
-				for (const item of value) {
-					if (item && typeof item === 'object') {
-						const childId = item.id || item._id || ''
-						await this.download(db, item, childCollectionName, childId, settingsOrMap, session, 'upsert')
-					}
-				}
+			for (const item of value) {
+				if (!item || typeof item !== 'object') continue
+				const childId = item.id || item._id || ''
+				if (!childId) continue
+				await this.download(db, item, childCollectionName, String(childId), settingsOrMap, session, 'upsert')
 			}
 		} else if (mode === 'delete') {
 			for (const item of value) {
-				// process nested relations first (cascade delete) so child sub-relations are removed
 				if (item && typeof item === 'object' && item.id) {
 					await this.download(db, item, key, item.id, settingsOrMap, session, 'delete')
 				}
@@ -188,12 +217,12 @@ export class MutationService {
 		if (mode === 'upsert') {
 			if (item?.id) {
 				const { id: _id, ...childParams } = item
-				childParams[name] = parentId
+				childParams[source] = parentId
 				if (audit) childParams.updatedAt = new Date()
 				await collection.updateOne({ _id }, { $set: childParams }, { session })
 				item.id = _id
 			} else {
-				const childParams = { ...item, _id: uuidv4(), [name]: parentId } as any
+				const childParams = { ...item, _id: uuidv4(), [source]: parentId } as any
 				if (audit) childParams.createdAt = new Date()
 				await collection.insertOne(childParams, { session })
 				item.id = childParams._id

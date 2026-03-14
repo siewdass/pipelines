@@ -64,7 +64,7 @@ export default function ProjectList() {
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/projects/projectdata/${item._id}`);
+                    navigate(`/projects/projecttables/${item._id}`);
                   }}
                   className="text-sm font-semibold text-brand-500 hover:text-brand-600 transition-colors"
                 >

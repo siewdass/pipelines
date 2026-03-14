@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsObject, Matches } from 'class-validator'
+import { IsString, IsOptional, IsObject, Matches, IsDefined } from 'class-validator'
 import { ApiProperty } from '@nestjs/swagger'
 
 export class MutationRequestDto {
@@ -8,6 +8,7 @@ export class MutationRequestDto {
   source: string
 
   @ApiProperty({ description: 'Input projection per collection (fields, embedded).' })
+  @IsDefined()
   input: Record<string, unknown> | Array<Record<string, unknown>>
 
   @IsOptional()

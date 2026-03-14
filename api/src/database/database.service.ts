@@ -7,13 +7,46 @@ export class DatabaseService {
     private readonly projectService: ProjectService
 	) {}
 
-	// Accept plain HTTP JSON bodies (no gRPC JsonValue decoding)
 	prepare(data: any): { collection: string; doc?: any; association?: any } {
 		return {
 			collection: data.collection,
 			doc: data.doc ?? undefined,
 			association: data.association ?? undefined
 		}
+	}
+
+	async getTablesMetadata(projectId: string): Promise<any[]> {
+		const dbContext = await this.projectService.getProjectContext(projectId)
+		const schemasCol = dbContext.db.collection('schemas')
+		const schemas = await schemasCol.find().toArray()
+
+		const enrichedSchemas = await Promise.all(schemas.map(async (schema) => {
+			const collectionName = (schema._id as any) as string
+			
+			let count = 0
+			let sizeKb = 0
+			let avgObjSizeRaw = 0
+
+			try {
+				const stats = await dbContext.db.command({ collStats: collectionName })
+				count = stats.count || 0
+				sizeKb = Math.round((stats.size / 1024) * 100) / 100
+				avgObjSizeRaw = stats.avgObjSize || 0
+			} catch (e) {
+				// Collection might not exist physically yet
+			}
+
+			return {
+				id: schema._id,
+				name: schema.name || collectionName,
+				associations: schema.associations || {},
+				count,
+				sizeKb,
+				avgObjSize: Math.round(avgObjSizeRaw)
+			}
+		}))
+
+		return enrichedSchemas
 	}
 
 	async fetch(projectId: string, collection: string, query: any = {}, association?: any, doc?: any): Promise<any> {
@@ -25,8 +58,9 @@ export class DatabaseService {
 
 		if (association) {
 			const assocName = association.name
-			let schemaDoc = await schemasCol.findOne({ name: collection })
+			let schemaDoc = await schemasCol.findOne({ _id: collection as any })
 			associations = schemaDoc && schemaDoc.associations ? schemaDoc.associations : {}
+			
 			if (associations[assocName]) {
 				const assoc = associations[assocName]
 				const type = assoc.type
@@ -39,19 +73,20 @@ export class DatabaseService {
 					}
 				}
 				colName = relatedCollection
-				schemaDoc = await schemasCol.findOne({ name: relatedCollection })
+				schemaDoc = await schemasCol.findOne({ _id: relatedCollection as any })
 				associations = schemaDoc && schemaDoc.associations ? schemaDoc.associations : {}
 			}
 		} else {
-			const schemaDoc = await schemasCol.findOne({ name: collection })
+			const schemaDoc = await schemasCol.findOne({ _id: collection as any })
 			associations = schemaDoc && schemaDoc.associations ? schemaDoc.associations : {}
 		}
 
 		const col = dbContext.db.collection(colName)
 		const docs = await col.find(filter).toArray()
 		for (const d of docs) {
-			await this.expandDoc(dbContext.db, d, associations)
+			await this.expandDoc(dbContext.db, d, colName, associations)
 		}
+
 		return {
 			collection: colName,
 			docs,
@@ -59,24 +94,28 @@ export class DatabaseService {
 		}
 	}
 
-	async expandDoc(db: any, doc: any, associations: any): Promise<void> {
+	async expandDoc(db: any, doc: any, source: string, associations: any): Promise<void> {
 		for (const key of Object.keys(associations)) {
 			const assoc = associations[key]
 			const type = assoc.type
-			const collection = assoc.collection
+			const target = assoc.collection
+
 			if (type === 'one-to-one') {
 				if (typeof doc[key] === 'string') {
-					const related = await db.collection(collection).findOne({ _id: doc[key] })
+					const related = await db.collection(target).findOne({ _id: doc[key] })
 					if (related) doc[key] = related
 				}
 			} else if (type === 'one-to-many') {
 				const parentId = doc._id
-				const related = await db.collection(collection).find({ [key]: parentId }).toArray()
+				const related = await db.collection(target).find({ [source]: parentId }).toArray()
 				doc[key] = related
 			} else if (type === 'many-to-many') {
-				const ids = doc[key]
-				if (Array.isArray(ids) && ids.length > 0) {
-					const related = await db.collection(collection).find({ _id: { $in: ids } }).toArray()
+				const pivotName = `${source}_${target}`
+				const parentId = doc._id
+				const relations = await db.collection(pivotName).find({ [source]: parentId }).project({ [target]: 1, _id: 0 }).toArray()
+				const ids = relations.map(r => r[target])
+				if (ids.length > 0) {
+					const related = await db.collection(target).find({ _id: { $in: ids } }).toArray()
 					doc[key] = related
 				} else {
 					doc[key] = []

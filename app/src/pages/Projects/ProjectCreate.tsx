@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router";
+import { useEffect } from "react";
 import { ChevronLeftIcon } from "../../icons";
 import { useForm } from "../../hooks/useForm";
 import Button from "../../components/ui/button/Button";
@@ -15,14 +16,16 @@ const SCHEMA = {
 export default function ProjectCreate() {
   const navigate = useNavigate();
   const [onSubmit, Form] = useForm<Record<string, unknown>>(SCHEMA);
-  const [createProject, creating] = useMutate('post', '/project/create', 'projects');
+  const [createProject, creating, result] = useMutate<any>('post', '/project/create', 'projects');
+
+  useEffect(() => {
+    if (result) {
+      navigate('/projects');
+    }
+  }, [result, navigate]);
 
   const handleSave = (formData: any) => {
-    createProject(formData, {
-      onSuccess: () => {
-        navigate('/projects');
-      }
-    });
+    createProject(formData);
   };
 
   return (

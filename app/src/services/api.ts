@@ -43,6 +43,16 @@ api.interceptors.request.use(
       config.headers['project-id'] = projectToken
     }
 
+    // Auto-detect projectId from URL to assist ProjectGuard when using Account Token
+    const pathParts = window.location.pathname.split('/'); // e.g. ["", "projects", "details", "123"]
+    const projectsIndex = pathParts.indexOf('projects');
+    if (projectsIndex !== -1 && pathParts[projectsIndex + 2]) {
+      const allowedPaths = ['details', 'projectdata', 'projecttables'];
+      if (allowedPaths.includes(pathParts[projectsIndex + 1])) {
+        config.headers['x-project-id'] = pathParts[projectsIndex + 2];
+      }
+    }
+
     return config
   },
   (error) => {

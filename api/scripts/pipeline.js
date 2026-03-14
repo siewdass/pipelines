@@ -1,51 +1,88 @@
-const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjJlODZiNjQ5LTFlNmUtNGFhNy1hOTMxLTc4M2M5YjVmNTViZSIsImFjY291bnRJZCI6IjI0YzIyOWY2LThjZWMtNDdlMy05MDRlLTc1MTBmYTk0NzMxZiIsImlhdCI6MTc3MzQ0Mzg1NH0.UeBADggLSIZFm0C_8rEn7bRXGgEQfarFLrhjW2reCo4', 
-};
+const axios = require('axios');
+const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
 
-const url = 'http://localhost:8000';
+const API_BASE_URL = 'http://localhost:8000';
+const PROJECT_ID = '2e86b649-1e6e-4aa7-a931-783c9b5f55be';
+const SECRET = 'dev-user-secret'; // Default used in ProjectGuard
 
-async function post(path, body) {
-    const res = await fetch(`${url}${path}`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-    });
-    try { return await res.json() }
-    catch (e) { return { error: 404 }; }
+// Generar un token válido para el ProjectID
+const USER_TOKEN = jwt.sign({ id: PROJECT_ID, accountId: 'dev-account' }, SECRET);
+
+const api = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Authorization': `Bearer ${USER_TOKEN}`
+    }
+});
+
+async function post(url, data) {
+    try {
+        const response = await api.post(url, data);
+        return response.data;
+    } catch (error) {
+        return error.response ? error.response.data : error.message;
+    }
 }
 
-(async function run() {
+(async () => {
+    // --- Step 1: Insert 3 Tags ---
     console.log('--- Step 1: Inserting 3 Tags (Master Data) ---');
-    // Nombres fijos para probar la restricción de 'uniques'
-    const tagsToCreate = [
-        { name: 'Typescript', type: 'language' },
-        { name: 'NestJS', type: 'framework' },
-        { name: 'MongoDB', type: 'database' }
+    const tags = [
+        { name: 'Typescript', type: 'language', id: uuidv4() },
+        { name: 'NestJS', type: 'framework', id: uuidv4() },
+        { name: 'MongoDB', type: 'database', id: uuidv4() }
     ];
-    
-    // Insertamos los tags con la opción 'uniques' para evitar duplicados
+    const tagIds = tags.map(t => t.id);
+
     const tagResponse = await post('/mutation/upsert', {
         source: 'tags',
-        input: tagsToCreate,
-        options: {
-            uniques: ['name'] // El campo 'name' debe ser único
-        },
+        input: tags,
+        options: { uniques: ['name'] }
     });
-
     console.log('Tag Insertion Response:', JSON.stringify(tagResponse, null, 2));
 
-    console.log('--- Step 2: Verification (Fetching Tags) ---');
-    const tagsFetch = await post('/database/fetch', {
-        collection: 'tags'
+    // --- Step 2: Verify Tags ---
+    console.log('\n--- Step 2: Verification (Fetching Tags via Inquiry) ---');
+    const tagsFetch = await post('/inquiry/retrieve', {
+        source: 'tags',
+        output: { id: 1, name: 1, type: 1 }
     });
+    
+    if (tagsFetch && tagsFetch.items) {
+        console.log('Retrieved Tags:', JSON.stringify(tagsFetch.items, null, 2));
 
-    if (tagsFetch.docs) {
-        console.log('Retrieved Tags:', JSON.stringify(tagsFetch.docs, null, 2));
-        
-        const foundNames = tagsFetch.docs.map(t => t.name);
-        const allCreated = tagsToCreate.every(t => foundNames.includes(t.name));
-        console.log('All tags created successfully:', allCreated);
+        // --- Step 4: Create a Post linked to Tags ---
+        console.log('\n--- Step 4: Creating a Post with linked Tags ---');
+        const postResponse = await post('/mutation/upsert', {
+            source: 'posts',
+            input: {
+                title: 'Mi primer post con NestJS y Mongo',
+                content: 'Aprendiendo a usar relaciones Many-to-Many',
+                tags: tagIds // El campo ahora se llama tags
+            },
+            options: {
+                bridge: { tags: 'tags' } // Mapeo bridge: campo 'tags' -> colección 'tags'
+            }
+        });
+        console.log('Post Creation Response:', JSON.stringify(postResponse, null, 2));
+
+        // --- Step 5: Fetch Post with Expanded Tags ---
+        console.log('\n--- Step 5: Fetching Post with Expanded Tags ---');
+        const expandedPost = await post('/inquiry/retrieve', {
+            source: 'posts',
+            output: {
+                id: 1,
+                title: 1,
+                tags: { id: 1, name: 1, type: 1 } // Expandir campo 'tags'
+            },
+            options: {
+                tags: { 
+                    list: { bridge: 'tags' } 
+                }
+            }
+        });
+        console.log('Expanded Post Result:', JSON.stringify(expandedPost.items, null, 2));
     } else {
         console.log('Consult response (unexpected structure):', JSON.stringify(tagsFetch, null, 2));
     }

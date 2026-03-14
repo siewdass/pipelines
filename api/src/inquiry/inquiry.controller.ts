@@ -9,7 +9,7 @@ import { UserAuthGuard } from '../authorization/user.guard'
 import { ProjectGuard } from '../project/project.guard'
 
 @Controller('inquiry')
-@UseGuards(UserAuthGuard, ProjectGuard)
+@UseGuards(ProjectGuard, UserAuthGuard)
 export class InquiryController {
 	constructor(
     private readonly projectService: ProjectService,
@@ -63,15 +63,12 @@ export class InquiryController {
 			cursor = cursor.skip((pagination.page - 1) * pagination.limit).limit(pagination.limit)
 		}
 
-		const docs = await cursor.toArray()
-		// For each document, call populate for each nested key separately
+		const rawDocs = await cursor.toArray()
+		const docs = rawDocs.map(d => ({ ...d }))
+
+		// expand nested data for each document
 		for (const doc of docs) {
-			for (const key of Object.keys(nested)) {
-				const childProj = { [key]: nested[key] }
-				const childOpt = ((options as Record<string, unknown> | undefined)?.[key] as Record<string, unknown>) ?? {}
-				// merge settingsMap with childOptions under a reserved key so populate can access both
-				await this.service.upload(doc, childProj, db, source, childOpt)
-			}
+			await this.service.upload(doc, nested as Record<string, unknown>, db, source, options ?? {})
 		}
 
 		const items = this.service.serialize(docs)
