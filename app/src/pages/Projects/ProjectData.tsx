@@ -21,9 +21,9 @@ export default function ProjectData() {
     <div className="w-full">
       <PageMeta
         title={`${tableId} | Project Data`}
-        description={`Browsing data for collection ${tableId}`}
+        description={`Browsing data for table ${tableId}`}
       />
-      <PageBreadcrumb pageTitle="Collection Data" />
+      <PageBreadcrumb pageTitle="Table Data" />
       
       <div className="space-y-6">
         <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 transition-all duration-300">
@@ -39,7 +39,7 @@ export default function ProjectData() {
                 {tableId}
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Browsing all documents in this collection
+                Browsing all documents in this table
               </p>
             </div>
           </div>
@@ -87,9 +87,9 @@ export default function ProjectData() {
               <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gray-100 text-gray-400 dark:bg-gray-800 mb-4">
                 <TableIcon className="size-10" />
               </div>
-              <h5 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">Collection is Empty</h5>
+              <h5 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">Table is Empty</h5>
               <p className="max-w-xs mx-auto text-sm text-gray-500 dark:text-gray-400">
-                No data records found for this collection yet.
+                No data records found for this table yet.
               </p>
             </div>
           )}
