@@ -12,6 +12,7 @@ import * as jwt from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
 
 import { Origin } from './origin.schema'
+import { EmailSetting } from './email-setting.schema'
 
 @Controller('project')
 @UseGuards(AccountAuthGuard)
@@ -19,6 +20,7 @@ export class ProjectController {
 	constructor(
 		@InjectModel(Project.name, 'default') private readonly projectModel: Model<Project & mongoose.Document>,
 		@InjectModel(Origin.name, 'default') private readonly originModel: Model<Origin & mongoose.Document>,
+		@InjectModel(EmailSetting.name, 'default') private readonly emailSettingModel: Model<EmailSetting & mongoose.Document>,
 		private readonly projectService: ProjectService
 	) {}
 
@@ -132,5 +134,30 @@ export class ProjectController {
 
 		await this.originModel.deleteOne({ _id: originId, projectId: id })
 		return { ok: true, message: 'Origin removed successfully' }
+	}
+
+	@Get(':id/email-settings')
+	async getEmailSettings(@Req() req: Request & { accountId: string }, @Param('id') id: string) {
+		const { accountId } = req
+		const project = await this.projectModel.findOne({ _id: id, accountId }).exec()
+		if (!project) throw new NotFoundException('project not found')
+
+		const settings = await this.emailSettingModel.findOne({ projectId: id }).lean().exec()
+		return settings || { email: '', token: '' }
+	}
+
+	@Post(':id/email-settings')
+	async saveEmailSettings(@Req() req: Request & { accountId: string }, @Param('id') id: string, @Body() body: { email: string, token: string }) {
+		const { accountId } = req
+		const project = await this.projectModel.findOne({ _id: id, accountId }).exec()
+		if (!project) throw new NotFoundException('project not found')
+
+		const settings = await this.emailSettingModel.findOneAndUpdate(
+			{ projectId: id },
+			{ email: body.email || '', token: body.token || '' },
+			{ new: true, upsert: true }
+		).lean().exec()
+
+		return { ...settings, message: 'Email settings saved successfully' }
 	}
 }

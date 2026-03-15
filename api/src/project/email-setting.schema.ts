@@ -1,0 +1,20 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
+import { Document } from 'mongoose'
+import { v4 as uuidv4 } from 'uuid'
+
+@Schema({ collection: 'email_settings' })
+export class EmailSetting extends Document {
+  @Prop({ type: String, default: () => uuidv4() })
+	declare _id: string
+
+  @Prop({ required: true })
+  email: string
+
+  @Prop({ required: true })
+  token: string
+
+  @Prop({ required: true })
+  projectId: string
+}
+
+export const EmailSettingSchema = SchemaFactory.createForClass(EmailSetting)

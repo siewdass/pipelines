@@ -11,26 +11,37 @@ export default function ProjectDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [newOriginUrl, setNewOriginUrl] = useState("");
+  const [emailInput, setEmailInput] = useState<string | null>(null);
+  const [tokenInput, setTokenInput] = useState<string | null>(null);
   
   // Queries
   const [project, loadingProject] = useQuery<any>(`project-${id}`, `/project/${id}`);
   const [origins, loadingOrigins] = useQuery<any[]>(`origins-${id}`, `/project/${id}/origins`);
+  const [emailSettings, loadingEmail] = useQuery<any>(`email-${id}`, `/project/${id}/email-settings`);
 
   // Mutations
   const [regenerate, regenerating] = useMutate('patch', `/project/${id}/token`, `project-${id}`);
   const [updateStatus, updatingStatus] = useMutate('patch', `/project/${id}/status`, `project-${id}`);
   const [addOrigin, adding] = useMutate('post', `/project/${id}/origins`, `origins-${id}`);
   const [removeOrigin, removing] = useMutate('delete', `/project/${id}/origins`, `origins-${id}`);
+  const [saveEmail, savingEmail] = useMutate('post', `/project/${id}/email-settings`, `email-${id}`);
+
+  // Derived state to avoid sync setState in useEffect
+  const currentEmail = emailInput !== null ? emailInput : (emailSettings?.email || "");
+  const currentToken = tokenInput !== null ? tokenInput : (emailSettings?.token || "");
 
   const handleAddOrigin = () => {
     if (!newOriginUrl.trim()) return;
-    addOrigin({ url: newOriginUrl }, {
-      onSuccess: () => setNewOriginUrl("")
-    });
+    addOrigin({ url: newOriginUrl });
+    setNewOriginUrl("");
   };
 
   const handleRemoveOrigin = (originId: string) => {
     removeOrigin({ overrideUrl: `/project/${id}/origins/${originId}` });
+  };
+
+  const handleSaveEmail = () => {
+    saveEmail({ email: currentEmail, token: currentToken });
   };
 
   const toggleStatus = (checked: boolean) => {
@@ -146,8 +157,9 @@ export default function ProjectDetails() {
           </div>
         </div>
 
-        {/* Origins Management Card */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 transition-all duration-300">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+          {/* Origins Management Card */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 transition-all duration-300">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -215,6 +227,74 @@ export default function ProjectDetails() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Email Settings Card */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 transition-all duration-300">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                Email Settings
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Configure the email provider and API token to enable transactional email features for this project.
+              </p>
+            </div>
+            
+            <div className="shrink-0">
+              <Button 
+                onClick={handleSaveEmail} 
+                disabled={
+                  savingEmail || 
+                  !currentEmail.trim() || 
+                  !currentToken.trim() || 
+                  (currentEmail === (emailSettings?.email || "") && currentToken === (emailSettings?.token || ""))
+                }
+                size="sm"
+              >
+                {savingEmail ? 'Saving...' : 'Save Email Settings'}
+              </Button>
+            </div>
+          </div>
+
+          {loadingEmail ? (
+            <div className="flex justify-center py-8">
+              <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <div className="space-y-4 max-w-xl">
+              <div>
+                <label className="text-xs text-gray-400 block mb-2 font-medium">Sender Email Address</label>
+                <input 
+                  type="email" 
+                  placeholder="e.g. no-reply@myapp.com" 
+                  name="project_email_sender_disable_autofill"
+                  autoComplete="off"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
+                  value={currentEmail}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  className="w-full pl-4 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-gray-900/50 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all dark:text-gray-200"
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs text-gray-400 block mb-2 font-medium">Provider Token (API Key)</label>
+                <input 
+                  type="password" 
+                  placeholder="Enter your email provider's token" 
+                  name="project_email_token_disable_autofill"
+                  autoComplete="new-password"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
+                  value={currentToken}
+                  onChange={(e) => setTokenInput(e.target.value)}
+                  className="w-full pl-4 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-gray-900/50 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all dark:text-gray-200"
+                />
+              </div>
+            </div>
+          )}
+        </div>
         </div>
       </div>
     </div>

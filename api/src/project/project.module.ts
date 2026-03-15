@@ -4,6 +4,7 @@ import { ProjectService } from './project.service'
 import { ProjectController } from './project.controller'
 import { Project, ProjectSchema } from './project.schema'
 import { Origin, OriginSchema } from './origin.schema'
+import { EmailSetting, EmailSettingSchema } from './email-setting.schema'
 
 import { ProjectGuard } from './project.guard'
 
@@ -11,7 +12,8 @@ import { ProjectGuard } from './project.guard'
 	imports: [
 		MongooseModule.forFeature([
 			{ name: Project.name, schema: ProjectSchema },
-			{ name: Origin.name, schema: OriginSchema }
+			{ name: Origin.name, schema: OriginSchema },
+			{ name: EmailSetting.name, schema: EmailSettingSchema }
 		], 'default'),
 	],
 	providers: [ ProjectService, ProjectGuard ],

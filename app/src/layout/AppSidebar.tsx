@@ -7,11 +7,10 @@ import {
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
-  ListIcon,
+  FolderIcon,
   PageIcon,
   PieChartIcon,
   TableIcon,
-  UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
@@ -30,13 +29,8 @@ const navItems: NavItem[] = [
     subItems: [{ name: "Ecommerce", path: "/"}],
   },
   {
-    icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
-  },
-  {
     name: "Projects",
-    icon: <ListIcon />,
+    icon: <FolderIcon />,
     path: "/projects",
   },
   {
