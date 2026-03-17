@@ -1,0 +1,35 @@
+# Antigravity Project Rules
+
+## 🌍 Language & Communication
+- **Idioma**: Siempre responde en **Español**.
+- **Preguntas**: Si un mensaje termina en signo de interrogación ("?"), trátalo solo como una pregunta. Explica pero **NO** realices cambios en los archivos.
+- **Confirmación**: Antes de realizar cualquier cambio, explica brevemente el "cómo" y el "por qué". Pregunta explícitamente: "¿Estás seguro de que esto es lo que quieres hacer?" y espera confirmación. **Evita sugerir temas no relacionados con la petición original.**
+- **Código y Comentarios**: Nombres de variables, funciones, clases y todos los comentarios/documentación deben estar en **Inglés**.
+- **Contexto**: Si falta información para realizar una tarea con precisión, detente y pide los detalles específicos necesarios antes de proponer una solución.
+
+## 🛠️ Node & Package Management
+- **PNPM**: Usa siempre `pnpm` como gestor de paquetes. No uses `npm` ni `yarn`.
+- **Package Management**: No edites `package.json` manualmente. Usa `pnpm add <pkg>` o `pnpm remove <pkg>`.
+- **Validación**: Usa `npx tsc --noEmit` para validar errores de tipos, no comandos de build.
+- **Linting**: Busca configuraciones de ESLint y respeta sus reglas al escribir código.
+
+## 🚀 TypeScript & Code Quality
+- **Indentación**: Usa siempre **TABS (\t)** para la indentación en archivos TS/TSX. No uses espacios.
+- **Tipado**: Tipado estricto. **Prohibido el uso de `any`**.
+- **Nomenclatura**: Usa nombres descriptivos en Inglés. **Evita abreviaturas** a menos que sean estándares de la industria.
+- **Exportaciones**: Evita `export default` a menos que sea un punto de entrada principal (como archivos de rutas). Prefiere exports nombrados.
+- **Asincronía**: Prefiere `async/await`.
+- **Inmutabilidad**: Evita mutaciones directas; usa patrones inmutables.
+- **Estructura**: Mantén el código modular, separado por dominio y funcionalidad. Respeta la estructura de carpetas existente.
+
+## ⚛️ React Guidelines
+- **Formularios**: Usa siempre **React Hook Form** con **Zod** para validación de datos.
+- **Estado Global**: Usa **Zustand** para la gestión de estado global.
+- **Data Fetching**: Usa **TanStack Query (React Query)** para fetching y gestión de caché.
+- **Optimización**: Valida siempre la necesidad real de `useMemo` y `useCallback` antes de implementarlos para evitar sobre-optimización.
+- **Componentes**: Usa componentes funcionales modernos con TypeScript.
+
+## 📂 Data & Backend
+- **Validación**: Usa esquemas de **Zod** para validar datos tanto en frontend como en el backend.
+- **API**: Mantén los endpoints centralizados en archivos de `constants/`.
+- **Documentación**: Documenta funciones públicas y módulos exportados detalladamente en Inglés.

@@ -1,19 +1,22 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter as Router } from "react-router";
 import "./index.css";
 import App from "./App.tsx";
 import { AppWrapper } from "./components/common/PageMeta.tsx";
 import { ThemeProvider } from "./context/ThemeContext.tsx";
-import { QueryProvider } from "./hooks/useFetch";
+import { FetchProvider } from "./hooks/useFetch";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryProvider>
+    <FetchProvider>
       <ThemeProvider>
         <AppWrapper>
-          <App />
+          <Router>
+            <App />
+          </Router>
         </AppWrapper>
       </ThemeProvider>
-    </QueryProvider>
+    </FetchProvider>
   </StrictMode>,
 );

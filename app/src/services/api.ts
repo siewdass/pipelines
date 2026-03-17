@@ -1,23 +1,7 @@
 import axios from 'axios'
 import { useAuthStore } from '../state/auth'
-import { useNavigate } from "react-router";
-import { useEffect } from "react";
 
-export let navigate: (path: string) => void;
-
-export const setNavigate = (nav: (path: string) => void) => {
-  navigate = nav;
-};
-
-export const NavigateSetter = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    setNavigate(navigate);
-  }, [navigate]);
-
-  return null;
-};
+import { navigate } from '../hooks/useRouter'
 
 export const api = axios.create({
   // Utilizamos la variable de entorno, si no existe toma el localhost por defecto

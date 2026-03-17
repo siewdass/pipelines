@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
+import { useRoutes, Navigate } from "react-router";
 import { useEffect } from "react";
 import { Toaster } from "./hooks/useToast";
 import SignIn from "./pages/AuthPages/SignIn";
@@ -20,11 +20,48 @@ import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import { useAuthStore } from "./state/auth";
-import { NavigateSetter } from "./services/api";
+import { NavigateSetter } from "./hooks/useRouter";
 import Landing from "./pages/Landing";
 
 export default function App() {
   const { isAuthenticated } = useAuthStore();
+
+  const routes = useRoutes([
+    {
+      path: "/",
+      element: <Landing />,
+    },
+    {
+      element: isAuthenticated ? <AppLayout /> : <Navigate to="/signin" />,
+      children: [
+        { path: "/dashboard", element: <Home /> },
+        { path: "/profile", element: <UserProfiles /> },
+        { path: "/blank", element: <Blank /> },
+        { path: "/projects/*", element: <Projects /> },
+        { path: "/basic-tables", element: <BasicTables /> },
+        { path: "/alerts", element: <Alerts /> },
+        { path: "/avatars", element: <Avatars /> },
+        { path: "/badge", element: <Badges /> },
+        { path: "/buttons", element: <Buttons /> },
+        { path: "/images", element: <Images /> },
+        { path: "/videos", element: <Videos /> },
+        { path: "/line-chart", element: <LineChart /> },
+        { path: "/bar-chart", element: <BarChart /> },
+      ],
+    },
+    {
+      path: "/signin",
+      element: isAuthenticated ? <Navigate to="/dashboard" /> : <SignIn />,
+    },
+    {
+      path: "/signup",
+      element: isAuthenticated ? <Navigate to="/dashboard" /> : <SignUp />,
+    },
+    {
+      path: "*",
+      element: <NotFound />,
+    },
+  ]);
 
   // Smoothly fade out and remove the preloader when the app mounts
   useEffect(() => {
@@ -38,51 +75,12 @@ export default function App() {
     }
   }, []);
 
-  return (
+  return (  
     <>
       <Toaster richColors position="top-right" />
-      <Router>
-        <NavigateSetter />
-        <ScrollToTop />
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Landing />} />
-
-          {/* Dashboard Layout - Protected */}
-          <Route element={isAuthenticated ? <AppLayout /> : <Navigate to="/signin" />}>
-            <Route path="/dashboard" element={<Home />} />
-
-            {/* Others Page */}
-            <Route path="/profile" element={<UserProfiles />} />
-            <Route path="/blank" element={<Blank />} />
-
-            {/* Projects */}
-            <Route path="/projects/*" element={<Projects />} />
-
-            {/* Tables */}
-            <Route path="/basic-tables" element={<BasicTables />} />
-
-            {/* Ui Elements */}
-            <Route path="/alerts" element={<Alerts />} />
-            <Route path="/avatars" element={<Avatars />} />
-            <Route path="/badge" element={<Badges />} />
-            <Route path="/buttons" element={<Buttons />} />
-            <Route path="/images" element={<Images />} />
-            <Route path="/videos" element={<Videos />} />
-
-            {/* Charts */}
-            <Route path="/line-chart" element={<LineChart />} />
-            <Route path="/bar-chart" element={<BarChart />} />
-          </Route>
-
-          {/* Auth Layout - Redirect if already logged in */}
-          <Route path="/signin" element={isAuthenticated ? <Navigate to="/dashboard" /> : <SignIn />} />
-          <Route path="/signup" element={isAuthenticated ? <Navigate to="/dashboard" /> : <SignUp />} />
-
-          {/* Fallback Route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
+      <NavigateSetter />
+      <ScrollToTop />
+      {routes}
     </>
   );
 }

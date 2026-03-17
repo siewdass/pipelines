@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { api, navigate } from '../services/api';
+import { api } from '../services/api';
+import { navigate } from '../hooks/useRouter';
 
 export interface LoggedUser {
   email: string;

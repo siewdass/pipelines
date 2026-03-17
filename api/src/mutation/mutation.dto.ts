@@ -23,8 +23,4 @@ export class MutationResponseDto {
 
   @ApiProperty({ description: 'Response message or error details.' })
   message: string
-
-  @IsOptional()
-  @ApiProperty({ description: 'The processed documents with their IDs.' })
-  docs?: any[]
 }

@@ -10,7 +10,9 @@ export interface BoundFormProps<T> {
 
 export function useForm<T extends FormValues = FormValues>(schema: any): [
   (callback: SubmitCallback<T>) => void,
-  (props: BoundFormProps<T>) => ReactElement | null
+  (props: BoundFormProps<T>) => ReactElement | null,
+  T,
+  boolean
 ] {
   const [data, setData] = useState<T>({} as T);
   const [isValid, setIsValid] = useState<boolean>(false);
@@ -62,5 +64,5 @@ export function useForm<T extends FormValues = FormValues>(schema: any): [
     };
   }, [schema]);
 
-  return [onSubmit, BoundFormComponent];
+  return [onSubmit, BoundFormComponent, data, isValid];
 }

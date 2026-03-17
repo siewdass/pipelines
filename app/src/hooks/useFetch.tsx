@@ -11,7 +11,7 @@ const queryClient = new QueryClient();
 /**
  * Application-wide Query Provider
  */
-export function QueryProvider({ children }: { children: React.ReactNode }) {
+export function FetchProvider({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
