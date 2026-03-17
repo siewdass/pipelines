@@ -1,41 +1,36 @@
 import { create } from 'zustand';
-import { api } from '../services/api';
-import { navigate } from '../hooks/useRouter';
-
-export interface LoggedUser {
-  email: string;
-  // TODO: Add other necessary attributes sent by backend later
-}
+import { api } from './api';
 
 interface AuthState {
-  isAuthenticated: boolean;
-  loggedUser?: LoggedUser;
-  register: (email: string, password: string, name: string) => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  isLogged: boolean;
+  loggedUser?: {
+    [key: string]: any;
+  };
+  signup: (email: string, password: string, name: string) => Promise<void>;
+  signin: (email: string, password: string) => Promise<void>;
+  signout: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  isAuthenticated: !!window.localStorage.getItem('token'), // isLogged
+export const useAuth = create<AuthState>((set) => ({
+  isLogged: !!window.localStorage.getItem('token'), // isLogged
   loggedUser: undefined,
-  register: async (email, password, name) => {
+  signup: async (email, password, name) => {
     const response = await api.post("/authentication/account/register", { email, password, name });
     if (!response.data.success) {
       throw new Error(response.data.message || "Registration failed");
     }
   },
-  login: async (email, password) => {
+  signin: async (email, password) => {
     const response = await api.post("/authentication/account/login", { email, password });
     if (response.data.success) {
       window.localStorage.setItem('token', response.data.token);
-      set({ isAuthenticated: true, loggedUser: { email } });
+      set({ isLogged: true, loggedUser: { email } });
     } else {
       throw new Error(response.data.message || "Login failed");
     }
   },
-  logout: () => {
+  signout: () => {
     window.localStorage.removeItem('token');
-    navigate('/signin');
-    set({ isAuthenticated: false, loggedUser: undefined });
+    set({ isLogged: false, loggedUser: undefined });
   },
 }));
