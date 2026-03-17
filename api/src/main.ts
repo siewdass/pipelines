@@ -7,6 +7,7 @@ async function bootstrap() {
 	const app = await NestFactory.create(MainModule, {
 		logger: new ConsoleLogger({
 			prefix: 'PIPELINES',
+			colors: true,
 		}),
 	})
 	app.enableCors({

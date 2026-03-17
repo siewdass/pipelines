@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
+import { useEffect } from "react";
 import { Toaster } from "./hooks/useToast";
 import SignIn from "./pages/AuthPages/SignIn";
 import SignUp from "./pages/AuthPages/SignUp";
@@ -20,9 +21,22 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import { useAuthStore } from "./state/auth";
 import { NavigateSetter } from "./services/api";
+import Landing from "./pages/Landing";
 
 export default function App() {
   const { isAuthenticated } = useAuthStore();
+
+  // Smoothly fade out and remove the preloader when the app mounts
+  useEffect(() => {
+    const preloader = document.getElementById("preloader");
+    if (preloader) {
+      setTimeout(() => {
+        preloader.style.opacity = "0";
+        preloader.style.visibility = "hidden";
+        setTimeout(() => preloader.remove(), 500); // 500ms for transition
+      }, 300); // Optional small hardcode delay so it doesn't flash infinitely fast
+    }
+  }, []);
 
   return (
     <>
@@ -31,9 +45,12 @@ export default function App() {
         <NavigateSetter />
         <ScrollToTop />
         <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Landing />} />
+
           {/* Dashboard Layout - Protected */}
           <Route element={isAuthenticated ? <AppLayout /> : <Navigate to="/signin" />}>
-            <Route index path="/" element={<Home />} />
+            <Route path="/dashboard" element={<Home />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
@@ -59,8 +76,8 @@ export default function App() {
           </Route>
 
           {/* Auth Layout - Redirect if already logged in */}
-          <Route path="/signin" element={isAuthenticated ? <Navigate to="/" /> : <SignIn />} />
-          <Route path="/signup" element={isAuthenticated ? <Navigate to="/" /> : <SignUp />} />
+          <Route path="/signin" element={isAuthenticated ? <Navigate to="/dashboard" /> : <SignIn />} />
+          <Route path="/signup" element={isAuthenticated ? <Navigate to="/dashboard" /> : <SignUp />} />
 
           {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />

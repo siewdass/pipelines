@@ -15,7 +15,7 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  isAuthenticated: !!window.localStorage.getItem('token'),
+  isAuthenticated: !!window.localStorage.getItem('token'), // isLogged
   loggedUser: undefined,
   register: async (email, password, name) => {
     const response = await api.post("/authentication/account/register", { email, password, name });

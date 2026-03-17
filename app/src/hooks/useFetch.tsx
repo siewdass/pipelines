@@ -1,6 +1,23 @@
-import { useQuery as useQueryHook, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery as useQueryHook, useMutation, useQueryClient, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
 import { api } from '../services/api';
 import { toast } from 'sonner';
+
+/**
+ * React Query Client Instance
+ */
+const queryClient = new QueryClient();
+
+/**
+ * Application-wide Query Provider
+ */
+export function QueryProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+}
 
 /**
  * Generic Fetch Hook (GET)
@@ -73,9 +90,7 @@ export function useMutate<TData = any, TVariables = any, TError = any>(
     },
   });
 
-  const execute = (variables: TVariables & { overrideUrl?: string }) => {
-    mutation.mutate(variables);
-  };
+  const execute = (variables: TVariables & { overrideUrl?: string }) => mutation.mutate(variables);
 
   return [execute, mutation.isPending, mutation.data] as [typeof execute, boolean, TData | undefined];
 }

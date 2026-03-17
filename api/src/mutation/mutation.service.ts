@@ -7,14 +7,35 @@ export class MutationService {
 
 	async uniques(collection: any, docs: any[], uniques: string[], session: any): Promise<void> {
 		for (const field of uniques) {
-			const values = docs.filter(d => d && d[field] !== undefined).map(d => d[field])
+			const values = docs
+				.filter((d: any) => d && d[field] !== undefined)
+				.map((d: any) => d[field])
+				
 			if (values.length > 0) {
-				const existingDocs = await collection.find({ [field]: { $in: values } }, { session }).toArray()
+				const query = { [ field ]: { $in: values } }
+				const existingDocs = await collection.find(query, { session }).toArray()
 				if (existingDocs.length > 0) {
-					throw new Error(`Unique constraint violation on field '${field}'. Conflicts: ${existingDocs.map(e => e[field]).join(', ')}`)
+					const conflicts = existingDocs.map((e: any) => e[field]).join(', ')
+					throw new Error(`Unique constraint violation on field '${field}'. Conflicts: ${conflicts}`)
 				}
 			}
 		}
+	}
+
+	async findExistingId(collection: any, doc: any, uniques: string[], session: any): Promise<string | null> {
+		if (!uniques || !uniques.length) return null
+		const query: any = {}
+		let hasQuery = false
+		for (const field of uniques) {
+			if (doc[field] !== undefined) {
+				query[field] = doc[field]
+				hasQuery = true
+			}
+		}
+		if (!hasQuery) return null
+
+		const existing = await collection.findOne(query, { session })
+		return existing ? String(existing._id) : null
 	}
 
 	timestamp(obj: any, audit: boolean, isCreate: boolean = true) {
@@ -25,28 +46,23 @@ export class MutationService {
 		}
 	}
 
-	getOptions(options: Record<string, unknown>): { uniques?: string[]; bridge?: Record<string, string>; audit?: boolean } {
-		const out: { uniques?: string[]; bridge?: Record<string, string>; audit?: boolean } = {}
-		if (!options || typeof options !== 'object') return out
-
-		if ('uniques' in options) {
-			const u = options['uniques']
-			if (Array.isArray(u)) out.uniques = u.filter(x => typeof x === 'string')
+	getOptions(options: Record<string, any>): any {
+		const out: any = { ...options }
+		
+		if (options.uniques && Array.isArray(options.uniques)) {
+			out.uniques = options.uniques.filter((x: any) => typeof x === 'string')
 		}
 
-		if ('bridge' in options) {
-			const b = options['bridge']
-			if (b && typeof b === 'object') {
-				const map: Record<string, string> = {}
-				for (const [ key, val ] of Object.entries(b as Record<string, unknown>)) {
-					if (typeof val === 'string' && val.length) map[key] = val
-				}
-				if (Object.keys(map).length) out.bridge = map
+		if (options.bridge && typeof options.bridge === 'object') {
+			const map: Record<string, string> = {}
+			for (const [ key, val ] of Object.entries(options.bridge)) {
+				if (typeof val === 'string' && val.length) map[key] = val
 			}
+			out.bridge = map
 		}
 
-		if ('audit' in options) {
-			out.audit = !!options['audit']
+		if (options.audit !== undefined) {
+			out.audit = !!options.audit
 		}
 
 		return out
@@ -55,7 +71,7 @@ export class MutationService {
 	async download(db: Db, doc: any, name: string, parentId: string, settings: any, session?: any, mode: 'delete' | 'upsert' = 'upsert'): Promise<void> {
 		// Aseguramos que la colección principal se registre
 		if (mode === 'upsert') {
-			await this.registerCollection(db, name, session)
+			await this.registerCollection(db, name, doc, session)
 		}
 
 		for (const [ key, value ] of Object.entries(doc)) {
@@ -82,7 +98,7 @@ export class MutationService {
 							type: 'one-to-many'
 						}, session)
 					}
-					await this.oneToMany(db, name, key, parentId, value as any[], [], false, settings, session, mode)
+					await this.oneToMany(db, name, key, parentId, value as any[], [], !!settings.audit, settings, session, mode)
 					delete doc[key]
 				}
 			} else if (value && typeof value === 'object' && value !== null && !Array.isArray(value) && (value.constructor === Object)) {
@@ -94,7 +110,7 @@ export class MutationService {
 						type: 'one-to-one'
 					}, session)
 				}
-				await this.oneToOne(db, value, key, name, parentId, false, mode, session)
+				await this.oneToOne(db, value, key, name, parentId, !!settings.audit, mode, session, settings)
 				const childId = (value as any).id || (value as any)._id || ''
 				if (childId) {
 					await this.download(db, value, key, childId, settings, session, mode)
@@ -104,11 +120,31 @@ export class MutationService {
 		}
 	}
 
-	private async registerCollection(db: Db, name: string, session?: any) {
+	private async registerCollection(db: Db, name: string, doc?: any, session?: any) {
 		const schemas = db.collection('schemas')
+		const setDoc: any = { name }
+
+		if (doc && typeof doc === 'object') {
+			for (const [ k, v ] of Object.entries(doc)) {
+				// Prevent overwriting internal/system fields
+				if (k === 'id' || k === '_id' || k === 'createdAt' || k === 'updatedAt') continue
+				
+				let type: string = typeof v
+				if (Array.isArray(v)) {
+					type = 'array'
+				} else if (v === null) {
+					type = 'null'
+				} else if (typeof v === 'object' && v.constructor === Object) {
+					type = 'object'
+				}
+				
+				setDoc[`fields.${k}`] = type
+			}
+		}
+
 		await schemas.updateOne(
 			{ _id: name as any },
-			{ $set: { name } },
+			{ $set: setDoc },
 			{ upsert: true, session }
 		)
 	}
@@ -130,7 +166,7 @@ export class MutationService {
 
 		// 2. Asegurar que la colección destino también exista en schemas
 		if (details.collection) {
-			await this.registerCollection(db, details.collection, session)
+			await this.registerCollection(db, details.collection, null, session)
 		}
 	}
 
@@ -148,7 +184,7 @@ export class MutationService {
 			const valuesSet = new Set(values)
 			const bulkOps: any[] = [
 				...currentIds.filter(id => !valuesSet.has(id)).map(id => ({ deleteOne: { filter: { [name]: parentId, [target]: id } } })),
-				...values.filter(id => !currentIdsSet.has(id)).map(id => ({ insertOne: { document: { [name]: parentId, [target]: id } } }))
+				...values.filter(id => !currentIdsSet.has(id)).map(id => ({ insertOne: { document: { _id: uuidv4(), [name]: parentId, [target]: id } } }))
 			]
 			if (bulkOps.length > 0) {
 				await db.collection(pivotCollection).bulkWrite(bulkOps, { session })
@@ -183,15 +219,40 @@ export class MutationService {
 					if (params.id) writeDoc.updatedAt = new Date()
 				}
 
-				if (params.id) {
+				if (item.id) {
 					const { id: _id, ...childParams } = writeDoc
-					return { updateOne: { filter: { _id: params.id }, update: { $set: childParams } } }
+					return { updateOne: { filter: { _id: item.id }, update: { $set: childParams } } }
 				} else {
 					writeDoc._id = uuidv4()
 					item.id = writeDoc._id
 					return { insertOne: { document: writeDoc } }
 				}
 			}).filter(Boolean)
+
+			if (settingsOrMap?.[key]?.uniques) {
+				const toCheck: any[] = []
+				for (const item of value) {
+					if (!item.id) {
+						const existingId = await this.findExistingId(childCol, item, settingsOrMap[key].uniques, session)
+						if (existingId) {
+							item.id = existingId
+							// Update the corresponding op in opsFromItems
+							const opIndex = value.indexOf(item)
+							if (opIndex !== -1 && opsFromItems[opIndex]?.insertOne) {
+								const { document } = opsFromItems[opIndex].insertOne
+								const { ...updatePayload } = document
+								delete (updatePayload as any)._id
+								opsFromItems[opIndex] = { updateOne: { filter: { _id: existingId }, update: { $set: updatePayload } } }
+							}
+						} else {
+							toCheck.push(item)
+						}
+					}
+				}
+				if (toCheck.length > 0) {
+					await this.uniques(childCol, toCheck, settingsOrMap[key].uniques, session)
+				}
+			}
 
 			const bulkOps: any[] = [ ...deleteOps, ...opsFromItems ]
 			if (bulkOps.length > 0) await childCol.bulkWrite(bulkOps, { session })
@@ -212,17 +273,31 @@ export class MutationService {
 		}
 	}
 
-	private async oneToOne(db: Db, item: any, source: string, name: string, parentId: string, audit: boolean, mode: 'upsert' | 'delete', session?: any): Promise<void> {
+	private async oneToOne(db: Db, item: any, source: string, name: string, parentId: string, audit: boolean, mode: 'upsert' | 'delete', session?: any, settings?: any): Promise<void> {
 		const collection = db.collection(source)
 		if (mode === 'upsert') {
 			if (item?.id) {
 				const { id: _id, ...childParams } = item
-				childParams[source] = parentId
+				childParams[name] = parentId
 				if (audit) childParams.updatedAt = new Date()
 				await collection.updateOne({ _id }, { $set: childParams }, { session })
 				item.id = _id
 			} else {
-				const childParams = { ...item, _id: uuidv4(), [source]: parentId } as any
+				// Auto-resolve ID by unique fields if missing
+				if (settings?.[source]?.uniques) {
+					const existingId = await this.findExistingId(collection, item, settings[source].uniques, session)
+					if (existingId) {
+						item.id = existingId
+						const { id: _id, ...childParams } = item
+						childParams[name] = parentId
+						if (audit) childParams.updatedAt = new Date()
+						await collection.updateOne({ _id }, { $set: childParams }, { session })
+						return
+					}
+					// Still check global uniques for other docs or if not found
+					await this.uniques(collection, [ item ], settings[source].uniques, session)
+				}
+				const childParams = { ...item, _id: uuidv4(), [ name ]: parentId } as any
 				if (audit) childParams.createdAt = new Date()
 				await collection.insertOne(childParams, { session })
 				item.id = childParams._id

@@ -52,6 +52,7 @@ export class DatabaseService {
 	async fetch(projectId: string, collection: string, query: any = {}, association?: any, doc?: any): Promise<any> {
 		const dbContext = await this.projectService.getProjectContext(projectId)
 		let associations = {}
+		let fields = {}
 		let colName = collection
 		let filter = query
 		const schemasCol = dbContext.db.collection('schemas')
@@ -59,10 +60,9 @@ export class DatabaseService {
 		if (association) {
 			const assocName = association.name
 			let schemaDoc = await schemasCol.findOne({ _id: collection as any })
-			associations = schemaDoc && schemaDoc.associations ? schemaDoc.associations : {}
 			
-			if (associations[assocName]) {
-				const assoc = associations[assocName]
+			if (schemaDoc && schemaDoc.associations && schemaDoc.associations[assocName]) {
+				const assoc = schemaDoc.associations[assocName]
 				const type = assoc.type
 				const relatedCollection = assoc.collection
 				if (doc) {
@@ -74,11 +74,13 @@ export class DatabaseService {
 				}
 				colName = relatedCollection
 				schemaDoc = await schemasCol.findOne({ _id: relatedCollection as any })
-				associations = schemaDoc && schemaDoc.associations ? schemaDoc.associations : {}
+				associations = schemaDoc?.associations || {}
+				fields = schemaDoc?.fields || {}
 			}
 		} else {
 			const schemaDoc = await schemasCol.findOne({ _id: collection as any })
-			associations = schemaDoc && schemaDoc.associations ? schemaDoc.associations : {}
+			associations = schemaDoc?.associations || {}
+			fields = schemaDoc?.fields || {}
 		}
 
 		const col = dbContext.db.collection(colName)
@@ -90,7 +92,8 @@ export class DatabaseService {
 		return {
 			collection: colName,
 			docs,
-			schema: associations
+			schema: associations,
+			fields
 		}
 	}
 

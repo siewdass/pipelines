@@ -18,9 +18,11 @@ export default function ProjectData() {
 
   const docs = result?.docs || [];
   const associations = result?.schema || {};
+  const fields = result?.fields || {};
 
   const getFieldType = (key: string, value: any) => {
     if (associations[key]) return 'Relation';
+    if (fields[key]) return fields[key]; // From official schema
     if (Array.isArray(value)) return 'Array';
     if (value === null) return 'Null';
     return typeof value;
@@ -110,7 +112,7 @@ export default function ProjectData() {
                         <span className="w-1/4 sm:w-1/5 xl:w-[15%] text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0 break-all">
                           {key === '_id' ? 'ID' : key}
                         </span>
-                        <div className="flex-1 text-sm truncate">
+                        <div className="flex-1 text-sm truncate text-gray-800 dark:text-gray-200">
                           {renderValue(key, value)}
                         </div>
                         <div className="shrink-0 text-right w-24">

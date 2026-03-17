@@ -1,6 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, Logger } from '@nestjs/common'
 import { Request } from 'express'
 import * as jwt from 'jsonwebtoken'
+import { clc } from '../utils/colors'
 
 type JwtPayload = { id?: string } & Record<string, unknown>
 
@@ -21,8 +22,8 @@ export class AccountAuthGuard implements CanActivate {
 			const secret = process.env.ACCOUNT_JWT_SECRET || 'dev-account-secret'
 			const payload = jwt.verify(token, secret) as JwtPayload
 			request.accountId = payload?.id
-		} catch (error) {
-			this.logger.error('[AUTH] Account Auth Error:', error)
+		} catch (error: any) {
+			this.logger.error(`${clc.red('[AUTH] Account Auth Error:')} ${error.message}`)
 			throw new UnauthorizedException('Invalid or expired token')
 		}
 

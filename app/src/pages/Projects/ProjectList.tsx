@@ -2,7 +2,7 @@ import { useNavigate } from "react-router";
 import ComponentCard from "../../components/common/ComponentCard";
 import { DataGrid } from "../../components/tables/DataGrid";
 import { useQuery } from "../../hooks/useFetch";
-import { FilterIcon, PlusIcon } from "../../icons";
+import { FilterIcon, PlusIcon, PieChartIcon, TableIcon } from "../../icons";
 
 export default function ProjectList() {
   const [projects, loading] = useQuery<any[]>('projects', '/project/list');
@@ -58,17 +58,23 @@ export default function ProjectList() {
                 {item.description || 'No description provided.'}
               </p>
               <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
-                <span className="text-[10px] uppercase font-bold text-gray-400">
-                  ID: {item._id.substring(0, 8)}...
-                </span>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/projects/metrics/${item._id}`);
+                  }}
+                  className="flex items-center gap-1.5 text-sm font-semibold text-orange-500 hover:text-orange-600 transition-colors"
+                >
+                  <PieChartIcon className="size-4" /> Metrics
+                </button>
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/projects/projecttables/${item._id}`);
                   }}
-                  className="text-sm font-semibold text-brand-500 hover:text-brand-600 transition-colors"
+                  className="flex items-center gap-1.5 text-sm font-semibold text-brand-500 hover:text-brand-600 transition-colors"
                 >
-                  Database
+                  <TableIcon className="size-4" /> Database
                 </button>
               </div>
             </div>

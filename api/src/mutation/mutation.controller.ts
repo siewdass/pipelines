@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common'
+import { Controller, Post, Body, UseGuards, Req, Logger } from '@nestjs/common'
 import { Request } from 'express'
 import { v4 as uuidv4 } from 'uuid'
 import { ProjectService } from '../project/project.service'
@@ -9,10 +9,13 @@ import { UpsertRequestDoc, UpsertResponseDoc, PurgedRequestDoc, PurgeResponseDoc
 import { MutationRequestDto, MutationResponseDto } from './mutation.dto'
 import { UserAuthGuard } from '../authorization/user.guard'
 import { ProjectGuard } from '../project/project.guard'
+import { clc } from '../utils/colors'
 
 @Controller('mutation')
 @UseGuards(ProjectGuard, UserAuthGuard)
 export class MutationController {
+	private readonly logger = new Logger(MutationController.name)
+
 	constructor(
 		private readonly projectService: ProjectService,
 		private readonly mutateService: MutationService
@@ -23,94 +26,102 @@ export class MutationController {
 	@Post('upsert')
 	async update(@Body() { source, input, options }: MutationRequestDto, @Req() req: Request & { projectId: string }): Promise<MutationResponseDto> {
 		const projectId = req.projectId
-		console.log(`\n[MUTATION] --- Upsert Start ---`)
-		console.log(`[MUTATION] Source: ${source}`)
-		console.log(`[MUTATION] ProjectId from Req: ${projectId}`)
+		this.logger.log(clc.magenta(clc.bold('--- Upsert Start ---')))
+		this.logger.log(`${clc.cyan('Source:')} ${clc.yellow(source)}`)
+		this.logger.log(`${clc.cyan('ProjectId:')} ${clc.magenta(projectId)}`)
 		
 		const { db, startSession } = await this.projectService.getProjectContext(projectId)
-		console.log(`[MUTATION] DB Name from Context: ${db.databaseName}`)
+		this.logger.log(`${clc.cyan('Database:')} ${clc.blue(db.databaseName)}`)
 		
 		let session: any = null
 		try {
 			session = await startSession()
-			// Topology structure varies by driver version. We check for 'ReplicaSetNoPrimary', 'ReplicaSetWithPrimary', etc.
-			// If it's 'Single', it's Standalone.
 			const topology = session.client.topology?.description?.type || session.client.topology?.type
-			console.log(`[MUTATION] Session started. Topology: ${topology}`)
+			this.logger.log(`${clc.cyan('Session started. Topology:')} ${clc.gray(topology)}`)
 			
 			if (topology === 'Single' || !topology) {
-				console.warn(`[MUTATION] Standalone Mongo detected. Sessions/Transactions NOT supported.`)
+				this.logger.warn(clc.yellow('Standalone Mongo detected. Sessions/Transactions NOT supported.'))
 				await session.endSession()
 				session = null
 			}
-		} catch (e) {
-			console.warn(`[MUTATION] Could not start session (likely Standalone): ${e.message}`)
+		} catch (e: any) {
+			this.logger.warn(`${clc.red('Could not start session:')} ${e.message}`)
 			session = null
 		}
 
 		try {
 			const execute = async (s?: any) => {
 				const docs = Array.isArray(input) ? input as any[] : [ input ]
-				console.log(`[MUTATION] Processing ${docs.length} documents.`)
+				this.logger.log(`${clc.cyan('Processing:')} ${clc.bold(String(docs.length))} documentos.`)
 				
 				const settings = this.mutateService.getOptions(options || {})
-				console.log(`[MUTATION] Options: ${JSON.stringify(settings)}`)
+				this.logger.log(`${clc.cyan('Options:')} ${clc.gray(JSON.stringify(settings))}`)
 				
 				const collection = db.collection(source)
 
 				if (settings.uniques) {
-					console.log(`[MUTATION] Checking uniques: ${settings.uniques}`)
+					this.logger.log(`${clc.cyan('Checking uniques:')} ${clc.magenta(settings.uniques.join(', '))}`)
 					await this.mutateService.uniques(collection, docs, settings.uniques, s)
 				}
 
 				for (const doc of docs) {
 					if (!doc || typeof doc !== 'object') {
-						console.warn(`[MUTATION] Invalid doc skipped:`, doc)
+						this.logger.warn('Invalid doc skipped:', doc)
 						continue
 					}
 					
-					const finalId = doc.id || doc._id
+					let finalId = doc.id || doc._id
+					
+					// Auto-resolve ID by unique fields if missing
+					if (!finalId && settings.uniques) {
+						const existingId = await this.mutateService.findExistingId(collection, doc, settings.uniques, s)
+						if (existingId) {
+							finalId = existingId
+							this.logger.log(`${clc.blue('Resolved existing ID by uniques:')} ${clc.magenta(finalId)}`)
+						}
+					}
+
 					if (!finalId) {
 						doc._id = uuidv4()
-						console.log(`[MUTATION] Generated UUID for doc: ${doc._id}`)
+						this.logger.log(`${clc.green('Generated UUID for doc:')} ${clc.magenta(doc._id)}`)
 					} else {
 						doc._id = finalId
-						console.log(`[MUTATION] Using existing id/_id: ${doc._id}`)
+						this.logger.log(`${clc.blue('Using final id/_id:')} ${clc.magenta(doc._id)}`)
 					}
 					// Ensure original id is removed to avoid duplicate fields in DB
 					delete doc.id
 					
-					console.log(`[MUTATION] Calling download/nesting for doc...`)
+					this.logger.log(clc.gray(`Calling download/nesting for doc ${doc._id}...`))
 					await this.mutateService.download(db, doc, source, doc._id, settings, s, 'upsert')
 					
-					console.log(`[MUTATION] Executing updateOne (upsert:true) for: ${doc._id}`)
+					this.logger.log(`${clc.blue('Executing updateOne (upsert:true) for:')} ${clc.magenta(doc._id)}`)
 					const res = await collection.updateOne(
 						{ _id: doc._id }, 
 						{ $set: doc }, 
 						{ upsert: true, session: s }
 					)
-					console.log(`[MUTATION] Result for ${doc._id}: matched=${res.matchedCount}, upserted=${res.upsertedCount}, acknowledged=${res.acknowledged}`)
+					this.logger.log(`${clc.green('Result for')} ${clc.magenta(doc._id)}: matched=${res.matchedCount}, upserted=${res.upsertedCount}`)
 				}
-				return { success: true, message: 'Upsert operation completed successfully.' }
+				return { success: true, message: 'Upsert operation completed successfully.', docs }
 			}
 
 			if (session) {
-				console.log(`[MUTATION] Running within Transaction...`)
+				this.logger.log(clc.magenta('Running within Transaction...'))
 				try {
 					const result = await session.withTransaction(() => execute(session))
-					console.log(`[MUTATION] Transaction committed successfully.`)
+					this.logger.log(clc.green('Transaction committed successfully.'))
 					return result
 				} finally {
 					await session.endSession()
 				}
 			} else {
-				console.log(`[MUTATION] Running direct operations (No Session)...`)
+				this.logger.log(clc.magenta('Running direct operations (No Session)...'))
 				const result = await execute()
-				console.log(`[MUTATION] Operations completed.`)
+				this.logger.log(clc.green('Operations completed.'))
 				return result
 			}
-		} catch (error) {
-			console.error(`[MUTATION ERROR]`, error)
+		} catch (error: any) {
+			this.logger.error(`${clc.red('[MUTATION ERROR]')} ${error.message}`)
 			return { success: false, message: typeof error === 'string' ? error : (error instanceof Error ? error.message : String(error)) }
 		}
 	}
@@ -120,24 +131,34 @@ export class MutationController {
 	@Post('purge')
 	async purge(@Body() { source, input }: MutationRequestDto, @Req() req: Request & { projectId: string }): Promise<MutationResponseDto> {
 		const projectId = req.projectId
+		this.logger.log(clc.magenta(clc.bold('--- Purge Start ---')))
+		this.logger.log(`${clc.cyan('Source:')} ${clc.yellow(source)}`)
+
 		const { db, startSession } = await this.projectService.getProjectContext(projectId)
+		this.logger.log(`${clc.cyan('Database:')} ${clc.blue(db.databaseName)}`)
 		
 		let session: any = null
-		try { session = await startSession() } catch (e) { session = null }
+		try { 
+			session = await startSession() 
+			this.logger.log(clc.cyan('Session started for purge.'))
+		} catch (e: any) { 
+			session = null 
+		}
 
 		try {
 			const execute = async (s?: any) => {
-				const docs = Array.isArray(input) ? input as any[] : [ input ]
-				if (docs.length === 0) return { success: true, message: 'No documents to purge.' }
+				const docsToPurge = Array.isArray(input) ? input as any[] : [ input ]
+				this.logger.log(`${clc.red('Purging')} ${clc.bold(String(docsToPurge.length))} documents from ${clc.yellow(source)}`)
+				if (docsToPurge.length === 0) return { success: true, message: 'No documents to purge.' }
 
 				const collection = db.collection(source)
 
-				for (const doc of docs as Doc[]) {
+				for (const doc of docsToPurge as Doc[]) {
 					if (!doc.id) throw new Error('id required for purge')
 					await this.mutateService.download(db, doc, source, doc.id, {}, s, 'delete')
 				}
 
-				const ids = docs.map(doc => (doc as Doc).id)
+				const ids = docsToPurge.map(doc => (doc as Doc).id)
 				await collection.deleteMany({ _id: { $in: ids } }, { session: s })
 
 				return { success: true, message: 'Purge operation completed successfully.' }
@@ -156,7 +177,7 @@ export class MutationController {
 				if (session) await session.endSession()
 				return await execute()
 			}
-		} catch (error) {
+		} catch (error: any) {
 			return { success: false, message: typeof error === 'string' ? error : (error instanceof Error ? error.message : String(error)) }
 		}
 	}

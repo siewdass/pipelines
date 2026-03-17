@@ -331,5 +331,33 @@ layer(base);
   @apply !p-0 !pl-6;
 }
 
+/* Full page preloader styles */
+#root:has(.initial-loader) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  background-color: #ffffff;
+}
 
+@media (prefers-color-scheme: dark) {
+  #root:has(.initial-loader) {
+    background-color: #111827;
+  }
+}
 
+.initial-loader {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid #465fff; /* Using standard brand-500 from the project */
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: initial-spin 1s linear infinite;
+}
+
+@keyframes initial-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

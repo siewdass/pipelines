@@ -7,6 +7,7 @@ import { InquiryModule } from './inquiry/inquiry.module'
 import { AuthenticationModule } from './authentication/authentication.module'
 import { DatabaseModule } from './database/database.module'
 import { AuthorizationModule } from './authorization/authorization.module'
+import { AssembleModule } from './assemble/assemble.module'
 
 import { ConfigModule } from '@nestjs/config'
 
@@ -25,6 +26,7 @@ import { ConfigModule } from '@nestjs/config'
 		AuthenticationModule,
 		DatabaseModule,
 		AuthorizationModule,
+		AssembleModule,
 	],
 	providers: [],
 	exports: [],

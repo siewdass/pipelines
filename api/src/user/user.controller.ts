@@ -1,14 +1,17 @@
-import { Controller, Post, Patch, Get, Body, Param, HttpException, HttpStatus, Headers } from '@nestjs/common'
+import { Controller, Post, Patch, Get, Body, Param, HttpException, HttpStatus, Headers, Logger } from '@nestjs/common'
+import { clc } from '../utils/colors'
 import { ProjectService } from '../project/project.service'
 import { User, UserSchema, Role, RoleSchema, Permission, PermissionSchema } from './user.schema'
 import { CreateUserDto, UpdateUserDto } from './user.dto'
 
 @Controller('user')
 export class UserController {
+	private readonly logger = new Logger(UserController.name)
 	constructor(private readonly projectService: ProjectService) {}
 
 	@Post()
 	async create(@Headers('project-id') projectId: string, @Body() body: CreateUserDto) {
+		this.logger.log(`${clc.cyan('Creating user:')} ${clc.yellow(body.email)} ${clc.gray(`(Project: ${projectId})`)}`)
 		const UserModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
 		try {
 			const exists = await UserModel.findOne({ email: body.email }).select('_id').lean().exec()
@@ -24,6 +27,7 @@ export class UserController {
 
 	@Patch(':id')
 	async update(@Headers('project-id') projectId: string, @Param('id') id: string, @Body() body: UpdateUserDto) {
+		this.logger.log(`${clc.cyan('Updating user:')} ${clc.magenta(id)}`)
 		const UserModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
 		try {
 			const updated = await UserModel.findByIdAndUpdate(id, { $set: body }, { new: true }).select('-password').lean().exec()
@@ -45,6 +49,7 @@ export class UserController {
 
 	@Get()
 	async getAll(@Headers('project-id') projectId: string) {
+		this.logger.log(`${clc.cyan('Listing all users for project:')} ${clc.magenta(projectId)}`)
 		const UserModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
 		const list = await UserModel.find().select('-password').lean().exec()
 		return { success: true, users: list }
@@ -52,6 +57,7 @@ export class UserController {
 
 	@Post('roles')
 	async createRole(@Headers('project-id') projectId: string, @Body() body: { name: string; description?: string }) {
+		this.logger.log(`${clc.cyan('Creating role:')} ${clc.yellow(body.name)}`)
 		try {
 			const RoleModel = await this.projectService.getProjectModel(projectId, RoleSchema, Role.name)
 			const exists = await RoleModel.findOne({ name: body.name }).select('_id').lean().exec()

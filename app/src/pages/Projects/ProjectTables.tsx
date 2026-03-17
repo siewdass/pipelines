@@ -37,7 +37,7 @@ export default function ProjectTables() {
         <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 transition-all duration-300">
           <div className="flex items-center gap-4 mb-8">
             <button 
-              onClick={() => navigate(`/projects/details/${id}`)}
+              onClick={() => navigate('/projects')}
               className="flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
             >
               <ChevronLeftIcon className="size-6" />

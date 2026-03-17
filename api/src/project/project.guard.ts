@@ -5,6 +5,7 @@ import { Request } from 'express'
 import { Project } from './project.schema'
 import { Model } from 'mongoose'
 import * as jwt from 'jsonwebtoken'
+import { clc } from '../utils/colors'
 
 @Injectable()
 export class ProjectGuard implements CanActivate {
@@ -27,7 +28,7 @@ export class ProjectGuard implements CanActivate {
 		const token = authorization?.replace('Bearer ', '').trim()
 		
 		if (!token) {
-			this.logger.warn('[PROJECT] Authorization token is missing')
+			this.logger.warn(clc.yellow('[PROJECT] Authorization token is missing'))
 			throw new BadRequestException('Authorization token is missing')
 		}
 
@@ -47,7 +48,7 @@ export class ProjectGuard implements CanActivate {
 			}
 
 			request.projectId = payload.id
-			this.logger.log(`[PROJECT GUARD] Extracted projectId: ${request.projectId}`)
+			this.logger.log(`${clc.blue('[PROJECT GUARD]')} Extracted projectId: ${clc.magenta(String(request.projectId))}`)
 			return true
 		} catch (error) {
 			// Fallback: Si falló la verificación con USER_SECRET, tal vez sea un token de cuenta
@@ -58,7 +59,7 @@ export class ProjectGuard implements CanActivate {
 				return true
 			}
 
-			this.logger.error(`[PROJECT] Project validation failed: ${error.message}`)
+			this.logger.error(`${clc.red('[PROJECT] Project validation failed:')} ${error.message}`)
 			throw new BadRequestException('Invalid or expired project-token')
 		}
 	}

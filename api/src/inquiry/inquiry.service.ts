@@ -1,17 +1,21 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { Db, Doc } from '../mutation/mutation.type'
+import { clc } from '../utils/colors'
 
 @Injectable()
 export class InquiryService {
+	private readonly logger = new Logger(InquiryService.name)
+
 	async upload(doc: Doc, nestedProjection: Doc, db: Db, source: string, options: Doc): Promise<void> {
-		console.log(`[INQUIRY] Starting upload for ${source}. ParentId: ${doc._id || doc.id}`)
+		this.logger.log(`${clc.blue('[INQUIRY]')} Starting upload for ${clc.yellow(source)}. ${clc.gray(`ParentId: ${doc._id || doc.id}`)}`)
 		for (const [key, value] of Object.entries(nestedProjection)) {
 			if (!this.isRecord(value)) continue
 			
-			console.log(`[INQUIRY] Processing nested key: ${key}`)
+			
+			this.logger.log(`${clc.gray('[INQUIRY]')} Processing nested key: ${clc.cyan(key)}`)
 			// Initialize the field in the document if it's missing (needed for expansion)
 			if (doc[key] === undefined) {
-				console.log(`[INQUIRY] Initializing key ${key} to null in doc`)
+				this.logger.log(`${clc.gray('[INQUIRY]')} Initializing key ${key} to null in doc`)
 				doc[key] = null
 			}
 
@@ -26,16 +30,16 @@ export class InquiryService {
 					const pivotCollection = `${source}_${target}`
 					const pivotCol = db.collection(pivotCollection)
 
-					console.log(`[INQUIRY] Many-to-many: ${source} -> ${target} via ${pivotCollection}`)
+					this.logger.log(`${clc.blue('[INQUIRY]')} Many-to-many: ${clc.yellow(source)} -> ${clc.yellow(target)} via ${clc.cyan(pivotCollection)}`)
 					const collInfo = await db.listCollections({ name: pivotCollection }).toArray()
 					if (collInfo.length === 0) {
-						console.log(`[INQUIRY] Pivot ${pivotCollection} missing`)
+						this.logger.log(`${clc.yellow('[INQUIRY]')} Pivot ${pivotCollection} missing`)
 						doc[key] = []
 						continue
 					}
 
 					const pivotDocs = await pivotCol.find({ [source]: parentId }).toArray()
-					console.log(`[INQUIRY] Found ${pivotDocs.length} relations for ${parentId}`)
+					this.logger.log(`${clc.gray('[INQUIRY]')} Found ${clc.bold(String(pivotDocs.length))} relations for ${parentId}`)
 					const childIds = pivotDocs.map((p) => (p as Doc)[target]).filter(Boolean)
 					let childDocs: unknown[] = []
 					if (childIds.length) {
@@ -43,7 +47,7 @@ export class InquiryService {
 						let cursor = childCol.find(q, { projection: childProj }).sort(sort ?? {})
 						if (list.limit) cursor = cursor.limit(list.limit)
 						childDocs = await cursor.toArray()
-						console.log(`[INQUIRY] Fetched ${childDocs.length} children from ${key}`)
+						this.logger.log(`${clc.gray('[INQUIRY]')} Fetched ${clc.bold(String(childDocs.length))} children from ${clc.cyan(key)}`)
 					}
 
 					for (const childDoc of childDocs) {
@@ -54,7 +58,7 @@ export class InquiryService {
 					}
 					doc[key] = childDocs
 				} else {
-					console.log(`[INQUIRY] One-to-many lookup for ${key}`)
+					this.logger.log(`${clc.blue('[INQUIRY]')} One-to-many lookup for ${clc.cyan(key)}`)
 					const q: any = { ...filter, [source]: doc._id || doc.id }
 					let cursor = childCol.find(q, { projection: childProj }).sort(sort ?? {})
 					if (list.limit) cursor = cursor.limit(list.limit)
@@ -69,7 +73,7 @@ export class InquiryService {
 					doc[key] = childDocs
 				}
 			} else {
-				console.log(`[INQUIRY] One-to-one lookup for ${key}`)
+				this.logger.log(`${clc.blue('[INQUIRY]')} One-to-one lookup for ${clc.cyan(key)}`)
 				const q: any = { ...filter, [source]: doc._id || doc.id }
 				const childDoc = await childCol.findOne(q, { projection: childProj, sort: sort ?? {} })
 				if (childDoc) {
@@ -118,7 +122,24 @@ export class InquiryService {
 		if (!params) return out
 
 		if (!key) {
-			if (params.filter) out.filter = params.filter
+			if (params.filter) {
+				for (const [ fKey, fVal ] of Object.entries(params.filter)) {
+					if (fKey.startsWith('$')) throw new Error('MongoDB operators are strictly prohibited in queries.')
+					if (typeof fVal === 'object' && fVal !== null && !Array.isArray(fVal)) {
+						for (const k of Object.keys(fVal)) {
+							if (k.startsWith('$')) throw new Error('MongoDB operators are strictly prohibited in queries.')
+						}
+					}
+					
+					if (typeof fVal === 'string' && fVal.includes('*')) {
+						out.filter[fKey] = new RegExp('^' + this.escapeRegExp(fVal).replace(/\\\*/g, '.*') + '$', 'i')
+					} else if (Array.isArray(fVal)) {
+						out.filter[fKey] = { $in: fVal }
+					} else {
+						out.filter[fKey] = fVal
+					}
+				}
+			}
 			if (params.sort) out.sort = params.sort
 			if (params.pagination) {
 				out.pagination = {
@@ -136,6 +157,13 @@ export class InquiryService {
 
 		if (options.filter) {
 			for (const [ fKey, fVal ] of Object.entries(options.filter)) {
+				if (fKey.startsWith('$')) throw new Error('MongoDB operators are strictly prohibited in queries.')
+				if (typeof fVal === 'object' && fVal !== null && !Array.isArray(fVal)) {
+					for (const k of Object.keys(fVal)) {
+						if (k.startsWith('$')) throw new Error('MongoDB operators are strictly prohibited in queries.')
+					}
+				}
+				
 				if (typeof fVal === 'string' && fVal.includes('*')) {
 					out.filter[fKey] = new RegExp('^' + this.escapeRegExp(fVal).replace(/\\\*/g, '.*') + '$', 'i')
 				} else if (Array.isArray(fVal)) {

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom React + Tailwind CDN</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React and ReactDOM CDN v19.2.4 -->
+    <script src="https://unpkg.com/react@19.2.4/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@19.2.4/umd/react-dom.production.min.js"></script>
+    <!-- React Query CDN v5.90.21 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tanstack/react-query@5.90.21/build/umd/index.production.min.js"></script>
+    <!-- Babel CDN v7.29.1 -->
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.29.1/babel.min.js"></script>
+</head>
+<body class="bg-slate-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { QueryClient, QueryClientProvider, useQuery } = ReactQuery;
+        const queryClient = new QueryClient();
+
+        const App = () => {
+            return (
+                <QueryClientProvider client={queryClient}>
+                    <MainContent />
+                </QueryClientProvider>
+            );
+        };
+
+        const MainContent = () => {
+            return (
+                <div className="min-h-screen flex items-center justify-center p-4">
+                    <div className="bg-white p-10 rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full transform hover:scale-[1.02] transition-all duration-300">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="h-12 w-12 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                            </div>
+                            <h1 className="text-2xl font-black text-slate-800 tracking-tight">Data Pipeline</h1>
+                        </div>
+                        
+                        <p className="text-slate-500 font-medium mb-8 leading-relaxed">
+                            This is a standalone page running <span className="text-blue-600 font-bold">React</span>, <span className="text-blue-600 font-bold">Tailwind</span> and <span className="text-blue-600 font-bold">React Query</span> via CDN. Pure simplicity.
+                        </p>
+                        
+                        <button className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-colors shadow-xl shadow-slate-200 active:scale-95 duration-150">
+                            Explore Custom View
+                        </button>
+
+                        <div className="mt-8 pt-8 border-t border-slate-50 flex justify-between items-center">
+                            <div className="flex -space-x-2">
+                                <div className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white"></div>
+                                <div className="w-8 h-8 rounded-full bg-slate-300 border-2 border-white"></div>
+                                <div className="w-8 h-8 rounded-full bg-slate-400 border-2 border-white"></div>
+                            </div>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">v1.1.0</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
