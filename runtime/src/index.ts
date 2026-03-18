@@ -10,6 +10,7 @@ import { useForm } from './library/form';
 import { Main } from './library';
 import * as theme from './library/theme';
 import * as sidebar from './library/sidebar';
+import * as router from './library/router';
 
 // Components (Visual)
 import * as dropdown from './components/dropdown';
@@ -34,6 +35,7 @@ export const reacticons = Fa;
 (window as any).Icons = reacticons;
 (window as any).Theme = theme;
 (window as any).Sidebar = sidebar;
+(window as any).Router = router;
 
 // Components modules
 (window as any).Dropdown = dropdown;
@@ -43,3 +45,5 @@ export const reacticons = Fa;
 
 // Main Wrapper
 (window as any).Main = Main;
+
+console.log('Pipelines Runtime Loaded (Router Ready)');

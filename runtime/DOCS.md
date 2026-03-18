@@ -89,7 +89,43 @@ signout();
 
 ---
 
-## 🎨 4. Temas (`Theme`)
+## 🗺️ 4. Navegación (`Router`)
+*Subyacente: **React Router 7***. Hook para control de rutas y definición del sistema.
+
+```javascript
+const { useRouter, useRoutes } = window.Router;
+
+// 1. Definir rutas del sistema
+const App = () => {
+    const routes = useRoutes([
+        { path: "/", element: <Landing /> },
+        { path: "/users", element: <UserList /> }
+    ]);
+    return routes;
+};
+
+// 2. Controlar la navegación
+const { navigate, setQuery } = useRouter();
+
+// Navegar a una ruta
+navigate('/dashboard');
+
+// Volver atrás
+navigate(-1);
+
+// Actualizar parámetros (ej: ?filter=active)
+setQuery({ filter: 'active' }); 
+
+// Reemplazar parámetros (ej: borrar todo y poner solo page=1)
+setQuery({ page: 1 }, { merge: false });
+
+// Eliminar un parámetro
+setQuery({ filter: null });
+```
+
+---
+
+## 🎨 5. Temas (`Theme`)
 *Subyacente: **Custom Context***. Control de modo oscuro.
 
 ```javascript
@@ -101,7 +137,7 @@ toggleTheme();
 
 ---
 
-## 🔔 5. Notificaciones (`Notification`)
+## 🔔 6. Notificaciones (`Notification`)
 *Subyacente: **Sonner***. Alertas visuales.
 
 ```javascript
@@ -113,7 +149,7 @@ show("Guardado con éxito", "success");
 
 ---
 
-## 🧱 6. Componentes UI (`Table`, `Dropdown`, `Dialog`)
+## 🧱 7. Componentes UI (`Table`, `Dropdown`, `Dialog`)
 *Subyacente: **TanStack Table (en Table) / Headless UI***.
 
 ### DataGrid (Tabla)
@@ -135,7 +171,7 @@ const [toggle, open, close, isOpen, Menu] = useDropdown();
 
 ---
 
-## ⚡ 7. Iconos (`Icons`)
+## ⚡ 8. Iconos (`Icons`)
 *Subyacente: **FontAwesome 6***. Acceso directo a todas las glifos de FA.
 
 ```javascript
@@ -147,7 +183,7 @@ const { FaHome, FaShieldHalved } = window.Icons;
 
 ---
 
-## 🛠️ 8. Formularios (`Form`)
+## 🛠️ 9. Formularios (`Form`)
 *Subyacente: **JSON Forms***. Generador dinámico de formularios.
 
 ```javascript
@@ -177,7 +213,7 @@ const handleSave = () => submit(data => console.log(data));
 
 ---
 
-## 🗺️ 9. Navegación (`Sidebar`)
+## 🗺️ 10. Navegación Lateral (`Sidebar`)
 *Subyacente: **Custom Context / LocalStorage***.
 
 ```javascript
