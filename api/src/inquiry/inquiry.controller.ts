@@ -7,10 +7,11 @@ import { ApiBody, ApiOkResponse } from '@nestjs/swagger'
 import { RetrieveRequestDoc, RetrieveResponseDoc } from './inquiry.doc'
 import { UserAuthGuard } from '../authorization/user.guard'
 import { ProjectGuard } from '../project/project.guard'
+import { SourceGuard } from '../authorization/source.guard'
 import { clc } from '../utils/colors'
 
 @Controller('inquiry')
-@UseGuards(ProjectGuard, UserAuthGuard)
+@UseGuards(ProjectGuard, UserAuthGuard, SourceGuard)
 export class InquiryController {
 	private readonly logger = new Logger(InquiryController.name)
 

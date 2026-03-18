@@ -20,7 +20,7 @@ const formatError = (err: string) => {
   return err; // Fallback
 };
 
-import { useValidation } from './ValidationContext';
+import { useValidation } from './Form';
 
 export function Base({ label, errors, path, hasValue, children }: BaseProps) {
   const { showValidation, customErrors } = useValidation();

@@ -78,12 +78,11 @@ export function useMutation<V = any>(
 
   const mutate = (
     input: V, 
-    callbacks?: { 
-      onSuccess?: (data: MutationResponse) => void, 
-      onError?: (error: any) => void 
-    }
+    callback?: (res: MutationResponse) => void
   ) => {
-    mutation.mutate(input, callbacks);
+    mutation.mutate(input, {
+      onSuccess: (data) => callback?.(data),
+    });
   };
 
   return [mutate, mutation.isPending] as [typeof mutate, boolean];

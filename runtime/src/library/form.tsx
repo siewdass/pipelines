@@ -43,7 +43,7 @@ export function useForm<T extends FormValues = FormValues>(schema: any): [
 
   // Create a stable component identity that only changes if the schema changes
   const BoundFormComponent = useMemo(() => {
-    return ({ className = "" }: BoundFormProps<T>) => {
+    return ({ className = "", initial }: BoundFormProps<T>) => {
       // Grabbing values from ref during render to avoid stale closures 
       // while keeping the component identity stable.
       const { 
@@ -51,6 +51,15 @@ export function useForm<T extends FormValues = FormValues>(schema: any): [
         showValidation: currentShowValidation, 
         handleChange: currentHandleChange 
       } = stateRef.current;
+
+      // Synchronize initial data on mount if provided
+      // Use useMemo behavior logic: if initial is provided, we merge it.
+      // But a simple useEffect[initial] (once) is safer for "pre-fill" behavior.
+      const hasInitialized = useRef(false);
+      if (!hasInitialized.current && initial) {
+          currentHandleChange(initial, true); // Assume valid until AJV runs or keep current isValid
+          hasInitialized.current = true;
+      }
 
       return (
         <BaseForm<T>

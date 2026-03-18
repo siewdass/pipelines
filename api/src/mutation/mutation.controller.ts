@@ -9,10 +9,11 @@ import { UpsertRequestDoc, UpsertResponseDoc, PurgedRequestDoc, PurgeResponseDoc
 import { MutationRequestDto, MutationResponseDto } from './mutation.dto'
 import { UserAuthGuard } from '../authorization/user.guard'
 import { ProjectGuard } from '../project/project.guard'
+import { SourceGuard } from '../authorization/source.guard'
 import { clc } from '../utils/colors'
 
 @Controller('mutation')
-@UseGuards(ProjectGuard, UserAuthGuard)
+@UseGuards(ProjectGuard, UserAuthGuard, SourceGuard)
 export class MutationController {
 	private readonly logger = new Logger(MutationController.name)
 

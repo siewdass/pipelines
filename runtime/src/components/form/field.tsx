@@ -1,7 +1,7 @@
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { useState } from 'react';
 import { Base } from './base';
-import { EyeIcon, EyeCloseIcon } from '../../icons';
+import { HiOutlineEye as EyeIcon, HiOutlineEyeSlash as EyeCloseIcon } from 'react-icons/hi2';
 
 export const FieldRenderer = withJsonFormsControlProps(
   ({ data, handleChange, path, label, errors, schema }) => {

@@ -30,7 +30,7 @@ export class AuthenticationController {
 		return await this.projectService.getProjectModel('default', AccountSchema, Account.name)
 	}
 
-	@Post('register')
+	@Post('signup')
 	async register(@Headers('project-id') projectId: string, @Body() { email, password, name }: RegisterRequestDto): Promise<RegisterResponseDto> {
 		this.logger.log(`${clc.cyan('User registration attempt:')} ${clc.yellow(email)} ${clc.gray(`(Project: ${projectId})`)}`)
 		const userModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
@@ -42,7 +42,7 @@ export class AuthenticationController {
 		return { success: true, message: 'Register success' }
 	}
 
-	@Post('login')
+	@Post('signin')
 	async login(@Headers('project-id') projectId: string, @Body() { email, password }: LoginRequestDto): Promise<LoginResponseDto> {
 		this.logger.log(`${clc.cyan('User login attempt:')} ${clc.yellow(email)}`)
 		const userModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)

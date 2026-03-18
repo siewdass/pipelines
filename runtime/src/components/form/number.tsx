@@ -1,6 +1,6 @@
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Base } from './base';
-import { MiniChevronUpIcon, MiniChevronDownIcon } from '../../icons';
+import { HiMiniChevronUp as MiniChevronUpIcon, HiMiniChevronDown as MiniChevronDownIcon } from 'react-icons/hi2';
 
 interface NumberInputProps {
   value: number | string;

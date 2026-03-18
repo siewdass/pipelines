@@ -2,7 +2,21 @@ import { useMemo } from 'react';
 import { JsonForms } from '@jsonforms/react';
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { renderers } from './index';
-import { ValidationContext } from './ValidationContext';
+
+import { createContext, useContext } from 'react';
+
+interface ValidationContextType {
+  showValidation: boolean;
+  customErrors: Record<string, string>;
+}
+
+export const ValidationContext = createContext<ValidationContextType>({
+  showValidation: false,
+  customErrors: {},
+});
+
+export const useValidation = () => useContext(ValidationContext);
+
 
 export interface FormValues extends Record<string, any> {
   [key: string]: any;
