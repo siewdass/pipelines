@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common'
 import { Model } from 'mongoose'
-import { User } from './user.schema'
+import { User } from '../user/user.schema'
 import jwt from 'jsonwebtoken'
 
 @Injectable()

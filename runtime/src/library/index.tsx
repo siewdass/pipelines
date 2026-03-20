@@ -1,5 +1,6 @@
 import React from 'react';
 import { HashRouter } from 'react-router';
+import { HelmetProvider } from 'react-helmet-async';
 import { DataProvider } from './database';
 import { ThemeProvider } from './theme';
 import { NotificationProvider } from '../components/notification';
@@ -14,15 +15,17 @@ interface MainProps {
  */
 export const Main: React.FC<MainProps> = ({ children }) => {
   return (
-    <HashRouter>
-      <DataProvider>
-        <ThemeProvider>
-          <SidebarProvider>
-            <NotificationProvider position="top-right" richColors />
-            {children}
-          </SidebarProvider>
-        </ThemeProvider>
-      </DataProvider>
-    </HashRouter>
+    <HelmetProvider>
+      <HashRouter>
+        <DataProvider>
+          <ThemeProvider>
+            <SidebarProvider>
+              <NotificationProvider position="top-right" richColors />
+              {children}
+            </SidebarProvider>
+          </ThemeProvider>
+        </DataProvider>
+      </HashRouter>
+    </HelmetProvider>
   );
 };

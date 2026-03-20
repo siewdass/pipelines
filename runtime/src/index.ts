@@ -18,6 +18,18 @@ import * as table from './components/table';
 import * as dialog from './components/dialog';
 import * as notification from './components/notification';
 
+// Extra Visual (Productivity & UI)
+import * as Tabs from 'react-tabs';
+import { Tooltip } from 'react-tooltip';
+import * as Accordion from 'react-accessible-accordion';
+import * as Motion from 'framer-motion';
+
+// Extra Logic (Hooks & Utils)
+import * as useHooks from 'react-use';
+import { useHotkeys } from 'react-hotkeys-hook';
+import * as dateFns from 'date-fns';
+import { cn } from './utils/styles';
+
 import * as Fa from "react-icons/fa6";
 
 export const reacticons = Fa;
@@ -43,7 +55,18 @@ export const reacticons = Fa;
 (window as any).Dialog = dialog;
 (window as any).Notification = notification;
 
+// UI Extra
+(window as any).Tabs = Tabs;
+(window as any).Tooltip = { Tooltip };
+(window as any).Accordion = Accordion;
+(window as any).Motion = Motion;
+
+// Logic Extra
+(window as any).Hooks = { ...useHooks, useHotkeys };
+(window as any).Utils = { cn };
+(window as any).DateFns = dateFns;
+
 // Main Wrapper
 (window as any).Main = Main;
 
-console.log('Pipelines Runtime Loaded (Router Ready)');
+console.log('Pipelines Runtime Loaded (Router-Driven Metadata Ready)');

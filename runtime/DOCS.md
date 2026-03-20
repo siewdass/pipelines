@@ -1,35 +1,40 @@
 # 🚀 Pipelines Runtime Documentation
 
-Esta es la guía de referencia para usar el bundle `runtime.js` de Pipelines. Todo el sistema está expuesto en el objeto global `window` para facilitar su uso en páginas estáticas con Babel y Tailwind CDN.
+Esta es la guía de referencia técnica para el uso del bundle `runtime.js` de Pipelines.
 
 ---
 
-## 🏗️ 1. Estructura Base
-Esta es la estructura mínima para construir una página reactiva con el bundle de Pipelines. Incluye **Tailwind CSS** para estilos y **Babel** para interpretar JSX en el navegador.
+## 🏗️ 1. Estructura Base y Configuración
+Configuración mínima obligatoria para el funcionamiento de la **Base de Datos**, **Autenticación** y **Router**.
 
 ```html
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <!-- Estilos y Runtime -->
+    <!-- Tecnologías de Soporte -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="./dist/runtime.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.29.1/babel.min.js"></script>
+    
+    <!-- Runtime de Pipelines -->
+    <script src="./dist/runtime.js"></script>
 </head>
-<body class="bg-slate-50">
+<body class="bg-black text-white">
     <div id="root"></div>
 
     <script type="text/babel">
+        // ⚠️ CONFIGURACIÓN OBLIGATORIA
+        window.PIPELINES = {
+            TOKEN: "TU_TOKEN_X_PROJECT_ID" // JWT que identifica al proyecto
+        };
+
         const { Main } = window;
-        
         const App = () => (
             <div className="p-20 text-center">
                 <h1 className="text-4xl font-black">¡Hola Pipelines!</h1>
             </div>
         );
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<Main><App /></Main>);
+        ReactDOM.createRoot(document.getElementById('root')).render(<Main><App /></Main>);
     </script>
 </body>
 </html>
@@ -38,187 +43,107 @@ Esta es la estructura mínima para construir una página reactiva con el bundle 
 ---
 
 ## 📊 2. Base de Datos (`Database`)
-*Subyacente: **React Query***. Gestión de fuentes de datos genéricas (inventarios, tareas, etc).
+*Subyacente: **TanStack Query / Axios***. Gestión de fuentes de datos.
 
 ```javascript
 const { useInquiry, useMutation } = window.Database;
 
-/**
- * CONSULTAS (useInquiry)
- * Firma: (source, type, output, options)
- * - source: "nombre_de_la_fuente"
- * - type: "retrieve" (lista) | "index" (uno)
- * - output: { filtros y campos }
- * - options: { limit, page } -> Solo para 'retrieve'
- */
+// CONSULTAS (Lista con paginación)
+const [items, loading, pagination] = useInquiry("inventory", "retrieve", { status: 'active' }, { limit: 10 });
 
-// Ejemplo: Lista de registros con paginación
-const [items, loading, pagination] = useInquiry("inventory", "retrieve", { filter: { active: true } }, { limit: 10, page: 1 });
-
-// Ejemplo: Registro único
-const [item] = useInquiry("inventory", "index", { id: "ABC-123" });
-
-/**
- * MODIFICACIONES (useMutation)
- * Firma: (source, type, options) -> [mutate, isPending]
- */
-
+// MODIFICACIONES (Guardar)
 const [save, saving] = useMutation("inventory", "upsert");
-
-<button
-    onClick={() => save({ id: "ABC-123", stock: 50 }, (res) => res.success && console.log("¡Guardado!"))}
-    disabled={saving}
->
-    {saving ? "Guardando..." : "Guardar"}
-</button>
+save({ id: "123", stock: 100 }, (res) => res.success && alert("Guardado"));
 ```
 
 ---
 
 ## 🔐 3. Autenticación (`Authentication`)
-*Subyacente: **Zustand / JWT***. Gestión de sesión y usuarios.
+*Subyacente: **Zustand / JWT***. Estado global de sesión.
 
 ```javascript
 const { useAuth } = window.Authentication;
 const { isLogged, signin, signup, signout, loggedUser } = useAuth();
 
-await signin("user@example.com", "123456");
-await signup("user@example.com", "123456", "John Doe");
+// Inicio de Sesión
+await signin("user@example.com", "mi_password");
+
+// Registro
+await signup({ email: "user@example.com", password: "...", name: "Juan" });
+
+// Cierre de Sesión
 signout();
 ```
 
 ---
 
-## 🗺️ 4. Navegación (`Router`)
-*Subyacente: **React Router 7***. Hook para control de rutas y definición del sistema.
+## 🗺️ 4. Navegación & SEO (`Router`)
+*Subyacente: **React Router 7 / Framer Motion / Helmet***.
 
 ```javascript
 const { useRouter, useRoutes } = window.Router;
 
-// 1. Definir rutas del sistema
+// Definición de Rutas con Títulos y Descripciones automáticas
 const App = () => {
-    const routes = useRoutes([
-        { path: "/", element: <Landing /> },
-        { path: "/users", element: <UserList /> }
-    ]);
-    return routes;
+    const routesConfig = [
+        { 
+            path: "/", 
+            element: <Home />, 
+            title: "Inicio"     // Título automático en el navegador
+        },
+        { 
+            path: "/app", 
+            element: <Dashboard />, 
+            title: "Mi Panel", 
+            description: "Resumen estadístico" 
+        }
+    ];
+    return useRoutes(routesConfig);
 };
 
-// 2. Controlar la navegación
+// Navegación Programática y Query Params
 const { navigate, setQuery } = useRouter();
-
-// Navegar a una ruta
-navigate('/dashboard');
-
-// Volver atrás
-navigate(-1);
-
-// Actualizar parámetros (ej: ?filter=active)
-setQuery({ filter: 'active' }); 
-
-// Reemplazar parámetros (ej: borrar todo y poner solo page=1)
-setQuery({ page: 1 }, { merge: false });
-
-// Eliminar un parámetro
-setQuery({ filter: null });
+setQuery({ status: "active" }); // Actualiza parámetros en la URL (?status=active)
+navigate('/app');              // Navega a una ruta (con transición suave)
 ```
 
 ---
 
-## 🎨 5. Temas (`Theme`)
-*Subyacente: **Custom Context***. Control de modo oscuro.
+## 🧱 5. UI Estructural & Componentes Profesionales
+- **Pestañas (`window.Tabs`)**: Basado en `react-tabs`. Contiene: `Tabs, TabList, Tab, TabPanel`.
+- **Tooltip (`window.Tooltip`)**: Basado en `react-tooltip`.
+- **Acordeón (`window.Accordion`)**: Basado en `react-accessible-accordion`.
+- **Animaciones (`window.Motion`)**: Acceso directo a `framer-motion` (ej: `motion.div`).
+
+---
+
+## 🎨 6. Temas & Estilos Contextuales
+*Subyacente: **Tailwind CSS / clsx / tailwind-merge***.
 
 ```javascript
-const { useTheme } = window.Theme;
-const { theme, toggleTheme } = useTheme();
+const { theme, toggleTheme } = window.Theme.useTheme();
+const { cn } = window.Utils; // Utilidad para concatenar clases condicionales de Tailwind
 
-toggleTheme();
+<div className={cn("p-4 transition-all", theme === 'dark' ? "bg-black" : "bg-white")} />
 ```
 
 ---
 
-## 🔔 6. Notificaciones (`Notification`)
-*Subyacente: **Sonner***. Alertas visuales.
-
-```javascript
-const { useToast } = window.Notification;
-const { show } = useToast();
-
-show("Guardado con éxito", "success");
-```
-
----
-
-## 🧱 7. Componentes UI (`Table`, `Dropdown`, `Dialog`)
-*Subyacente: **TanStack Table (en Table) / Headless UI***.
-
-### DataGrid (Tabla)
-```javascript
-const { DataGrid, useTable } = window.Table;
-const table = useTable({ data, columns });
-
-<DataGrid table={table} />
-```
-
-### Dropdown (Menú)
-```javascript
-const { useDropdown } = window.Dropdown;
-const [toggle, open, close, isOpen, Menu] = useDropdown();
-
-<button onClick={toggle}>Opciones</button>
-<Menu>...</Menu>
-```
-
----
-
-## ⚡ 8. Iconos (`Icons`)
-*Subyacente: **FontAwesome 6***. Acceso directo a todas las glifos de FA.
-
-```javascript
-const { FaHome, FaShieldHalved } = window.Icons;
-
-<FaHome />
-<FaShieldHalved />
-```
-
----
-
-## 🛠️ 9. Formularios (`Form`)
-*Subyacente: **JSON Forms***. Generador dinámico de formularios.
+## 📋 7. Formularios dinámicos (`Form`)
+*Subyacente: **JSON Forms / Ajv***. Generador de formularios reactivo.
 
 ```javascript
 const { useForm } = window.Form;
+const [submit, MyForm, values, isValid] = useForm(schema);
 
-// Ejemplo con Layout Horizontal y Vertical combinado
-const [submit, MyForm, values, isValid] = useForm({
-    type: "vertical",
-    items: [
-        { 
-            type: "horizontal", 
-            items: [
-                { name: "nombre", type: "string", label: "Nombre", required: true },
-                { name: "edad", type: "number", label: "Edad" }
-            ]
-        },
-        { name: "biografia", type: "string", label: "Bio", min: 10 }
-    ]
-});
-
-// Soporta precarga de datos mediante el prop 'initial'
-<MyForm initial={{ nombre: "Juan Pérez", edad: 30 }} />
-
-const handleSave = () => submit(data => console.log(data));
-<button onClick={handleSave} disabled={!isValid}>Guardar</button>
+<MyForm initial={{ name: "Pipeline" }} />
 ```
 
 ---
 
-## 🗺️ 10. Navegación Lateral (`Sidebar`)
-*Subyacente: **Custom Context / LocalStorage***.
+## 🧭 8. Sidebar & Navegación Lateral
+*Subyacente: **Zustand / LocalStorage***.
 
 ```javascript
-const { useSidebar } = window.Sidebar;
-const { isExpanded, toggleSidebar } = useSidebar();
-
-<button onClick={toggleSidebar}>Toggle</button>
+const { isExpanded, toggleSidebar } = window.Sidebar.useSidebar();
 ```

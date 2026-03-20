@@ -1,8 +1,7 @@
 import { Controller, Post, Patch, Body, HttpException, HttpStatus, Headers, Logger } from '@nestjs/common'
 import * as bcrypt from 'bcrypt'
-import { clc } from '../utils/colors'
 import { ProjectService } from '../project/project.service'
-import { User, UserSchema } from './user.schema'
+import { User, UserSchema } from '../user/user.schema'
 import { Account, AccountSchema } from '../account/account.schema'
 import { CreateAccountDto } from '../account/account.dto'
 import { AuthenticationService } from './authentication.service'
@@ -32,41 +31,38 @@ export class AuthenticationController {
 
 	@Post('signup')
 	async register(@Headers('project-id') projectId: string, @Body() { email, password, name }: RegisterRequestDto): Promise<RegisterResponseDto> {
-		this.logger.log(`${clc.cyan('User registration attempt:')} ${clc.yellow(email)} ${clc.gray(`(Project: ${projectId})`)}`)
+		this.logger.log(`User registration attempt: ${email} (Project: ${projectId})`)
 		const userModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
 		const existingUser = await userModel.findOne({ email }).lean().exec()
 		if (existingUser) throw new HttpException('User already exists', HttpStatus.CONFLICT)
 		const newUser = new userModel({ email, password, name })
 		await newUser.save()
-		this.logger.log(`${clc.green('User registered successfully:')} ${clc.magenta(newUser._id)}`)
+		this.logger.log(`User registered successfully: ${newUser._id}`)
 		return { success: true, message: 'Register success' }
 	}
 
 	@Post('signin')
 	async login(@Headers('project-id') projectId: string, @Body() { email, password }: LoginRequestDto): Promise<LoginResponseDto> {
-		this.logger.log(`${clc.cyan('User login attempt:')} ${clc.yellow(email)}`)
+		this.logger.log(`User login attempt: ${email}`)
 		const userModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
 		const foundUser = await this.authService.validateUser(userModel, email, password)
 		const token = this.authService.generateToken({ id: foundUser._id, email: foundUser.email }, 'user')
-		this.logger.log(`${clc.green('User login success:')} ${clc.magenta(String(foundUser._id))}`)
+		this.logger.log(`User login success: ${foundUser._id}`)
 		return { success: true, message: 'Login success', token }
 	}
 
 	@Post('recover')
 	async recover(@Body() _: RecoverRequestDto): Promise<RecoverResponseDto> {
-		// Implement recover logic (e.g. send email)
 		return { success: true, message: 'Recover success' }
 	}
 
 	@Patch('save')
 	async save(@Body() _: RecoverRequestDto): Promise<RecoverResponseDto> {
-		// Implement recover logic (e.g. send email)
 		return { success: true, message: 'Recover success' }
 	}
 
 	@Post('reset')
 	async reset(@Body() _: ResetRequestDto): Promise<ResetResponseDto> {
-		// Implement reset logic
 		return { success: true, message: 'Reset success' }
 	}
 
@@ -80,10 +76,10 @@ export class AuthenticationController {
 			const hashed = await bcrypt.hash(password, rounds)
 			const created = new accountModel({ email, password: hashed, name })
 			await created.save()
-			this.logger.log(`${clc.green('Account registered successfully:')} ${clc.yellow(email)}`)
+			this.logger.log(`Account registered successfully: ${email}`)
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : String(err ?? 'Unknown')
-			this.logger.error(`${clc.red('Account Register Error:')} ${message}`)
+			this.logger.error(`Account Register Error: ${message}`)
 			throw new HttpException(message, HttpStatus.BAD_REQUEST)
 		}
 		return { success: true, message: 'Register success' }
@@ -99,10 +95,10 @@ export class AuthenticationController {
 			const match = await bcrypt.compare(password, found.password)
 			if (!match) throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED)
 			token = this.authService.generateToken({ id: found._id, email: found.email }, 'account')
-			this.logger.log(`${clc.green('Account login success:')} ${clc.yellow(email)}`)
+			this.logger.log(`Account login success: ${email}`)
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : String(err ?? 'Unknown')
-			this.logger.error(`${clc.red('Account Login Error:')} ${message}`)
+			this.logger.error(`Account Login Error: ${message}`)
 			throw new HttpException(message, HttpStatus.BAD_REQUEST)
 		}
 		return { success: true, message: 'Login success', token }

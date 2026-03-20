@@ -1,65 +1,44 @@
 import { Injectable, CanActivate, ExecutionContext, BadRequestException, Logger } from '@nestjs/common'
-import { InjectModel } from '@nestjs/mongoose'
-import * as mongoose from 'mongoose'
 import { Request } from 'express'
-import { Project } from './project.schema'
-import { Model } from 'mongoose'
 import * as jwt from 'jsonwebtoken'
 import { clc } from '../utils/colors'
 
 @Injectable()
 export class ProjectGuard implements CanActivate {
 	private readonly logger = new Logger(ProjectGuard.name)
-	constructor(@InjectModel(Project.name, 'default') private readonly projectModel: Model<Project & mongoose.Document>) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		const request = context.switchToHttp().getRequest<Request & { projectId?: string; accountId?: string }>()
+		const request = context.switchToHttp().getRequest<Request & { projectId?: string }>()
 		
-		// If AccountAuthGuard already passed, we can take the project ID from a header
-		if (request.accountId) {
-			const headerProjectId = request.headers['x-project-id'] as string
-			if (headerProjectId) {
-				request.projectId = headerProjectId
-				return true
-			}
-		}
+		/**
+		 * Identificador Único del Proyecto (Token) envíado mediante X-Project-Id (o X-Pipeline-Id).
+		 * Este guard solo valida la pertenencia y validez del token del proyecto, no la autenticación del usuario.
+		 */
+		const projectToken = (request.headers['x-project-id'] || request.headers['x-pipeline-id']) as string
 
-		const authorization = request.headers.authorization
-		const token = authorization?.replace('Bearer ', '').trim()
-		
-		if (!token) {
-			this.logger.warn(clc.yellow('[PROJECT] Authorization token is missing'))
-			throw new BadRequestException('Authorization token is missing')
+		if (!projectToken) {
+			this.logger.warn(clc.yellow('[PROJECT] Project Token (X-Project-Id) is missing'))
+			throw new BadRequestException('Project Token is missing')
 		}
 
 		try {
+			// El secreto con el que se firmaron los tokens de proyecto
 			const secret = process.env.USER_JWT_SECRET || 'dev-user-secret'
-			const payload = jwt.verify(token, secret) as any
+			const payload = jwt.verify(projectToken, secret) as any
 			
 			if (!payload.id) {
-				// If it's an account token being used where ProjectGuard is required, 
-				// we still need a way to know the project id.
-				const headerProjectId = request.headers['x-project-id'] as string
-				if (headerProjectId) {
-					request.projectId = headerProjectId
-					return true
-				}
-				throw new BadRequestException('Invalid token: no project id (id) in payload and no x-project-id header')
+				this.logger.error(clc.red('[PROJECT] Invalid project token: missing id in payload'))
+				throw new BadRequestException('Invalid project token')
 			}
 
+			// Inyectamos el ID real del proyecto para que los servicios lo usen como contexto de base de datos
 			request.projectId = payload.id
-			this.logger.log(`${clc.blue('[PROJECT GUARD]')} Extracted projectId: ${clc.magenta(String(request.projectId))}`)
+			
+			this.logger.log(`${clc.blue('[PROJECT GUARD]')} Project identity established: ${clc.magenta(String(request.projectId))}`)
+			
 			return true
 		} catch (error) {
-			// Fallback: Si falló la verificación con USER_SECRET, tal vez sea un token de cuenta
-			// pero AccountAuthGuard ya debería haberlo manejado si estaba presente.
-			const headerProjectId = request.headers['x-project-id'] as string
-			if (headerProjectId && request.accountId) {
-				request.projectId = headerProjectId
-				return true
-			}
-
-			this.logger.error(`${clc.red('[PROJECT] Project validation failed:')} ${error.message}`)
+			this.logger.error(`${clc.red('[PROJECT] Project token validation failed:')} ${error.message}`)
 			throw new BadRequestException('Invalid or expired project-token')
 		}
 	}

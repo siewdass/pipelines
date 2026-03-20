@@ -1,11 +1,13 @@
 import { Controller, Post, Body, BadRequestException, UseGuards, Req, Get, Param, Patch, NotFoundException, Delete, Logger } from '@nestjs/common'
-import { clc } from '../utils/colors'
 import { InjectModel } from '@nestjs/mongoose'
 import * as mongoose from 'mongoose'
 import { Model } from 'mongoose'
 import { ProjectService } from './project.service'
 import { User, UserSchema } from '../user/user.schema'
+import { Role, RoleSchema } from '../user/role.schema'
+import { Permission, PermissionSchema } from '../user/permission.schema'
 import { Project } from './project.schema'
+import { Account, AccountSchema } from '../account/account.schema'
 import { CreateProjectDto, UpdateProjectStatusDto, AddOriginDto, SaveEmailSettingsDto } from './project.dto'
 import { AccountAuthGuard } from '../authorization/account.guard'
 import { Request } from 'express'
@@ -24,6 +26,7 @@ export class ProjectController {
 		@InjectModel(Project.name, 'default') private readonly projectModel: Model<Project & mongoose.Document>,
 		@InjectModel(Origin.name, 'default') private readonly originModel: Model<Origin & mongoose.Document>,
 		@InjectModel(EmailSetting.name, 'default') private readonly emailSettingModel: Model<EmailSetting & mongoose.Document>,
+		@InjectModel(Account.name, 'default') private readonly accountModel: Model<Account & mongoose.Document>,
 		private readonly projectService: ProjectService
 	) {}
 
@@ -36,7 +39,9 @@ export class ProjectController {
 		const token = jwt.sign({ id: _id, accountId }, secret)
 
 		try {
-			this.logger.log(`${clc.cyan('Creating project:')} ${clc.yellow(body.name)}`)
+			this.logger.log(`Creating project: ${body.name}`)
+			
+			// 1. Create the Project record
 			const project = await this.projectModel.create({
 				...body,
 				_id,
@@ -45,18 +50,54 @@ export class ProjectController {
 				status: 'active'
 			})
 
-			// Create anonymous user in the new project database
-			const userModel = await this.projectService.getProjectModel(_id, UserSchema, User.name)
-			await userModel.create({
-				email: 'anonymous@anonymous.com',
-				name: 'Anonymous',
-				firstLogin: false
+			// 2. Automatically register the creator's origin if present
+			const originUrl = req.headers.origin as string
+			if (originUrl) {
+				await this.originModel.create({
+					url: originUrl,
+					projectId: _id,
+					status: 'active'
+				})
+				this.logger.log(`Automatic origin registered: ${originUrl}`)
+			}
+
+			// 3. Initialize Project Security (Roles & Admin User)
+			const RoleModel = await this.projectService.getProjectModel(_id, RoleSchema, Role.name)
+			const PermissionModel = await this.projectService.getProjectModel(_id, PermissionSchema, Permission.name)
+			const UserModel = await this.projectService.getProjectModel(_id, UserSchema, User.name)
+
+			// 3a. Create the "*" (All Access) Permission
+			const allPermission = await PermissionModel.create({
+				name: 'all_access',
+				description: 'Full administrative access (*) to all resources',
+				read: true,
+				write: true,
+				resources: [ '*' ]
 			})
 
-			this.logger.log(`${clc.green('Project created successfully:')} ${clc.magenta(_id)}`)
+			// 3b. Create the "admin" Role and link it to the "*" permission
+			const adminRole = await RoleModel.create({
+				name: 'admin',
+				description: 'Project Administrator with full privileges',
+				permissions: [ allPermission._id ]
+			})
+
+			// 4. Create the Admin User (The creator) in the project database
+			const creatorAccount = await this.accountModel.findById(accountId).lean().exec()
+			if (creatorAccount) {
+				await UserModel.create({
+					email: creatorAccount.email,
+					name: creatorAccount.name,
+					roles: [ adminRole._id ],
+					firstLogin: false
+				})
+				this.logger.log(`Creator ${creatorAccount.email} registered as Admin in project database.`)
+			}
+
+			this.logger.log(`Project created successfully: ${_id}`)
 			return { ...project.toObject(), message: 'Project created successfully' }
 		} catch (error: any) {
-			this.logger.error(`${clc.red('Failed to create project:')} ${error.message}`)
+			this.logger.error(`Failed to create project: ${error.message}`)
 			throw new BadRequestException('failed to create project')
 		}
 	}
@@ -64,7 +105,7 @@ export class ProjectController {
 	@Get('list')
 	async listProjects(@Req() req: Request & { accountId: string }) {
 		const { accountId } = req
-		this.logger.log(`${clc.cyan('Listing projects for account:')} ${clc.magenta(accountId)}`)
+		this.logger.log(`Listing projects for account: ${accountId}`)
 		try {
 			const projects = await this.projectModel.find({ accountId }).lean().exec()
 			return projects
@@ -84,7 +125,7 @@ export class ProjectController {
 	@Patch(':id/token')
 	async regenerateToken(@Req() req: Request & { accountId: string }, @Param('id') id: string) {
 		const { accountId } = req
-		this.logger.log(`${clc.cyan('Regenerating token for project:')} ${clc.magenta(id)}`)
+		this.logger.log(`Regenerating token for project: ${id}`)
 		const secret = process.env.USER_JWT_SECRET || 'dev-user-secret'
 		// Include project id in token for traceability
 		const token = jwt.sign({ id, accountId }, secret)
