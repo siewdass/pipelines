@@ -94,7 +94,7 @@ export class MutationController {
 					this.logger.log(`Calling download/nesting for doc ${doc._id}...`)
 					await this.mutateService.download(db, doc, source, doc._id, settings, s, 'upsert')
 					
-					this.logger.log(`${'Executing updateOne (upsert:true for:')} ${doc._id}`)
+					this.logger.log(`Executing updateOne (upsert:true for: ${doc._id})`)
 					const res = await collection.updateOne(
 						{ _id: doc._id }, 
 						{ $set: doc }, 
@@ -115,7 +115,7 @@ export class MutationController {
 					await session.endSession()
 				}
 			} else {
-				this.logger.log('Running direct operations (No Session...'))
+				this.logger.log('Running direct operations (No Session...)')
 				const result = await execute()
 				this.logger.log('Operations completed.')
 				return result

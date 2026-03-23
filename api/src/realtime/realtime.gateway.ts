@@ -92,9 +92,9 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 	 * Assigns the client to a dynamic room based on source and options.
 	 */
 	@SubscribeMessage('subscribe')
-	handleSubscribe(
+	async handleSubscribe(
 		@ConnectedSocket() client: Socket,
-		@MessageBody() data: { source: string; options?: any }
+		@MessageBody() data: { source: string; filter?: any }
 	) {
 		if (this.protectedSources.includes(data.source?.toLowerCase())) {
 			this.logger.warn(`Client ${client.id} blocked from subscribing to protected source: ${data.source}`)
@@ -102,8 +102,21 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 		}
 
 		// Example: room:chat:general or room:fleet:camion_1
-		const roomName = this.realtimeService.buildRoomName(data.source, data.options)
+		const roomName = this.realtimeService.buildRoomName(data.source, data.filter)
 		client.join(roomName)
+
+		try {
+			// Inmediatamente enviamos la data histórica a este cliente específico (no a la sala entera)
+			const projectId = client.data.projectId
+			const { db } = await this.projectService.getProjectContext(projectId)
+			const recentData = await this.realtimeService.fetchRecent(db, data.source, roomName)
+			if (recentData && recentData.length > 0) {
+				client.emit(data.source, recentData)
+			}
+		} catch (err) {
+			this.logger.error(`Error fetching recent data for subscription: ${err.message}`)
+		}
+
 		this.logger.log(`Client ${client.id} subscribed to ${roomName}`)
 	}
 
@@ -113,11 +126,11 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 	@SubscribeMessage('unsubscribe')
 	handleUnsubscribe(
 		@ConnectedSocket() client: Socket,
-		@MessageBody() data: { source: string; options?: any }
+		@MessageBody() data: { source: string; filter?: any }
 	) {
 		if (this.protectedSources.includes(data.source?.toLowerCase())) return
 
-		const roomName = this.realtimeService.buildRoomName(data.source, data.options)
+		const roomName = this.realtimeService.buildRoomName(data.source, data.filter)
 		client.leave(roomName)
 		this.logger.log(`Client ${client.id} unsubscribed from ${roomName}`)
 	}

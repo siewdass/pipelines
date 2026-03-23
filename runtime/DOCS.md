@@ -42,18 +42,30 @@ Configuración mínima obligatoria para el funcionamiento de la **Base de Datos*
 
 ---
 
-## 📊 2. Base de Datos (`Database`)
-*Subyacente: **TanStack Query / Axios***. Gestión de fuentes de datos.
+## 📊 2. Base de Datos & Tiempo Real (`Database`)
+*Subyacente: **TanStack Query / Socket.io***. Gestión de fuentes de datos estáticas y continuas. Todas las mutaciones propagan cambios en tiempo real a los demás clientes conectados de forma automática.
 
 ```javascript
-const { useInquiry, useMutation } = window.Database;
+const { useInquiry, useMutation, useSubscription, usePublish } = window.Database;
 
-// CONSULTAS (Lista con paginación)
+// CONSULTAS (Lista con paginación HTTP. Se auto-recarga via Socket 'refresh:source')
 const [items, loading, pagination] = useInquiry("inventory", "retrieve", { status: 'active' }, { limit: 10 });
 
-// MODIFICACIONES (Guardar)
-const [save, saving] = useMutation("inventory", "upsert");
+// MODIFICACIONES (Guardar HTTP. Lanza auto-recarga a todo el proyecto al terminar)
+const [save, saving] = useMutation("inventory", "upsert", {}, ["inventory"]);
 save({ id: "123", stock: 100 }, (res) => res.success && alert("Guardado"));
+
+// -----------------------------------------
+// FLUJOS DIRECTOS VÍA SOCKET (CHAT / GPS)
+// -----------------------------------------
+
+// SUSCRIPCIÓN (Recibe un flujo de estado continuo, sin latencia HTTP)
+// options sirve para filtrar (se une a una sala específica del servidor)
+const chatMessages = useSubscription("chat", { id: "general" });
+
+// PUBLICACIÓN (Emite a un stream específico sin refrescar cachés de inquiry)
+const publish = usePublish("chat", { id: "general" });
+publish({ text: "¡Hola sala!", from: "Usuario1" });
 ```
 
 ---

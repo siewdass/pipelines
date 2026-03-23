@@ -64,10 +64,28 @@ export class RealtimeService {
 		}
 	}
 
-	buildRoomName(source: string, options?: any): string {
-		// If options has a specific ID (like channelId), use it. 
+	async fetchRecent(db: any, source: string, roomName: string, limit: number = 50): Promise<any[]> {
+		if (!source) return []
+		try {
+			const col = db.collection(source)
+			const recent = await col
+				.find({ _roomId: roomName })
+				.sort({ _createdAt: -1 })
+				.limit(limit)
+				.toArray()
+			
+			// Devolvemos el array en orden cronológico inverso (para que el cliente reciba lo más viejo primero y lo nuevo al final)
+			return recent.reverse()
+		} catch (error) {
+			this.logger.error(`Error in fetchRecent for ${source}: ${error.message}`)
+			return []
+		}
+	}
+
+	buildRoomName(source: string, filter?: any): string {
+		// If filter has a specific ID (like channelId), use it. 
 		// Otherwise, use the source name as the base room.
-		if (options?.id) return `${source}:${options.id}`
+		if (filter?.id) return `${source}:${filter.id}`
 		return source
 	}
 }

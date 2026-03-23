@@ -33,12 +33,14 @@
 
 ---
 
-## 📊 2. Datos (`window.Database`)
-Maneja operaciones asíncronas vía **TanStack Query**.
-*Subyacente: **Axios (baseURL fijo: http://localhost:8000)***.
+## 📊 2. Datos & Realtime (`window.Database`)
+Maneja operaciones asíncronas vía **TanStack Query** y Poda Continua vía **Socket.io**.
+*Subyacentes: **Axios (HTTP)** y **WebSockets***.
 
-- **Consultas**: `useInquiry(source, type, output, options)`
-- **Mutaciones**: `useMutation(source, type, options)`
+- **Consultas (HTTP)**: `useInquiry(source, type, output, options)`
+- **Mutaciones (HTTP)**: `useMutation(source, type, options, refreshKeys)` *(Lanza auto-recarga global tras el éxito)*
+- **Suscripciones (Socket)**: `useSubscription(source, options)` *(Recibe data al instante)*
+- **Publicaciones (Socket)**: `usePublish(source, options)` *(Emite data al instante usando Ventanas Deslizantes)*
 
 ---
 

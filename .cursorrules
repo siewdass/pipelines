@@ -32,4 +32,4 @@
 ## 📂 Data & Backend
 - **Validación**: Usa esquemas de **Zod** para validar datos tanto en frontend como en el backend.
 - **API**: Mantén los endpoints centralizados en archivos de `constants/`.
-- **Documentación**: Documenta funciones públicas y módulos exportados detalladamente en Inglés.
+- **Documentación Continua**: Documenta funciones públicas y módulos exportados detalladamente en Inglés. **REGLA ESTRICTA**: Siempre que modifiques o añadas nuevo código, debes actualizar obligatoriamente su documentación (JSDoc, comentarios, etc.) en el mismo paso. La documentación debe evolucionar en tiempo real conforme se avanza con el desarrollo.
