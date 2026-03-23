@@ -11,6 +11,7 @@ import { Server, Socket } from 'socket.io'
 import { Logger } from '@nestjs/common'
 import * as jwt from 'jsonwebtoken'
 import { RealtimeService } from './realtime.service'
+import { ProjectService } from '../project/project.service'
 
 @WebSocketGateway({
 	cors: {
@@ -23,7 +24,12 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
 	private logger: Logger = new Logger('RealtimeGateway')
 
-	constructor(private readonly realtimeService: RealtimeService) {}
+	constructor(
+		private readonly realtimeService: RealtimeService,
+		private readonly projectService: ProjectService
+	) {}
+
+	private readonly protectedSources = [ 'user', 'users', 'role', 'roles', 'permission', 'permissions' ]
 
 	// JWT Secrets from environment
 	private readonly accountSecret = process.env.ACCOUNT_JWT_SECRET || 'dev-account-secret'
@@ -90,6 +96,11 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 		@ConnectedSocket() client: Socket,
 		@MessageBody() data: { source: string; options?: any }
 	) {
+		if (this.protectedSources.includes(data.source?.toLowerCase())) {
+			this.logger.warn(`Client ${client.id} blocked from subscribing to protected source: ${data.source}`)
+			return
+		}
+
 		// Example: room:chat:general or room:fleet:camion_1
 		const roomName = this.realtimeService.buildRoomName(data.source, data.options)
 		client.join(roomName)
@@ -104,6 +115,8 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 		@ConnectedSocket() client: Socket,
 		@MessageBody() data: { source: string; options?: any }
 	) {
+		if (this.protectedSources.includes(data.source?.toLowerCase())) return
+
 		const roomName = this.realtimeService.buildRoomName(data.source, data.options)
 		client.leave(roomName)
 		this.logger.log(`Client ${client.id} unsubscribed from ${roomName}`)
@@ -119,31 +132,32 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 		@MessageBody() payload: { source: string; input: any; options?: any }
 	) {
 		const { source, input, options } = payload
+		
+		if (this.protectedSources.includes(source?.toLowerCase())) {
+			this.logger.warn(`Client ${client.id} blocked from publishing to protected source: ${source}`)
+			return
+		}
+
 		const projectId = client.data.projectId
 		const userId = client.data.userId
 
 		// 1. Determinar el destino / Sala
-		let roomName = ''
-		if (source === 'user' && options?.to) {
-			roomName = `user:${options.to}`
-		} else {
-			roomName = this.realtimeService.buildRoomName(source, options)
-		}
+		const roomName = this.realtimeService.buildRoomName(source, options)
 
 		// 2. Persistencia y Poda (Sliding Window) 
-		// Si es una señal muy volátil (sin source o con flag explicit), saltaría. Pero por defecto, publicamos en "source".
-		const persistedData = source 
-			? await this.realtimeService.saveAndPrune(projectId, source, roomName, input, userId) 
-			: input
-
-		// 3. Emisión directa inteligente
-		if (source === 'user' && options?.to) {
-			this.server.to(roomName).emit('user', persistedData)
-			this.logger.log(`User ${userId} published DM to ${options.to}`)
-		} else {
-			this.server.to(roomName).emit(source, persistedData)
-			this.logger.log(`Client ${client.id} published to ${roomName}`)
+		let persistedData = input
+		if (source) {
+			try {
+				const { db } = await this.projectService.getProjectContext(projectId)
+				persistedData = await this.realtimeService.saveAndPrune(db, source, roomName, input, userId) 
+			} catch (err) {
+				this.logger.error(`Could not connect to project database: ${err.message}`)
+			}
 		}
+
+		// 3. Emisión
+		this.server.to(roomName).emit(source, persistedData)
+		this.logger.log(`Client ${client.id} published to ${roomName}`)
 	}
 
 	/**

@@ -1,12 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { ProjectService } from '../project/project.service'
-import { Types } from 'mongoose'
+import { v4 as uuidv4 } from 'uuid'
 
 @Injectable()
 export class RealtimeService {
 	private readonly logger = new Logger(RealtimeService.name)
 
-	constructor(private readonly projectService: ProjectService) {}
+	constructor() {}
 
 	/**
 	 * Guarda el evento publicado en la colección (source) del proyecto y 
@@ -14,7 +13,7 @@ export class RealtimeService {
 	 * que excedan un límite seguro (ej. 1000).
 	 */
 	async saveAndPrune(
-		projectId: string,
+		db: any,
 		source: string,
 		roomName: string,
 		input: any,
@@ -23,11 +22,9 @@ export class RealtimeService {
 		if (!source) return input
 
 		try {
-			const context = await this.projectService.getProjectContext(projectId)
-			const db = context.db
 
-			// Creamos un _id de string, común en la arquitectura de Pipelines
-			const docId = new Types.ObjectId().toString()
+			// Creamos un _id con UUID, común en la arquitectura de Pipelines
+			const docId = uuidv4()
 
 			// Documento con metadatos de ecosistema
 			const doc = {
