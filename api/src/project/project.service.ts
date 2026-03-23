@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
 import * as mongoose from 'mongoose'
-import { clc } from '../utils/colors'
 
 @Injectable()
 export class ProjectService {
@@ -16,19 +15,19 @@ export class ProjectService {
 		// Lazy-init the base connection if another module called us before onModuleInit finished
 		if (!this.baseConnection) {
 			const uri = process.env.MONGO_URI || 'mongodb://localhost:27017'
-			this.logger.log(`${clc.cyan('[PROJECT SERVICE]')} Initializing base connection to: ${clc.yellow(uri)}`)
+			this.logger.log(`[PROJECT SERVICE] Initializing base connection to: ${uri}`)
 			this.baseConnection = mongoose.createConnection(uri)
 			await (this.baseConnection as any).asPromise()
-			this.logger.log(`${clc.green('[PROJECT SERVICE]')} Base connection established.`)
+			this.logger.log(`[PROJECT SERVICE] Base connection established.`)
 		}
 		
-		this.logger.log(`${clc.blue('[PROJECT SERVICE]')} Requesting context for: ${clc.magenta(projectId)}`)
+		this.logger.log(`[PROJECT SERVICE] Requesting context for: ${projectId}`)
 		const connection = this.baseConnection.useDb(projectId, { useCache: true })
 		if (connection.readyState !== 1) {
-			this.logger.log(`${clc.gray('[PROJECT SERVICE]')} Waiting for connection to ${projectId} to be ready...`)
+			this.logger.log(`[PROJECT SERVICE] Waiting for connection to ${projectId} to be ready...`)
 			await (connection as any).asPromise()
 		}
-		this.logger.log(`${clc.green('[PROJECT SERVICE]')} Connection ready: ${clc.blue(String(connection.db?.databaseName))}`)
+		this.logger.log(`[PROJECT SERVICE] Connection ready: ${String(connection.db?.databaseName)}`)
 		
 		return {
 			connection,

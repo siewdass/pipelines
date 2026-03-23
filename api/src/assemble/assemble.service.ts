@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { ProjectService } from '../project/project.service'
-import { clc } from '../utils/colors'
 import { REACT_SKILLS_PROMPT } from './assemble.prompts'
 
 @Injectable()
@@ -17,9 +16,9 @@ export class AssembleService {
 		const apiKey = this.configService.get<string>('GEMINI_API_KEY')
 		if (apiKey) {
 			this.genAI = new GoogleGenerativeAI(apiKey)
-			this.logger.log(`${clc.green('Gemini AI initialized')}`)
+			this.logger.log(`Gemini AI initialized`)
 		} else {
-			this.logger.warn(`${clc.red('GEMINI_API_KEY is not defined')} in environment variables. Gemini features will be disabled.`)
+			this.logger.warn(`GEMINI_API_KEY is not defined in environment variables. Gemini features will be disabled.`)
 		}
 	}
 
@@ -47,12 +46,12 @@ export class AssembleService {
 				User Request: ${prompt}
 			`
 
-			this.logger.log(`Generating context-aware content for project: ${clc.yellow(projectId)}`)
+			this.logger.log(`Generating context-aware content for project: ${projectId}`)
 			const result = await model.generateContent(contextPrompt)
 			const response = await result.response
 			return response.text()
 		} catch (error) {
-			this.logger.error(`${clc.red('Error generating content from Gemini:')} ${error.message}`)
+			this.logger.error(`Error generating content from Gemini: ${error.message}`)
 			throw error
 		}
 	}

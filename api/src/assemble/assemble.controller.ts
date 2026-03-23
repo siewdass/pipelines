@@ -1,6 +1,5 @@
 import { Controller, Post, Body, Logger } from '@nestjs/common'
 import { AssembleService } from './assemble.service'
-import { clc } from '../utils/colors'
 
 @Controller('assemble')
 export class AssembleController {
@@ -13,8 +12,8 @@ export class AssembleController {
 		@Body('prompt') prompt: string,
 		@Body('projectId') projectId: string
 	) {
-		this.logger.log(`Received generation request for project: ${clc.yellow(projectId)}`)
-		this.logger.log(`Prompt: ${clc.cyan(prompt?.substring(0, 50))}...`)
+		this.logger.log(`Received generation request for project: ${projectId}`)
+		this.logger.log(`Prompt: ${prompt?.substring(0, 50)}...`)
 		const response = await this.assembleService.generateText(prompt, projectId)
 		return { response }
 	}

@@ -8,7 +8,6 @@ import { RetrieveRequestDoc, RetrieveResponseDoc } from './inquiry.doc'
 import { UserAuthGuard } from '../authorization/user.guard'
 import { ProjectGuard } from '../project/project.guard'
 import { SourceGuard } from '../authorization/source.guard'
-import { clc } from '../utils/colors'
 
 @Controller('inquiry')
 @UseGuards(ProjectGuard, UserAuthGuard, SourceGuard)
@@ -24,11 +23,11 @@ export class InquiryController {
 	async index(@Body() { source, output, options }: InquiryRequestDto, @Req() req: Request & { projectId: string }
 	): Promise<InquiryResponseDto> {
 		const projectId = req.projectId
-		this.logger.log(clc.cyan(clc.bold('--- Inquiry Index ---')))
-		this.logger.log(`${clc.cyan('Source:')} ${clc.yellow(source)}`)
+		this.logger.log('--- Inquiry Index ---')
+		this.logger.log(`Source: ${source}`)
 
 		const { db } = await this.projectService.getProjectContext(projectId)
-		this.logger.log(`${clc.cyan('Database:')} ${clc.blue(db.databaseName)}`)
+		this.logger.log(`Database: ${db.databaseName}`)
 
 		const col = db.collection(source)
 		// Use the filter parsed from options (getOptions) to find a single document
@@ -56,12 +55,12 @@ export class InquiryController {
 	@Post('retrieve')
 	async retrieve(@Body() { source, output, options }: InquiryRequestDto, @Req() req: Request & { projectId: string }): Promise<InquiryResponseDto> {
 		const projectId = req.projectId
-		this.logger.log(clc.cyan(clc.bold('--- Inquiry Retrieve ---')))
-		this.logger.log(`${clc.cyan('Source:')} ${clc.yellow(source)}`)
-		this.logger.log(`${clc.cyan('ProjectId:')} ${clc.magenta(projectId)}`)
+		this.logger.log('--- Inquiry Retrieve ---')
+		this.logger.log(`Source: ${source}`)
+		this.logger.log(`ProjectId: ${projectId}`)
 
 		const { db } = await this.projectService.getProjectContext(projectId)
-		this.logger.log(`${clc.cyan('Database:')} ${clc.blue(db.databaseName)}`)
+		this.logger.log(`Database: ${db.databaseName}`)
 
 		const col = db.collection(source)
 		const { filter, sort, pagination } = this.service.getOptions(options ?? {})

@@ -1,21 +1,20 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Db, Doc } from '../mutation/mutation.type'
-import { clc } from '../utils/colors'
 
 @Injectable()
 export class InquiryService {
 	private readonly logger = new Logger(InquiryService.name)
 
 	async upload(doc: Doc, nestedProjection: Doc, db: Db, source: string, options: Doc): Promise<void> {
-		this.logger.log(`${clc.blue('[INQUIRY]')} Starting upload for ${clc.yellow(source)}. ${clc.gray(`ParentId: ${doc._id || doc.id}`)}`)
+		this.logger.log(`[INQUIRY] Starting upload for ${source}. ${`ParentId: ${doc._id || doc.id}`}`)
 		for (const [key, value] of Object.entries(nestedProjection)) {
 			if (!this.isRecord(value)) continue
 			
 			
-			this.logger.log(`${clc.gray('[INQUIRY]')} Processing nested key: ${clc.cyan(key)}`)
+			this.logger.log(`[INQUIRY] Processing nested key: ${key}`)
 			// Initialize the field in the document if it's missing (needed for expansion)
 			if (doc[key] === undefined) {
-				this.logger.log(`${clc.gray('[INQUIRY]')} Initializing key ${key} to null in doc`)
+				this.logger.log(`[INQUIRY] Initializing key ${key} to null in doc`)
 				doc[key] = null
 			}
 
@@ -30,16 +29,16 @@ export class InquiryService {
 					const pivotCollection = `${source}_${target}`
 					const pivotCol = db.collection(pivotCollection)
 
-					this.logger.log(`${clc.blue('[INQUIRY]')} Many-to-many: ${clc.yellow(source)} -> ${clc.yellow(target)} via ${clc.cyan(pivotCollection)}`)
+					this.logger.log(`[INQUIRY] Many-to-many: ${source} -> ${target} via ${pivotCollection}`)
 					const collInfo = await db.listCollections({ name: pivotCollection }).toArray()
 					if (collInfo.length === 0) {
-						this.logger.log(`${clc.yellow('[INQUIRY]')} Pivot ${pivotCollection} missing`)
+						this.logger.log(`[INQUIRY] Pivot ${pivotCollection} missing`)
 						doc[key] = []
 						continue
 					}
 
 					const pivotDocs = await pivotCol.find({ [source]: parentId }).toArray()
-					this.logger.log(`${clc.gray('[INQUIRY]')} Found ${clc.bold(String(pivotDocs.length))} relations for ${parentId}`)
+					this.logger.log(`[INQUIRY] Found ${String(pivotDocs.length)} relations for ${parentId}`)
 					const childIds = pivotDocs.map((p) => (p as Doc)[target]).filter(Boolean)
 					let childDocs: unknown[] = []
 					if (childIds.length) {
@@ -47,7 +46,7 @@ export class InquiryService {
 						let cursor = childCol.find(q, { projection: childProj }).sort(sort ?? {})
 						if (list.limit) cursor = cursor.limit(list.limit)
 						childDocs = await cursor.toArray()
-						this.logger.log(`${clc.gray('[INQUIRY]')} Fetched ${clc.bold(String(childDocs.length))} children from ${clc.cyan(key)}`)
+						this.logger.log(`[INQUIRY] Fetched ${String(childDocs.length)} children from ${key}`)
 					}
 
 					for (const childDoc of childDocs) {
@@ -58,7 +57,7 @@ export class InquiryService {
 					}
 					doc[key] = childDocs
 				} else {
-					this.logger.log(`${clc.blue('[INQUIRY]')} One-to-many lookup for ${clc.cyan(key)}`)
+					this.logger.log(`[INQUIRY] One-to-many lookup for ${key}`)
 					const q: any = { ...filter, [source]: doc._id || doc.id }
 					let cursor = childCol.find(q, { projection: childProj }).sort(sort ?? {})
 					if (list.limit) cursor = cursor.limit(list.limit)
@@ -73,7 +72,7 @@ export class InquiryService {
 					doc[key] = childDocs
 				}
 			} else {
-				this.logger.log(`${clc.blue('[INQUIRY]')} One-to-one lookup for ${clc.cyan(key)}`)
+				this.logger.log(`[INQUIRY] One-to-one lookup for ${key}`)
 				const q: any = { ...filter, [source]: doc._id || doc.id }
 				const childDoc = await childCol.findOne(q, { projection: childProj, sort: sort ?? {} })
 				if (childDoc) {
