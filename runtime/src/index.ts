@@ -3,14 +3,14 @@ import ReactDOM from 'react-dom/client';
 import * as ReactQuery from '@tanstack/react-query';
 import * as ReactRouter from 'react-router';
 
-// Library (Logic, state, and providers)
-import * as database from './library/database';
-import * as authentication from './library/authentication';
+// Network & Core Logic
+import * as NetworkBase from './network';
 import { useForm } from './library/form';
 import { Main } from './library';
 import * as theme from './library/theme';
 import * as sidebar from './library/sidebar';
 import * as router from './library/router';
+import { Breadcrumbs } from './components/breadcrumbs';
 
 // Components (Visual)
 import * as dropdown from './components/dropdown';
@@ -34,39 +34,54 @@ import * as Fa from "react-icons/fa6";
 
 export const reacticons = Fa;
 
-// Expose to window object for "CDN-like" usage
+// --- New Unified Architecture ---
+
+// 1. Network: Data & Authentication
+const Network = {
+	...NetworkBase,
+};
+
+// 2. Interface: Visual Components & Feedback
+const Interface = {
+	Form: { useForm },
+	Theme: theme,
+	Sidebar: sidebar,
+	Icons: reacticons,
+	Dropdown: dropdown,
+	Table: table,
+	Dialog: dialog,
+	Notification: notification,
+	Breadcrumbs: Breadcrumbs,
+	Tabs: Tabs,
+	Tooltip: { Tooltip },
+	Accordion: Accordion,
+	Motion: Motion,
+};
+
+// 3. View: Routing Engine
+const View = {
+	Router: router,
+};
+
+// 4. Utils: Helpers & Hooks
+const Utils = {
+	cn,
+	Hooks: { ...useHooks, useHotkeys },
+	Date: dateFns,
+};
+
+// --- Expose to Window ---
+
+(window as any).Network = Network;
+(window as any).Interface = Interface;
+(window as any).View = View;
+(window as any).Utils = Utils;
+
+// Core React Helpers
 (window as any).React = React;
 (window as any).ReactDOM = ReactDOM;
 (window as any).ReactQuery = ReactQuery;
 (window as any).ReactRouter = ReactRouter;
-
-// Library modules
-(window as any).Database = database;
-(window as any).Authentication = authentication;
-(window as any).Form = { useForm };
-(window as any).Icons = reacticons;
-(window as any).Theme = theme;
-(window as any).Sidebar = sidebar;
-(window as any).Router = router;
-
-// Components modules
-(window as any).Dropdown = dropdown;
-(window as any).Table = table;
-(window as any).Dialog = dialog;
-(window as any).Notification = notification;
-
-// UI Extra
-(window as any).Tabs = Tabs;
-(window as any).Tooltip = { Tooltip };
-(window as any).Accordion = Accordion;
-(window as any).Motion = Motion;
-
-// Logic Extra
-(window as any).Hooks = { ...useHooks, useHotkeys };
-(window as any).Utils = { cn };
-(window as any).DateFns = dateFns;
-
-// Main Wrapper
 (window as any).Main = Main;
 
-console.log('Pipelines Runtime Loaded (Router-Driven Metadata Ready)');
+console.log('Pipelines Runtime Loaded (Network, Interface & View Ready)');

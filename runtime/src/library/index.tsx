@@ -1,7 +1,7 @@
 import React from 'react';
 import { HashRouter } from 'react-router';
 import { HelmetProvider } from 'react-helmet-async';
-import { DataProvider } from './database';
+import { DataProvider } from '../network';
 import { ThemeProvider } from './theme';
 import { NotificationProvider } from '../components/notification';
 import { SidebarProvider } from './sidebar';

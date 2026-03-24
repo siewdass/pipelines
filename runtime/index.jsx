@@ -1,0 +1,187 @@
+const { Main } = window;
+const { useAuthentication, useInquiry, useMutation, useSubscription, usePublish } = window.Network;
+const { useTheme } = window.Interface.Theme;
+const { useToast } = window.Interface.Notification;
+const { useForm } = window.Interface.Form;
+const { useRouter, useRoutes } = window.View.Router;
+const { FaArrowLeft, FaSun, FaMoon, FaUsers, FaDiagramProject, FaCheckCircle, FaTriangleExclamation, FaBolt } = window.Interface.Icons;
+
+/**
+ * App: Definición centralizada de rutas usando useRoutes.
+ */
+const App = () => {
+    const { isLogged } = useAuthentication();
+    
+    const routes = useRoutes([
+        { path: "/", element: <Landing /> },
+        { path: "/login", element: <AuthPage type="login" /> },
+        { path: "/signup", element: <AuthPage type="signup" /> },
+        { path: "/dashboard", element: <Dashboard /> }
+    ]);
+
+    return routes;
+};
+
+const Landing = () => {
+    const { navigate } = useRouter();
+    const { isLogged } = useAuthentication();
+
+    React.useEffect(() => {
+        if (isLogged) navigate('/dashboard', { replace: true });
+    }, [isLogged]);
+
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-slate-900 transition-colors px-4">
+            <div className="max-w-4xl text-center">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-xs font-black mb-8 border border-blue-100 dark:border-blue-800 uppercase tracking-widest">
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                    </span>
+                    Plataforma Unificada
+                </div>
+                <h1 className="text-6xl md:text-8xl font-black text-slate-900 dark:text-white mb-6 tracking-tighter leading-none">
+                    Tus <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Pipelines</span> <br/>en un solo lugar.
+                </h1>
+                <p className="text-xl md:text-2xl text-slate-500 dark:text-slate-400 font-medium mb-12 max-w-2xl mx-auto tracking-tight">
+                    Arquitectura modular y reactiva para control total de tus flujos de datos.
+                </p>
+                <div className="flex flex-col md:flex-row gap-4 justify-center">
+                    <button onClick={() => navigate('/login')} className="px-10 py-5 bg-slate-900 dark:bg-blue-600 text-white rounded-3xl font-bold text-lg hover:opacity-90 transition-all shadow-2xl active:scale-95 leading-none">
+                        Comenzar ahora
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const AuthPage = ({ type }) => {
+    const { signin, signup, isLogged } = useAuthentication();
+    const { navigate } = useRouter();
+    const { show } = useToast();
+    const [loading, setLoading] = React.useState(false);
+
+    React.useEffect(() => {
+        if (isLogged) navigate('/dashboard', { replace: true });
+    }, [isLogged]);
+
+    const schema = React.useMemo(() => ({
+        type: "vertical",
+        items: [
+            ...(type === 'signup' ? [{ name: "name", type: "string", label: "Nombre completo", required: true }] : []),
+            { name: "email", type: "string", label: "Email", required: true, pattern: "email" },
+            { name: "password", type: "string", label: "Contraseña", required: true, pattern: "password" }
+        ]
+    }), [type]);
+
+    const [submit, AuthForm, values, isValid] = useForm(schema);
+
+    const handleAuth = async () => {
+        setLoading(true);
+        submit(async (data) => {
+            try {
+                if (type === 'login') {
+                    await signin(data.email, data.password);
+                    show("Acceso concedido", "success");
+                } else {
+                    await signup(data.email, data.password, data.name);
+                    show("Cuenta creada", "success");
+                }
+                navigate('/dashboard');
+            } catch (err) {
+                show(err.message, "error");
+            } finally {
+                setLoading(false);
+            }
+        });
+    };
+
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-slate-50 dark:bg-slate-900 transition-colors">
+            <div className="w-full max-w-sm">
+                <button onClick={() => navigate('/')} className="flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white mb-8 font-black transition-colors uppercase text-xs tracking-widest">
+                    <FaArrowLeft /> Volver al Inicio
+                </button>
+                <div className="bg-white dark:bg-slate-800 p-10 rounded-[40px] shadow-2xl border border-slate-100 dark:border-slate-700">
+                    <h2 className="text-3xl font-black mb-1 dark:text-white">
+                        {type === 'login' ? 'Bienvenido' : 'Únete'}
+                    </h2>
+                    <p className="text-slate-400 font-bold mb-10 text-sm">
+                        {type === 'login' ? 'Ingresa tus credenciales.' : 'Crea tu cuenta gratis.'}
+                    </p>
+                    
+                    <AuthForm initial={type === 'login' ? { email: 'admin@pipelines.com' } : {}} />
+
+                    <button 
+                        onClick={handleAuth}
+                        disabled={loading || !isValid}
+                        className="w-full py-5 mt-6 bg-blue-600 text-white rounded-3xl font-bold shadow-xl active:scale-95 disabled:opacity-50 transition-all leading-none"
+                    >
+                        {loading ? 'Procesando...' : (type === 'login' ? 'Entrar' : 'Registrarse')}
+                    </button>
+
+                    <div className="mt-8 text-center">
+                        <button onClick={() => navigate(type === 'login' ? '/signup' : '/login')} className="text-sm font-black text-blue-600 hover:underline">
+                            {type === 'login' ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Entra'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const Dashboard = () => {
+    const { isLogged, signout } = useAuthentication();
+    const { navigate } = useRouter();
+    const { theme, toggleTheme } = useTheme();
+
+    React.useEffect(() => {
+        if (!isLogged) navigate('/login', { replace: true });
+    }, [isLogged]);
+
+    if (!isLogged) return null;
+
+    return (
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors p-8">
+            <header className="flex justify-between items-center mb-12 max-w-7xl mx-auto">
+                <div>
+                    <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">Panel Central</h2>
+                    <p className="text-slate-500 dark:text-slate-400 font-bold">Resumen operativo de tus flujos.</p>
+                </div>
+                <div className="flex gap-4">
+                    <button onClick={toggleTheme} className="p-4 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-3xl shadow-sm hover:shadow-md transition-all">
+                        {theme === 'dark' ? <FaSun className="text-yellow-500" /> : <FaMoon />}
+                    </button>
+                    <button onClick={() => { signout(); navigate('/'); }} className="px-6 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-3xl font-black text-xs uppercase tracking-widest text-red-500 hover:bg-red-50 transition-all">
+                        Desconexión
+                    </button>
+                </div>
+            </header>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-7xl mx-auto">
+                {[{t:'Usuarios',v:'1,248',i:FaUsers},{t:'Pipelines',v:'24',i:FaDiagramProject},{t:'Éxito',v:'99.4%',i:FaCheckCircle},{t:'Alertas',v:'0',i:FaTriangleExclamation}].map((s,i) => (
+                    <div key={i} className="bg-white dark:bg-slate-800 p-8 rounded-[40px] border border-slate-100 dark:border-slate-700 shadow-xl transition-all hover:-translate-y-1">
+                        <div className="w-10 h-10 bg-slate-50 dark:bg-slate-900/30 rounded-2xl flex items-center justify-center text-slate-400 mb-6 font-bold">
+                            {s.i && <s.i className="w-5 h-5" />}
+                        </div>
+                        <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest mb-4">{s.t}</h3>
+                        <div className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">{s.v}</div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="mt-12 max-w-7xl mx-auto">
+                <div className="flex items-center gap-3 mb-8 px-2">
+                    <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-500/20">
+                        <FaBolt className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">Eventos en Tiempo Real</h3>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const MainWrapper = () => <Main><App /></Main>;
+window.ReactDOM.createRoot(document.getElementById('root')).render(<MainWrapper />);

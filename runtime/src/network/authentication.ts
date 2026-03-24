@@ -1,15 +1,18 @@
 import { create } from 'zustand';
-import { api, reconnect } from './api';
+import { api, reconnect } from './';
 
-interface AuthState {
+interface AuthenticationState {
 	isLogged: boolean;
-	loggedUser?: { [key: string]: any };
+	loggedUser?: Record<string, unknown>;
 	signup: (email: string, password: string, name: string) => Promise<void>;
 	signin: (email: string, password: string) => Promise<void>;
 	signout: () => void;
 }
 
-export const useAuth = create<AuthState>((set) => ({
+/**
+ * Global state store for identity management.
+ */
+export const useAuthentication = create<AuthenticationState>((set) => ({
 	isLogged: !!window.localStorage.getItem('token'),
 	loggedUser: undefined,
 	signup: async (email, password, name) => {
@@ -24,8 +27,6 @@ export const useAuth = create<AuthState>((set) => ({
 			const token = response.data.token;
 			window.localStorage.setItem('token', token);
 			set({ isLogged: true, loggedUser: { email } });
-			
-			// Reconnect socket with the new user identity
 			reconnect(token);
 		} else {
 			throw new Error(response.data.message || "Login failed"); 
@@ -34,8 +35,6 @@ export const useAuth = create<AuthState>((set) => ({
 	signout: () => {
 		window.localStorage.removeItem('token');
 		set({ isLogged: false, loggedUser: undefined });
-		
-		// Reconnect socket to clear user identity (Anonymous mode)
 		reconnect(null);
 	},
 }));

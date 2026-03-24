@@ -22,8 +22,14 @@
   };
 
   const { Main } = window;
+  const { Breadcrumbs } = window.Interface;
   
-  const App = () => (<div className="p-10 text-4xl font-black">Ready</div>);
+  const App = () => (
+    <div className="p-10">
+      <Breadcrumbs />
+      <h1 className="text-4xl font-black mt-4">Ready</h1>
+    </div>
+  );
 
   ReactDOM.createRoot(document.getElementById('root')).render(
     <Main><App /></Main>
@@ -33,59 +39,46 @@
 
 ---
 
-## 📊 2. Datos & Realtime (`window.Database`)
-Maneja operaciones asíncronas vía **TanStack Query** y Poda Continua vía **Socket.io**.
-*Subyacentes: **Axios (HTTP)** y **WebSockets***.
+## 📊 2. Red & Datos (`window.Network`)
+Maneja operaciones asíncronas HTTP e intercambio de datos continuo vía WebSockets.
 
-- **Consultas (HTTP)**: `useInquiry(source, type, output, options)`
-- **Mutaciones (HTTP)**: `useMutation(source, type, options, refreshKeys)` *(Lanza auto-recarga global tras el éxito)*
-- **Suscripciones (Socket)**: `useSubscription(source, options)` *(Recibe data al instante)*
-- **Publicaciones (Socket)**: `usePublish(source, options)` *(Emite data al instante usando Ventanas Deslizantes)*
+### 🔌 Datos
+- **Consultas (HTTP)**: `useInquiry({ source, type, output, options })`
+- **Mutaciones (HTTP)**: `useMutation({ source, type, options, refresh })`
+- **Suscripciones (Socket)**: `useSubscription({ source, filter })`
+- **Publicaciones (Socket)**: `usePublish({ source, options })`
 
----
-
-## 🔐 3. Identidad (`window.Authentication`)
-Estado global de sesión vía **Zustand**.
-
-- **Hook**: `useAuth() -> { isLogged, signin, signup, signout, loggedUser }`
-- **Registro**: `signup({ email, password, name })`
-- **Acceso**: `signin(email, password)`
-- **Salida**: `signout()`
+### 🔐 Identidad
+- **Hook**: `useAuthentication() -> { isLogged, signin, signup, signout, loggedUser }`
+- **Acceso Directo**: `signin(email, password)`, `signup({ email, password, name })`, `signout()`
 
 ---
 
-## 🗺️ 4. Navegación & SEO (`window.Router`)
-Gestión de rutas con **Animaciones Automáticas** y **Metadatos**.
-*Subyacente: **React Router 7**, **Framer Motion**, **React Helmet Async***.
+## 🗺️ 3. Rutas & Jerarquía (`window.View`)
+Gestión de navegación con **Metadatos** y **Animaciones**.
 
-- **Configuración de Rutas Plana**:
-  ```javascript
-  const routes = window.Router.useRoutes([
-    { 
-      path: "/", 
-      element: <Home />, 
-      title: "Inicio",           // Título automático en el navegador
-      description: "Dashboard" 
-    },
-    { path: "/login", element: <Login />, title: "Acceso" }
-  ]);
-  ```
+- **Router**: `window.View.Router.useRoutes([...])` con soporte para `{ path, element, title, description }`.
+- **Navegación Local**: `window.Interface.Breadcrumbs` (Automático).
 
 ---
 
-## 🛠️ 5. UI Estructural e Interactiva
-- **Tabs**: `window.Tabs` (Tabs, TabList, Tab, TabPanel).
-- **Tooltip**: `window.Tooltip` (data-tooltip-id).
-- **Accordion**: `window.Accordion`.
-- **Motion**: `window.Motion`.
+## 🛠️ 4. Interfaz & Componentes (`window.Interface`)
+- **Formularios**: `useForm` (Generación JSON Forms).
+- **Control Visual**: `Breadcrumbs`, `Sidebar`, `Theme`.
+- **Widgets**: `Tabs`, `Tooltip`, `Accordion`, `Motion`.
+- **Feedback**: `Notification` (Toasts).
+- **UI Elements**: `Dropdown`, `Table`, `Dialog`.
+- **Iconos**: `Icons` (FontAwesome 6).
 
 ---
 
-## ⚡ 6. Iconos y Estilos
-- **window.Icons**: Acceso completo a **FontAwesome 6**.
-- **window.Utils**: `cn(...classes)` (clsx + tailwind-merge).
+## ⚡ 5. Utilidades y Helpers
+- **window.Utils**: `cn(...classes)` y `Date` (date-fns).
 
 ---
 
-## 📋 7. Formularios (`window.Form`)
-Generación dinámica basada en **JSON Forms**.
+## 📋 6. Resumen de Namespaces
+- **Network**: Todo lo que requiere conexión (Data & Auth).
+- **Interface**: Todo lo visual y componentes interactivos.
+- **View**: Todo lo relacionado a la ubicación y vista actual (Router).
+- **Utils**: Lógica pura y utilidades de estilo.

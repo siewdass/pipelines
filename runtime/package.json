@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "esbuild src/index.ts --bundle --minify --outfile=dist/runtime.js --define:process.env.NODE_ENV='\"production\"' --define:import.meta.env=\"{}\" --loader:.css=empty",
+    "test": "pnpm build && esbuild index.jsx --outfile=dist/index.js --format=iife --loader:.jsx=jsx && cp index.html dist/index.html && npx -y serve ./dist -l 3000",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -33,6 +34,7 @@
     "socket.io-client": "^4.8.3",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
+    "zod": "^4.3.6",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

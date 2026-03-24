@@ -28,6 +28,9 @@ Configuración mínima obligatoria para el funcionamiento de la **Base de Datos*
         };
 
         const { Main } = window;
+        const { useAuthentication } = Network;
+        const { useRouter, useRoutes } = View.Router;
+
         const App = () => (
             <div className="p-20 text-center">
                 <h1 className="text-4xl font-black">¡Hola Pipelines!</h1>
@@ -42,82 +45,114 @@ Configuración mínima obligatoria para el funcionamiento de la **Base de Datos*
 
 ---
 
-## 📊 2. Base de Datos & Tiempo Real (`Database`)
-*Subyacente: **TanStack Query / Socket.io***. Gestión de fuentes de datos estáticas y continuas. Todas las mutaciones propagan cambios en tiempo real a los demás clientes conectados de forma automática.
+## 🛰️ 2. Red & Datos (`Network`)
+Gestión de fuentes de datos (HTTP/WS) y autenticación. Todas las mutaciones propagan cambios en tiempo real automáticamente.
+
+### 📊 Datos
+*Subyacente: **TanStack Query / Socket.io***.
 
 ```javascript
-const { useInquiry, useMutation, useSubscription, usePublish } = window.Database;
+const { useInquiry, useMutation, useSubscription, usePublish } = window.Network;
 
-// CONSULTAS (Lista con paginación HTTP. Se auto-recarga via Socket 'refresh:source')
-const [items, loading, pagination] = useInquiry("inventory", "retrieve", { status: 'active' }, { limit: 10 });
+// CONSULTAS (HTTP + Auto-recarga via Socket 'refresh:source')
+const [items, loading, pagination] = useInquiry({
+    source: "inventory", 
+    type: "retrieve", 
+    output: { id: 1, stock: 1, name: 1 }, 
+    options: { filter: { status: 'active' }, limit: 10 }
+});
 
-// MODIFICACIONES (Guardar HTTP. Lanza auto-recarga a todo el proyecto al terminar)
-const [save, saving] = useMutation("inventory", "upsert", {}, ["inventory"]);
+// MODIFICACIONES (HTTP + Invalidation Global)
+const [save, saving] = useMutation({
+    source: "inventory", 
+    type: "upsert", 
+    refresh: ["inventory"]
+});
 save({ id: "123", stock: 100 }, (res) => res.success && alert("Guardado"));
 
-// -----------------------------------------
-// FLUJOS DIRECTOS VÍA SOCKET (CHAT / GPS)
-// -----------------------------------------
+// SUSCRIPCIÓN (Real-time Stream continuo)
+const chatMessages = useSubscription({ source: "chat", filter: { id: "general" } });
 
-// SUSCRIPCIÓN (Recibe un flujo de estado continuo, sin latencia HTTP)
-// options sirve para filtrar (se une a una sala específica del servidor)
-const chatMessages = useSubscription("chat", { id: "general" });
-
-// PUBLICACIÓN (Emite a un stream específico sin refrescar cachés de inquiry)
-const publish = usePublish("chat", { id: "general" });
+// PUBLICACIÓN (Emisión de eventos/mensajes)
+const publish = usePublish({ source: "chat", options: { id: "general" } });
 publish({ text: "¡Hola sala!", from: "Usuario1" });
 ```
 
----
-
-## 🔐 3. Autenticación (`Authentication`)
+### 🔐 Autenticación (`Network`)
 *Subyacente: **Zustand / JWT***. Estado global de sesión.
 
 ```javascript
-const { useAuth } = window.Authentication;
-const { isLogged, signin, signup, signout, loggedUser } = useAuth();
+const { useAuthentication } = window.Network;
+const { isLogged, signin, signup, signout, loggedUser } = useAuthentication();
 
-// Inicio de Sesión
 await signin("user@example.com", "mi_password");
-
-// Registro
-await signup({ email: "user@example.com", password: "...", name: "Juan" });
-
-// Cierre de Sesión
 signout();
 ```
 
 ---
 
-## 🗺️ 4. Navegación & SEO (`Router`)
+## 🖼️ 3. Visualización & Navegación (`View`)
+Control del estado visual de la página, rutas y jerarquía de navegación.
+
+### 🗺️ Rutas & SEO (`View.Router`)
 *Subyacente: **React Router 7 / Framer Motion / Helmet***.
 
 ```javascript
-const { useRouter, useRoutes } = window.Router;
+const { useRouter, useRoutes } = View.Router;
 
-// Definición de Rutas con Títulos y Descripciones automáticas
 const App = () => {
     const routesConfig = [
-        { 
-            path: "/", 
-            element: <Home />, 
-            title: "Inicio"     // Título automático en el navegador
-        },
-        { 
-            path: "/app", 
-            element: <Dashboard />, 
-            title: "Mi Panel", 
-            description: "Resumen estadístico" 
-        }
+        { path: "/", element: <Home />, title: "Inicio" },
+        { path: "/app", element: <Dashboard />, title: "Mi Panel" }
     ];
     return useRoutes(routesConfig);
 };
 
-// Navegación Programática y Query Params
 const { navigate, setQuery } = useRouter();
-setQuery({ status: "active" }); // Actualiza parámetros en la URL (?status=active)
-navigate('/app');              // Navega a una ruta (con transición suave)
+setQuery({ status: "active" }); // ?status=active
+navigate('/app');
 ```
+
+---
+
+## 🎨 4. Interfaz & Componentes (`Interface`)
+Herramientas visuales integradas para la construcción rápida de UIs.
+
+### 📋 Formularios Dinámicos (`Interface.Form`)
+```javascript
+const { useForm } = Interface.Form;
+const [submit, MyForm, values, isValid] = useForm(schema);
+
+<MyForm initial={{ name: "Pipeline" }} />
+```
+
+### 🧭 Navegación Local (`Interface.Breadcrumbs`)
+Generación automática de caminos de navegación.
+
+```javascript
+const { Breadcrumbs } = Interface;
+
+// Automático basado en la URL actual y títulos definidos en useRoutes
+<Breadcrumbs />
+
+// Con configuración personalizada
+<Breadcrumbs separator=" / " className="mb-8" />
+```
+
+### 🎨 Temas & Estilos (`Interface.Theme`)
+```javascript
+const { theme, toggleTheme } = Interface.Theme.useTheme();
+```
+
+### 🧱 Componentes Extra
+- **Barra Lateral**: `window.Interface.Sidebar`
+- **Iconos**: `window.Interface.Icons` (FontAwesome 6)
+- **Notificaciones**: `window.Interface.Notification` (Toasts)
+- **Modales/Dialogos**: `window.Interface.Dialog`
+- **Tablas**: `window.Interface.Table`
+- **Pestañas**: `window.Interface.Tabs`
+- **Animaciones**: `window.Interface.Motion` (Framer Motion)
+- **Utilidades**: `window.Utils.cn` (Concatenación de clases Tailwind)
 
 ---
 
