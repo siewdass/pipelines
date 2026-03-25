@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useState, useCallback, useMemo } from 'react';
 import { Modal, ModalProps } from 'react-responsive-modal';
 

@@ -62,8 +62,5 @@ export function useInquiry<T = unknown>(config: InquiryParams) {
 		return () => { socket.off(`refresh:${source}`, handler); };
 	}, [source]);
 
-	const data = type === 'retrieve' ? query.data?.items : query.data?.item;
-	const pagination = type === 'retrieve' ? query.data?.pagination : undefined;
-	
-	return [data, query.isLoading, pagination] as [typeof data, boolean, typeof pagination];
+	return [query.data, query.isLoading, query.refetch] as [InquiryResponse<T>, boolean, typeof query.refetch];
 }

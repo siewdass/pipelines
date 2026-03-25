@@ -16,7 +16,6 @@ import { Breadcrumbs } from './components/breadcrumbs';
 import * as dropdown from './components/dropdown';
 import * as table from './components/table';
 import * as dialog from './components/dialog';
-import * as notification from './components/notification';
 
 // Extra Visual (Productivity & UI)
 import * as Tabs from 'react-tabs';
@@ -28,10 +27,13 @@ import * as Motion from 'framer-motion';
 import * as useHooks from 'react-use';
 import { useHotkeys } from 'react-hotkeys-hook';
 import * as dateFns from 'date-fns';
-import { cn } from './utils/styles';
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 import * as FaLegacy from "react-icons/fa";
 import * as Fa6 from "react-icons/fa6";
+import { create as zustand } from 'zustand';
+import { z as zod } from 'zod';
 
 const Icons = { ...FaLegacy, ...Fa6 };
 
@@ -51,12 +53,12 @@ const Interface = {
 	Dropdown: dropdown,
 	Table: table,
 	Dialog: dialog,
-	Notification: notification,
 	Breadcrumbs: Breadcrumbs,
 	Tabs: Tabs,
 	Tooltip: { Tooltip },
 	Accordion: Accordion,
-	Motion: Motion,
+	// Compatibility Layer
+	Motion: Motion
 };
 
 // 3. View: Routing Engine
@@ -66,12 +68,18 @@ const View = {
 
 // 4. Utils: Helpers & Hooks
 const Utils = {
-	cn,
-	Hooks: { ...useHooks, useHotkeys },
-	Date: dateFns,
+	clsx,
+	twMerge,
+	reactUse: { ...useHooks },
+	reactHotkeys: { useHotkeys },
+	dateFns: dateFns,
+	framerMotion: Motion,
+	zustand,
+	zod,
 };
 
 // --- Expose to Window ---
+console.log("[Runtime] V2 (Compatibility Layer Active)");
 
 (window as any).React = React;
 (window as any).ReactDOM = ReactDOM;

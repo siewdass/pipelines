@@ -41,15 +41,20 @@ const getInitialAuth = () => {
 
 export const socket: Socket = io(BASE_URL, {
 	auth: getInitialAuth(),
-	autoConnect: true,
+	autoConnect: false, // Desactivado por defecto para evitar ruido al inicio
 	reconnection: true,
 	reconnectionDelay: 1000,
 	reconnectionAttempts: 10,
-	transports: [ 'polling' ], // Forzamos polling para estabilidad total en local
+	transports: [ 'polling' ],
+	forceNew: true, // Siempre inicia una sesión fresca
+	closeOnBeforeunload: true, // Avisa al servidor al cerrar/recargar
+	multiplex: false, // No compartir conexión entre instancias
+	rememberUpgrade: false, // Forzar handshake nuevo siempre
 });
 
 /**
  * Reconnects the socket with updated credentials.
+ * acts as a LAZY activator!
  */
 export const reconnect = (userToken?: string | null) => {
 	const pipelines = (window as any).PIPELINES;
@@ -57,12 +62,14 @@ export const reconnect = (userToken?: string | null) => {
 		projectToken: pipelines,
 		userToken: userToken !== undefined ? userToken : localStorage.getItem('token'),
 	};
-	if (socket.connected) {
-		socket.disconnect().connect();
-	} else {
+	if (!socket.connected) {
+		console.log('[REALTIME] Connecting data stream...');
 		socket.connect();
+	} else {
+		// Solo si ya estaba conectado, reiniciamos la sesión para aplicar nuevos tokens
+		socket.disconnect().connect();
+		console.log('[REALTIME] Synchronizing network identity...');
 	}
-	console.log('[REALTIME] Synchronizing network identity...');
 };
 
 /**
@@ -70,13 +77,28 @@ export const reconnect = (userToken?: string | null) => {
  */
 export const queryClient = new QueryClient();
 
-export const DataProvider = ({ children }: { children: React.ReactNode }) => (
-	<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-);
+// Generic Logging handlers
+const setupSocketLogs = (socket: Socket) => {
+	socket.on('connect', () => console.log('[REALTIME] Connection established:', socket.id));
+	socket.on('disconnect', () => console.log('[REALTIME] Connection lost'));
+};
 
-// Generic Logging
-socket.on('connect', () => console.log('[REALTIME] Connection established:', socket.id));
-socket.on('disconnect', () => console.log('[REALTIME] Connection lost'));
+export const DataProvider = ({ children }: { children: React.ReactNode }) => {
+	React.useEffect(() => {
+		setupSocketLogs(socket);
+		
+		// NOT MORE AUTO-CONNECT HERE!
+		// Connection happens only when hooks are used via reconnect()
+
+		return () => {
+			socket.off('connect');
+			socket.off('disconnect');
+			socket.disconnect();
+		};
+	}, []);
+
+	return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+};
 
 // 2. Data Management Submodules (Flatly exported)
 export * from './inquiry';

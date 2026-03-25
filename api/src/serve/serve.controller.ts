@@ -2,6 +2,7 @@ import { Controller, Get, Res, Req, UseGuards, NotFoundException, Logger } from 
 import type { Response, Request } from 'express'
 import { createReadStream, existsSync } from 'node:fs'
 import { join } from 'node:path'
+import * as jwt from 'jsonwebtoken'
 import { AssembleService } from '../assemble/assemble.service'
 import { ServeGuard } from './serve.guard'
 
@@ -11,14 +12,29 @@ export class ServeController {
 	constructor(private readonly assembleService: AssembleService) {}
 
 	@Get('loader.js')
-	async serveLoader(@Req() req: Request & { projectId: string }, @Res() res: Response) {
+	async serveLoader(@Req() req: Request, @Res() res: Response) {
 		const token = req.query['project-id'] as string
-		const apiHost = 'http://localhost:8000'
+		const apiHost = `${req.protocol}://${req.get('host')}`
+		
+		// Decodificar el token para mostrar el ID del proyecto en el loader
+		let decodedProjectId = 'unknown'
+		try {
+			const payload = jwt.decode(token) as { id: string }
+			decodedProjectId = payload?.id || 'unknown'
+		} catch {}
 
 		const loaderScript = `
 			(function() {
-				window.PIPELINES = "${token}";
-				console.log("[Loader] Initializing SDK for Project: ${req.projectId}");
+				// Limpiar rastros de sesiones anteriores para evitar errores 400
+				for (var key in localStorage) { if (key.indexOf('socket.io') === 0) localStorage.removeItem(key); }
+				for (var key in sessionStorage) { if (key.indexOf('socket.io') === 0) sessionStorage.removeItem(key); }
+				document.cookie = "io=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+				// Limpiar consola para iniciar con un lienzo en blanco (evita logs de la página anterior)
+				console.clear();
+				console.log("[Loader] Initializing SDK for Project: ${decodedProjectId}");
+
+				function load() {
 				
 				const style = document.createElement('style');
 				style.innerHTML = \`
@@ -41,9 +57,9 @@ export class ServeController {
 				document.body.insertAdjacentHTML('afterbegin', preloaderHtml);
 
 				const scripts = [
+					{ src: "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4", name: "Tailwind" },
 					{ src: "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap", type: 'link', name: 'Fonts' },
-					{ src: "https://cdn.tailwindcss.com", name: "Tailwind" },
-					{ src: "${apiHost}/serve/runtime.js", name: "Engine" },
+					{ src: "${apiHost}/serve/runtime.js?v=" + Date.now(), name: "Engine" },
 					{ src: "${apiHost}/serve?project-id=" + window.PIPELINES, name: "App" }
 				];
 
@@ -67,13 +83,11 @@ export class ServeController {
 				scripts.forEach((script) => {
 					const onLoaded = () => {
 						loadedCount++;
-						console.log("[Loader] OK: " + script.name);
 						status.textContent = "Cargando " + script.name;
 						targetPct = Math.round((loadedCount / scripts.length) * 100);
 					};
 					const onError = () => {
 						loadedCount++;
-						console.error("[Loader] FAILED: " + script.name + " (" + script.src + ")");
 						targetPct = Math.round((loadedCount / scripts.length) * 100);
 					};
 
@@ -87,6 +101,10 @@ export class ServeController {
 						document.head.appendChild(el);
 					}
 				});
+				}
+
+				window.PIPELINES = "${token}";
+				load();
 			})();
 		`
 		res.setHeader('Content-Type', 'application/javascript; charset=utf-8')
@@ -111,58 +129,35 @@ export class ServeController {
 	@Get()
 	@UseGuards(ServeGuard)
 	async serveProjectJs(@Req() req: Request & { projectId: string }, @Res() res: Response) {
-		this.logger.log(`[SERVE] Checking build for project ID: ${req.projectId}`)
-		let config = await this.assembleService.getConfig(req.projectId)
+		const config = await this.assembleService.getConfig(req.projectId)
 		
 		res.setHeader('Content-Type', 'application/javascript; charset=utf-8')
 		res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
 		res.setHeader('Access-Control-Allow-Origin', '*')
 
-		// Si no hay configuración o no hay build, generamos uno por defecto e intentamos compilar
 		if (!config || !config.build) {
-			this.logger.warn(`[SERVE] Missing build for ${req.projectId}. Generating starter template...`)
-			
+			this.logger.warn(`Auto-assembling missing build for: ${req.projectId}`)
 			const initialSource = config?.source || `
-				const App = () => {
-					return React.createElement('div', { 
-						style: { 
-							minHeight: '100vh', display: 'flex', flexDirection: 'column', 
-							alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f172a',
-							color: 'white', fontFamily: 'system-ui, sans-serif'
-						} 
-					}, [
-						React.createElement('h1', { style: { fontSize: '4rem', fontWeight: '900', marginBottom: '1rem', letterSpacing: '-0.05em' } }, 'Pipelines Ready.'),
-						React.createElement('p', { style: { opacity: 0.6, fontSize: '1.2rem' } }, 'Project Identity: ${req.projectId}')
-					]);
-				};
+				const App = () => React.createElement('div', { 
+					style: { minHeight: '100vh', background: '#000', color: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center' } 
+				}, 'Pipelines Project: ${req.projectId}');
 				window.App = App;
 			`
-
 			try {
 				const build = await this.assembleService.compileReactCode(initialSource)
-				
-				// Guardamos en DB para la próxima vez
 				if (config) {
 					config.build = build
 					await config.save()
 				} else {
 					// @ts-ignore
-					await this.assembleService.assembleConfigModel.create({
-						projectId: req.projectId,
-						source: initialSource,
-						build: build
-					})
+					await this.assembleService.assembleConfigModel.create({ projectId: req.projectId, source: initialSource, build: build })
 				}
-				
-				this.logger.log(`[SERVE] Auto-compiled starter template for ${req.projectId}`)
 				return res.send(build)
 			} catch (err) {
-				this.logger.error(`[SERVE] Failed to auto-compile: ${err.message}`)
-				return res.send(`console.error('[PIPELINES] Failed to auto-compile starter for ${req.projectId}');`)
+				return res.send(`console.error('[Serve] Failed to compile: ${err.message}');`)
 			}
 		}
 
-		this.logger.log(`[SERVE] Serving bundle (${config.build.length} bytes)`)
 		return res.send(config.build)
 	}
 }

@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useMemo } from 'react';
 import { JsonForms } from '@jsonforms/react';
 import { JsonSchema, UISchemaElement } from '@jsonforms/core';
@@ -54,11 +55,27 @@ export const BaseForm = <T extends Record<string, unknown>>({
     const properties: { [property: string]: JsonSchema } = {};
     const required: string[] = [];
 
-    const buildUiSchema = (item: SchemaItem): UISchemaElement | null => {
+    const buildUiSchema = (itemRaw: SchemaItem | any): UISchemaElement | null => {
+      // Normalize item to support both full names and short aliases
+      const item: SchemaItem = {
+        type: itemRaw.type || itemRaw.t,
+        name: itemRaw.name || itemRaw.n,
+        label: itemRaw.label || itemRaw.l,
+        items: itemRaw.items || itemRaw.i,
+        required: itemRaw.required || itemRaw.r,
+        pattern: itemRaw.pattern || itemRaw.p,
+        min: itemRaw.min,
+        max: itemRaw.max,
+        onValidate: itemRaw.onValidate || itemRaw.o,
+      };
+
+      const type = item.type;
+
       // Layouts
-      if (item.type === 'vertical' || item.type === 'horizontal') {
+      if (type === 'vertical' || type === 'v' || type === 'horizontal' || type === 'h') {
+        const layoutType = (type === 'vertical' || type === 'v') ? 'VerticalLayout' : 'HorizontalLayout';
         return {
-          type: item.type === 'vertical' ? 'VerticalLayout' : 'HorizontalLayout',
+          type: layoutType,
           elements: (item.items as SchemaItem[] || [])
             .map(buildUiSchema)
             .filter((e): e is UISchemaElement => e !== null),
@@ -69,42 +86,60 @@ export const BaseForm = <T extends Record<string, unknown>>({
       if (item.name) {
         // Build JSON Schema Part
         const jsonField: any = {};
-        
-        switch (item.type) {
-          case 'string':
+       
+        switch (type) {
+          case 't':
+          case 'text':
+          case 'e':
+          case 'email':
+          case 'p':
+          case 'password':
             jsonField.type = 'string';
             if (item.min) jsonField.minLength = item.min;
-            else if (item.required) jsonField.minLength = 1; // Ensure not empty if required
-            
+            else if (item.required) jsonField.minLength = 1;
             if (item.max) jsonField.maxLength = item.max;
-            if (item.pattern === 'email') jsonField.format = 'email';
-            if (item.pattern === 'password') jsonField.format = 'password';
+            if (type === 'e' || type === 'email') jsonField.format = 'email';
+            if (type === 'p' || type === 'password') jsonField.format = 'password';
+            break;
+
+          case 's':
+          case 'select':
+            jsonField.type = 'string';
             if (item.items) jsonField.enum = item.items;
             break;
+
+          case 'm':
+          case 'multiselect':
+            jsonField.type = 'array';
+            jsonField.uniqueItems = true;
+            if (item.required) jsonField.minItems = 1;
+            if (item.items) jsonField.items = { type: 'string', enum: item.items };
+            break;
+            
+          case 'n':
           case 'number':
             jsonField.type = 'number';
             if (item.min !== undefined) jsonField.minimum = item.min;
             if (item.max !== undefined) jsonField.maximum = item.max;
             break;
+    
+          case 'b':
           case 'boolean':
             jsonField.type = 'boolean';
             break;
-          case 'datetime':
+            
+          case 'd':
+          case 'date':
             jsonField.type = 'string';
-            jsonField.format = item.pattern?.includes('HH:mm') ? 'time' : 'date';
+            jsonField.format = 'date';
             break;
-          case 'array':
-            jsonField.type = 'array';
-            jsonField.uniqueItems = true;
-            if (item.required) jsonField.minItems = 1; // Ensure not empty if required
-            if (item.items) {
-              jsonField.items = {
-                type: 'string',
-                enum: item.items,
-              };
-            }
+
+          case 'c':
+          case 'time':
+            jsonField.type = 'string';
+            jsonField.format = 'time';
             break;
-        }
+        } 
 
         properties[item.name] = jsonField as JsonSchema;
         if (item.required) {
@@ -133,12 +168,19 @@ export const BaseForm = <T extends Record<string, unknown>>({
 
   const validators = useMemo(() => {
     const map: Record<string, (values: FormValues) => boolean> = {};
-    const traverse = (item: SchemaItem) => {
+    const traverse = (itemRaw: SchemaItem | any) => {
+      // Normalize for validators too
+      const item = {
+        name: itemRaw.name || itemRaw.n,
+        onValidate: itemRaw.onValidate || itemRaw.o,
+        items: itemRaw.items || itemRaw.i
+      };
+
       if (item.name && item.onValidate) {
         map[item.name] = item.onValidate;
       }
       if (item.items) {
-        item.items.forEach(child => {
+        item.items.forEach((child: any) => {
           if (typeof child !== 'string') traverse(child);
         });
       }

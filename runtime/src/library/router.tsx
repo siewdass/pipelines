@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useNavigate, useLocation, useParams, useSearchParams, useRoutes as useRoutesBase, matchRoutes } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
