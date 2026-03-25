@@ -1,5 +1,5 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import * as React from 'react';
+import * as ReactDOM from 'react-dom/client';
 import * as ReactQuery from '@tanstack/react-query';
 import * as ReactRouter from 'react-router';
 
@@ -30,9 +30,10 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import * as dateFns from 'date-fns';
 import { cn } from './utils/styles';
 
-import * as Fa from "react-icons/fa6";
+import * as FaLegacy from "react-icons/fa";
+import * as Fa6 from "react-icons/fa6";
 
-export const reacticons = Fa;
+const Icons = { ...FaLegacy, ...Fa6 };
 
 // --- New Unified Architecture ---
 
@@ -46,7 +47,7 @@ const Interface = {
 	Form: { useForm },
 	Theme: theme,
 	Sidebar: sidebar,
-	Icons: reacticons,
+	Icons: Icons,
 	Dropdown: dropdown,
 	Table: table,
 	Dialog: dialog,
@@ -72,16 +73,13 @@ const Utils = {
 
 // --- Expose to Window ---
 
-(window as any).Network = Network;
-(window as any).Interface = Interface;
-(window as any).View = View;
-(window as any).Utils = Utils;
-
-// Core React Helpers
 (window as any).React = React;
 (window as any).ReactDOM = ReactDOM;
 (window as any).ReactQuery = ReactQuery;
 (window as any).ReactRouter = ReactRouter;
-(window as any).Main = Main;
 
-console.log('Pipelines Runtime Loaded (Network, Interface & View Ready)');
+(window as any).Network = Network;
+(window as any).Interface = Interface;
+(window as any).View = View;
+(window as any).Utils = Utils;
+(window as any).Main = Main;

@@ -1,19 +1,47 @@
 import { useNavigate } from "react-router";
+import { useState } from "react";
 import ComponentCard from "../../components/common/ComponentCard";
 import { DataGrid } from "../../components/tables/DataGrid";
 import { useQuery } from "../../hooks/useFetch";
-import { FilterIcon, PlusIcon, PieChartIcon, TableIcon } from "../../icons";
+import { PlusIcon, PieChartIcon, TableIcon, ShootingStarIcon, SettingsIcon } from "../../icons";
 
 export default function ProjectList() {
   const [projects, loading] = useQuery<any[]>('projects', '/project/list');
+  const [selected, setSelected] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const toolbar = (
-    <div className="flex items-center gap-3">
-      <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 transition-colors">
-        <FilterIcon className="size-5" />
-        Filter
+  const toolbar = selected ? (
+    <div className="flex items-center gap-2">
+      <button 
+        onClick={() => navigate(`/projects/metrics/${selected}`)}
+        className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-theme-xs"
+      >
+        <PieChartIcon className="size-4" /> <span className="hidden md:inline">Metrics</span>
       </button>
+      <button 
+        onClick={() => navigate(`/projects/projecttables/${selected}`)}
+        className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-theme-xs"
+      >
+        <TableIcon className="size-4" /> <span className="hidden md:inline">Database</span>
+      </button>
+      <button 
+        onClick={() => navigate(`/projects/assemble/${selected}`)}
+        className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-theme-xs"
+      >
+        <ShootingStarIcon className="size-4" /> <span className="hidden md:inline">Assemble</span>
+      </button>
+
+      <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+
+      <button 
+        onClick={() => navigate(`/projects/details/${selected}`)}
+        className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-theme-xs"
+      >
+        <SettingsIcon className="size-4" /> <span className="hidden md:inline">Settings</span>
+      </button>
+    </div>
+  ) : (
+    <div className="flex items-center gap-3">
       <button 
         onClick={() => navigate('/projects/create')}
         className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-theme-sm font-medium text-white shadow-theme-xs hover:bg-brand-600 transition-colors"
@@ -26,7 +54,7 @@ export default function ProjectList() {
 
   return (
     <ComponentCard 
-      title="Active Projects Grid" 
+      title="Projects List" 
       desc="A list of all your current projects and their status."
       toolbar={toolbar}
     >
@@ -43,10 +71,10 @@ export default function ProjectList() {
           data={projects || []}
           renderItem={(item) => (
             <div 
-              onClick={() => navigate(`/projects/details/${item._id}`)}
-              className="p-4 border border-gray-200 rounded-xl dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+              onClick={() => setSelected(selected === item._id ? null : item._id)}
+              className={`p-5 border rounded-2xl bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-all cursor-pointer group ${selected === item._id ? 'border-brand-500 ring-1 ring-brand-500 dark:ring-brand-500/50 dark:border-brand-500' : 'border-gray-200 dark:border-gray-800'}`}
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800 mb-3">
                 <h4 className="font-semibold text-gray-800 dark:text-white/90 group-hover:text-brand-500 transition-colors">
                   {item.name}
                 </h4>
@@ -54,29 +82,9 @@ export default function ProjectList() {
                   {item.status || 'Active'}
                 </span>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 min-h-[40px]">
+              <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-3 min-h-[50px]">
                 {item.description || 'No description provided.'}
               </p>
-              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/projects/metrics/${item._id}`);
-                  }}
-                  className="flex items-center gap-1.5 text-sm font-semibold text-orange-500 hover:text-orange-600 transition-colors"
-                >
-                  <PieChartIcon className="size-4" /> Metrics
-                </button>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/projects/projecttables/${item._id}`);
-                  }}
-                  className="flex items-center gap-1.5 text-sm font-semibold text-brand-500 hover:text-brand-600 transition-colors"
-                >
-                  <TableIcon className="size-4" /> Database
-                </button>
-              </div>
             </div>
           )}
         />

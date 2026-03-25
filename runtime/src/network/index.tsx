@@ -18,7 +18,7 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
 	const pipelines = (window as any).PIPELINES;
-	const token = pipelines?.TOKEN || localStorage.getItem('token');
+	const token = pipelines || localStorage.getItem('token');
 	
 	if (token) {
 		config.headers.Authorization = `Bearer ${token}`;
@@ -34,7 +34,7 @@ api.interceptors.request.use((config) => {
 const getInitialAuth = () => {
 	const pipelines = (window as any).PIPELINES;
 	return {
-		projectToken: pipelines?.TOKEN,
+		projectToken: pipelines,
 		userToken: localStorage.getItem('token'),
 	};
 };
@@ -45,6 +45,7 @@ export const socket: Socket = io(BASE_URL, {
 	reconnection: true,
 	reconnectionDelay: 1000,
 	reconnectionAttempts: 10,
+	transports: [ 'polling' ], // Forzamos polling para estabilidad total en local
 });
 
 /**
@@ -53,7 +54,7 @@ export const socket: Socket = io(BASE_URL, {
 export const reconnect = (userToken?: string | null) => {
 	const pipelines = (window as any).PIPELINES;
 	socket.auth = {
-		projectToken: pipelines?.TOKEN,
+		projectToken: pipelines,
 		userToken: userToken !== undefined ? userToken : localStorage.getItem('token'),
 	};
 	if (socket.connected) {

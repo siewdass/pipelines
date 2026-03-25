@@ -8,6 +8,8 @@ import { AuthenticationModule } from './authentication/authentication.module'
 import { DatabaseModule } from './database/database.module'
 import { AuthorizationModule } from './authorization/authorization.module'
 import { AssembleModule } from './assemble/assemble.module'
+import { ServeModule } from './serve/serve.module'
+import { RealtimeModule } from './realtime/realtime.module'
 
 import { ConfigModule } from '@nestjs/config'
 
@@ -27,6 +29,8 @@ import { ConfigModule } from '@nestjs/config'
 		DatabaseModule,
 		AuthorizationModule,
 		AssembleModule,
+		ServeModule,
+		RealtimeModule,
 	],
 	providers: [],
 	exports: [],

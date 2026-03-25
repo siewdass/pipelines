@@ -47,7 +47,7 @@ export function useQuery<TData = any, TError = any>(
     gcTime: 1000 * 60 * 10,
   });
 
-  return [query.data, query.isLoading] as [TData | undefined, boolean];
+  return [query.data, query.isLoading, query.refetch] as [TData | undefined, boolean, typeof query.refetch];
 }
 
 /**
@@ -90,7 +90,7 @@ export function useMutate<TData = any, TVariables = any, TError = any>(
     },
   });
 
-  const execute = (variables: TVariables & { overrideUrl?: string }) => mutation.mutate(variables);
+  const execute = (variables: TVariables & { overrideUrl?: string }) => mutation.mutateAsync(variables);
 
   return [execute, mutation.isPending, mutation.data] as [typeof execute, boolean, TData | undefined];
 }

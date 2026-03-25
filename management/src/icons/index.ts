@@ -57,7 +57,8 @@ import {
   HiOutlineHandRaised as ErrorHexaIcon,
   HiMiniChevronUp as MiniChevronUpIcon,
   HiMiniChevronDown as MiniChevronDownIcon,
-  HiOutlineAdjustmentsHorizontal as FilterIcon
+  HiOutlineAdjustmentsHorizontal as FilterIcon,
+  HiOutlineCog8Tooth as SettingsIcon
 } from "react-icons/hi2";
 import { FcGoogle as GoogleIcon } from "react-icons/fc";
 import { FaXTwitter as XIcon } from "react-icons/fa6";
@@ -124,4 +125,5 @@ export {
   FilterIcon,
   GoogleIcon,
   XIcon,
+  SettingsIcon,
 };
