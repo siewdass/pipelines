@@ -18,10 +18,10 @@ import * as table from './components/table';
 import * as dialog from './components/dialog';
 
 // Extra Visual (Productivity & UI)
-import * as Tabs from 'react-tabs';
+import { Tabs } from 'react-tabs';
 import { Tooltip } from 'react-tooltip';
-import * as Accordion from 'react-accessible-accordion';
-import * as Motion from 'framer-motion';
+import { Accordion } from 'react-accessible-accordion';
+import { motion } from 'framer-motion';
 
 // Extra Logic (Hooks & Utils)
 import * as useHooks from 'react-use';
@@ -35,8 +35,6 @@ import * as Fa6 from "react-icons/fa6";
 import { create as zustand } from 'zustand';
 import { z as zod } from 'zod';
 
-const Icons = { ...FaLegacy, ...Fa6 };
-
 // --- New Unified Architecture ---
 
 // 1. Network: Data & Authentication
@@ -47,18 +45,17 @@ const Network = {
 // 2. Interface: Visual Components & Feedback
 const Interface = {
 	Form: { useForm },
-	Theme: theme,
-	Sidebar: sidebar,
-	Icons: Icons,
-	Dropdown: dropdown,
-	Table: table,
-	Dialog: dialog,
+	// Flattened Hooks
+	useTheme: theme.useTheme,
+	useSidebar: sidebar.useSidebar,
+	useTable: table.useTable,
+	useDialog: dialog.useDialog,
+	useDropdown: dropdown.useDropdown,
+	// Components
 	Breadcrumbs: Breadcrumbs,
 	Tabs: Tabs,
-	Tooltip: { Tooltip },
+	Tooltip: Tooltip,
 	Accordion: Accordion,
-	// Compatibility Layer
-	Motion: Motion
 };
 
 // 3. View: Routing Engine
@@ -68,18 +65,25 @@ const View = {
 
 // 4. Utils: Helpers & Hooks
 const Utils = {
+	Motion: motion.div,
 	clsx,
 	twMerge,
 	reactUse: { ...useHooks },
 	reactHotkeys: { useHotkeys },
 	dateFns: dateFns,
-	framerMotion: Motion,
 	zustand,
 	zod,
 };
 
 // --- Expose to Window ---
-console.log("[Runtime] V2 (Compatibility Layer Active)");
+console.log("[Runtime] V2 Core initialized.", { 
+	NetworkKeys: Object.keys(Network), 
+	InterfaceKeys: Object.keys(Interface),
+	UtilsKeys: Object.keys(Utils),
+	View: Object.keys(View),
+	Assets: Object.keys({ ...FaLegacy, ...Fa6 }),
+	Main: Main 
+});
 
 (window as any).React = React;
 (window as any).ReactDOM = ReactDOM;
@@ -89,5 +93,14 @@ console.log("[Runtime] V2 (Compatibility Layer Active)");
 (window as any).Network = Network;
 (window as any).Interface = Interface;
 (window as any).View = View;
+(window as any).Assets = { Icons: { ...FaLegacy, ...Fa6 } };
 (window as any).Utils = Utils;
 (window as any).Main = Main;
+(window as any).Bootstrap = (App: any) => {
+	const container = document.getElementById('root');
+	if (container) {
+		ReactDOM.createRoot(container).render(
+			React.createElement(Main, null, React.createElement(App))
+		);
+	}
+};

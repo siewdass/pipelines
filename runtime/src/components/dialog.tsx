@@ -10,17 +10,16 @@ import { Modal, ModalProps } from 'react-responsive-modal';
 export function useDialog() {
   const [isOpen, setIsOpen] = useState(false);
 
-  const open = useCallback(() => setIsOpen(true), []);
-  const close = useCallback(() => setIsOpen(false), []);
+  const setToggle = useCallback(() => setIsOpen((prev) => !prev), []);
 
   const DialogComponent = useMemo(() => {
     return ({ children, ...props }: Omit<ModalProps, 'open' | 'onClose'>) => (
-      <Modal open={isOpen} onClose={close} {...props}>
+      <Modal open={isOpen} onClose={setToggle} {...props}>
         {children}
       </Modal>
     );
-  }, [isOpen, close]);
+  }, [isOpen, setToggle]);
 
-  // Return as array [open, close, Dialog]
-  return [open, close, DialogComponent] as const;
+  // Return as array [Dialog, setToggle, setOpen, setClose, isOpen]
+  return [DialogComponent, setToggle, isOpen] as const;
 }

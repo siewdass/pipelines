@@ -50,7 +50,6 @@ export class AssembleService {
 			const systemInstruction = `
 				${REACT_SKILLS_PROMPT}
 
-				Project ID: ${projectId}
 				Database Schema:
 				${JSON.stringify(schemas, null, 2)}
 
@@ -62,7 +61,7 @@ export class AssembleService {
 				CRITICAL: Follow the exact JSON schema provided in the generation config.
 			`
 
-			const model = this.genAI.getGenerativeModel({ 
+			const model = this.genAI.getGenerativeModel({
 				model: 'gemini-3-flash-preview',
 				systemInstruction,
 				generationConfig: {

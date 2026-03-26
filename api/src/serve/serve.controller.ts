@@ -30,8 +30,6 @@ export class ServeController {
 				for (var key in sessionStorage) { if (key.indexOf('socket.io') === 0) sessionStorage.removeItem(key); }
 				document.cookie = "io=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
-				// Limpiar consola para iniciar con un lienzo en blanco (evita logs de la página anterior)
-				console.clear();
 				console.log("[Loader] Initializing SDK for Project: ${decodedProjectId}");
 
 				function load() {
