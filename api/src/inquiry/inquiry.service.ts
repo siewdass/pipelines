@@ -7,9 +7,8 @@ export class InquiryService {
 
 	async upload(doc: Doc, nestedProjection: Doc, db: Db, source: string, options: Doc): Promise<void> {
 		this.logger.log(`[INQUIRY] Starting upload for ${source}. ${`ParentId: ${doc._id || doc.id}`}`)
-		for (const [key, value] of Object.entries(nestedProjection)) {
+		for (const [ key, value ] of Object.entries(nestedProjection)) {
 			if (!this.isRecord(value)) continue
-			
 			
 			this.logger.log(`[INQUIRY] Processing nested key: ${key}`)
 			// Initialize the field in the document if it's missing (needed for expansion)

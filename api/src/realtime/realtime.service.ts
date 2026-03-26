@@ -82,10 +82,10 @@ export class RealtimeService {
 		}
 	}
 
-	buildRoomName(source: string, filter?: any): string {
-		// If filter has a specific ID (like channelId), use it. 
-		// Otherwise, use the source name as the base room.
-		if (filter?.id) return `${source}:${filter.id}`
-		return source
+	buildRoomName(source?: string, channel: string = ''): string {
+		// channel is mandatory for segmentation and room identity.
+		// source is optional: it enables DB persistence.
+		if (source && channel) return `${source}:${channel}`
+		return channel
 	}
 }

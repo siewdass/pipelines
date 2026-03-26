@@ -6,8 +6,8 @@ import { socket, reconnect } from './';
  * Valid parameters for a real-time subscription.
  */
 export const SubscriptionParamsSchema = z.object({
-	source: z.string(),
-	filter: z.record(z.string(), z.unknown()).and(z.object({ id: z.string().optional() })).optional(),
+	channel: z.string(),
+	source: z.string().optional(),
 });
 
 export type SubscriptionParams = z.infer<typeof SubscriptionParamsSchema>;
@@ -19,12 +19,14 @@ export type SubscriptionParams = z.infer<typeof SubscriptionParamsSchema>;
  */
 export function useSubscription<T = unknown>(config: SubscriptionParams) {
 	SubscriptionParamsSchema.parse(config);
-	const { source, filter } = config;
+	const { channel, source } = config;
 	const [subscribe, setSubscribe] = useState<T | undefined>();
 
 	useEffect(() => {
 		reconnect();
-		socket.emit('subscribe', { source, filter });
+		const eventName = source || channel;
+		socket.emit('subscribe', { source, channel });
+
 		const handler = (payload: unknown) => {
 			setSubscribe(prev => {
 				if (Array.isArray(prev) || Array.isArray(payload)) {
@@ -34,12 +36,13 @@ export function useSubscription<T = unknown>(config: SubscriptionParams) {
 				return payload as T;
 			});
 		};
-		socket.on(source, handler);
+
+		socket.on(eventName, handler);
 		return () => {
-			socket.off(source, handler);
-			socket.emit('unsubscribe', { source, filter });
+			socket.off(eventName, handler);
+			socket.emit('unsubscribe', { source, channel });
 		};
-	}, [source, JSON.stringify(filter)]);
+	}, [source, channel]);
 
 	return subscribe;
 }

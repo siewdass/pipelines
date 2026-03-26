@@ -46,7 +46,6 @@ export class AssembleService {
 			
 			const existingConfig = await this.assembleConfigModel.findOne({ projectId })
 			const existingSource = existingConfig?.source || 'No existing React code yet.'
-			const existingBuild = existingConfig?.build || 'No existing compiled code yet.'
 
 			const systemInstruction = `
 				${REACT_SKILLS_PROMPT}
@@ -58,9 +57,6 @@ export class AssembleService {
 				----- CURRENT EXISTING CODE -----
 				Source Code (JSX):
 				${existingSource}
-
-				Build Code (JS - Compiled):
-				${existingBuild}
 				---------------------------------
 
 				CRITICAL: Follow the exact JSON schema provided in the generation config.

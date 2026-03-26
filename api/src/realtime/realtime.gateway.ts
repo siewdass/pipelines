@@ -106,27 +106,30 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 	@SubscribeMessage('subscribe')
 	async handleSubscribe(
 		@ConnectedSocket() client: Socket,
-		@MessageBody() data: { source: string; filter?: any }
+		@MessageBody() data: { channel: string; source?: string }
 	) {
-		if (this.protectedSources.includes(data.source?.toLowerCase())) {
-			this.logger.warn(`Client ${client.id} blocked from subscribing to protected source: ${data.source}`)
+		const { channel, source } = data
+		if (source && this.protectedSources.includes(source.toLowerCase())) {
+			this.logger.warn(`Client ${client.id} blocked from subscribing to protected source: ${source}`)
 			return
 		}
 
 		// Example: room:chat:general or room:fleet:camion_1
-		const roomName = this.realtimeService.buildRoomName(data.source, data.filter)
+		const roomName = this.realtimeService.buildRoomName(source, channel)
 		client.join(roomName)
 
-		try {
-			// Inmediatamente enviamos la data histórica a este cliente específico (no a la sala entera)
-			const projectId = client.data.projectId
-			const { db } = await this.projectService.getProjectContext(projectId)
-			const recentData = await this.realtimeService.fetchRecent(db, data.source, roomName)
-			if (recentData && recentData.length > 0) {
-				client.emit(data.source, recentData)
+		if (source) {
+			try {
+				// Inmediatamente enviamos la data histórica a este cliente específico (no a la sala entera)
+				const projectId = client.data.projectId
+				const { db } = await this.projectService.getProjectContext(projectId)
+				const recentData = await this.realtimeService.fetchRecent(db, source, roomName)
+				if (recentData && recentData.length > 0) {
+					client.emit(source, recentData)
+				}
+			} catch (err) {
+				this.logger.error(`Error fetching recent data for subscription: ${err.message}`)
 			}
-		} catch (err) {
-			this.logger.error(`Error fetching recent data for subscription: ${err.message}`)
 		}
 
 		this.logger.log(`Client ${client.id} subscribed to ${roomName}`)
@@ -138,27 +141,26 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 	@SubscribeMessage('unsubscribe')
 	handleUnsubscribe(
 		@ConnectedSocket() client: Socket,
-		@MessageBody() data: { source: string; filter?: any }
+		@MessageBody() data: { channel: string; source?: string }
 	) {
-		if (this.protectedSources.includes(data.source?.toLowerCase())) return
-
-		const roomName = this.realtimeService.buildRoomName(data.source, data.filter)
+		const { channel, source } = data
+		const roomName = this.realtimeService.buildRoomName(source, channel)
 		client.leave(roomName)
 		this.logger.log(`Client ${client.id} unsubscribed from ${roomName}`)
 	}
 
 	/**
 	 * 3. Publish (Direct Messaging / Events)
-	 * Routes messages based on source and options.
+	 * Routes messages based on channel and (optional) source.
 	 */
 	@SubscribeMessage('publish')
 	async handlePublish(
 		@ConnectedSocket() client: Socket,
-		@MessageBody() payload: { source: string; input: any; options?: any }
+		@MessageBody() payload: { channel: string; input: any; source?: string }
 	) {
-		const { source, input, options } = payload
+		const { channel, input, source } = payload
 		
-		if (this.protectedSources.includes(source?.toLowerCase())) {
+		if (source && this.protectedSources.includes(source.toLowerCase())) {
 			this.logger.warn(`Client ${client.id} blocked from publishing to protected source: ${source}`)
 			return
 		}
@@ -167,9 +169,9 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 		const userId = client.data.userId
 
 		// 1. Determinar el destino / Sala
-		const roomName = this.realtimeService.buildRoomName(source, options)
+		const roomName = this.realtimeService.buildRoomName(source, channel)
 
-		// 2. Persistencia y Poda (Sliding Window) 
+		// 2. Persistencia solo si hay 'source'
 		let persistedData = input
 		if (source) {
 			try {
@@ -180,8 +182,9 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 			}
 		}
 
-		// 3. Emisión
-		this.server.to(roomName).emit(source, persistedData)
+		// 3. Emisión (Usa source como evento, o el canal si es efímero)
+		const eventName = source || channel
+		this.server.to(roomName).emit(eventName, persistedData)
 		this.logger.log(`Client ${client.id} published to ${roomName}`)
 	}
 
