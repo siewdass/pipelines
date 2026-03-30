@@ -24,9 +24,9 @@ export const useAuthentication = create<AuthenticationState>((set) => ({
 	signin: async (email, password) => {
 		const response = await api.post("/authentication/signin", { email, password });
 		if (response.data.success) {
-			const token = response.data.token;
+			const { token, user } = response.data;
 			window.localStorage.setItem('token', token);
-			set({ isLogged: true, loggedUser: { email } });
+			set({ isLogged: true, loggedUser: user });
 			reconnect(token);
 		} else {
 			throw new Error(response.data.message || "Login failed"); 

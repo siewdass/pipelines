@@ -106,3 +106,4 @@ export * from './mutation';
 export * from './subscription';
 export * from './publish';
 export * from './authentication';
+export * from './can';

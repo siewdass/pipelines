@@ -15,6 +15,8 @@ import {
 	ResetRequestDto,
 	ResetResponseDto,
 } from './authentication.dto'
+import { Role, RoleSchema } from '../user/role.schema'
+import { Permission, PermissionSchema } from '../user/permission.schema'
 
 @Controller('authentication')
 export class AuthenticationController {
@@ -42,13 +44,49 @@ export class AuthenticationController {
 	}
 
 	@Post('signin')
-	async login(@Headers('project-id') projectId: string, @Body() { email, password }: LoginRequestDto): Promise<LoginResponseDto> {
+	async login(@Headers('project-id') projectId: string, @Body() { email, password }: LoginRequestDto): Promise<LoginResponseDto & { user: any }> {
 		this.logger.log(`User login attempt: ${email}`)
 		const userModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
-		const foundUser = await this.authService.validateUser(userModel, email, password)
+		const foundUser = (await this.authService.validateUser(userModel, email, password)) as any
 		const token = this.authService.generateToken({ id: foundUser._id, email: foundUser.email }, 'user')
 		this.logger.log(`User login success: ${foundUser._id}`)
-		return { success: true, message: 'Login success', token }
+
+		// Fetch and Flatten Permissions
+		const permissions = await this.getUserPermissions(projectId, foundUser.roles || [])
+
+		return { 
+			success: true, 
+			message: 'Login success', 
+			token,
+			user: {
+				id: foundUser._id,
+				email: foundUser.email,
+				name: foundUser.name,
+				permissions
+			}
+		}
+	}
+
+	private async getUserPermissions(projectId: string, roleIds: string[]) {
+		const roleModel = await this.projectService.getProjectModel(projectId, RoleSchema, Role.name)
+		const permissionModel = await this.projectService.getProjectModel(projectId, PermissionSchema, Permission.name)
+		
+		const roles = await roleModel.find({ _id: { $in: roleIds } }).lean().exec()
+		const permissionIds = roles.flatMap((r: any) => r.permissions || [])
+		
+		const permissionDocs = await permissionModel.find({ _id: { $in: permissionIds } }).lean().exec()
+		
+		const flattenMap: Record<string, { read: boolean, write: boolean }> = {}
+		
+		for (const p of permissionDocs as any[]) {
+			for (const res of p.resources || []) {
+				if (!flattenMap[res]) flattenMap[res] = { read: false, write: false }
+				if (p.read) flattenMap[res].read = true
+				if (p.write) flattenMap[res].write = true
+			}
+		}
+		
+		return flattenMap
 	}
 
 	@Post('recover')

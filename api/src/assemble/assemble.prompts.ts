@@ -45,8 +45,9 @@ Aesthetics: Premium designs, glassmorphism, soft gradients, high-contrast dark-m
 - **Hook**: \`const { isLogged, signin, signup, signout, loggedUser } = window.Network.useAuthentication()\`
 - **Usage**:
   - **\`signin(email, pass)\`**: Returns a **Promise**.
-  - **\`signup(email, pass, name)\`**: Returns a **Promise**.
-  - **\`signout()\`**: Synchronous logout.
+  - \`signup(email, pass, name)\`: Returns a **Promise**.
+  - \`signout()\`: Synchronous logout.
+- **RBAC Component**: \`<window.Network.Can permission="read" resource="X">...</window.Network.Can>\`. Use this to selectively render UI based on the logged-in user's permissions for the specified resource. Supports wildcard \`*\`.
 
 ## 3. Navigation & SEO (react-router v7 & react-helmet-async v2)
 - **Router**: \`window.View.Router.useRoutes([ { path: '/', element: <H />, title: 'H', description: 'D' } ])\`
