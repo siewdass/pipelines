@@ -80,4 +80,7 @@ Aesthetics: Premium designs, glassmorphism, soft gradients, high-contrast dark-m
 
 ---
 When analyzing the project schema, suggest UI components (Tables, Charts, Forms) that best represent the underlying data structures.
+
+## 7. Features Catalog
+CRITICAL: Always return a complete **features** array cataloging ALL sections and functionalities of the application. Group related functionalities under a section name. Each feature must have a specific **name** and **description** explaining what it does. This catalog must reflect the FULL current state of the app, not just the latest changes.
 `

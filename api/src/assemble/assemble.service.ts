@@ -76,9 +76,32 @@ export class AssembleService {
 							code: {
 								type: SchemaType.STRING,
 								description: 'El código JSX puro y completo actualizado o intacto si no hubo cambios técnicos.'
+							},
+							features: {
+								type: SchemaType.ARRAY,
+								description: 'Catálogo jerárquico de todas las secciones y funcionalidades de la aplicación. Todo en español.',
+								items: {
+									type: SchemaType.OBJECT,
+									properties: {
+										name: { type: SchemaType.STRING, description: 'Nombre de la sección en español (ej: Gestión de Usuarios, Analíticas)' },
+										features: {
+											type: SchemaType.ARRAY,
+											description: 'Funcionalidades específicas dentro de esta sección.',
+											items: {
+												type: SchemaType.OBJECT,
+												properties: {
+													name: { type: SchemaType.STRING, description: 'Nombre de la funcionalidad en español' },
+													description: { type: SchemaType.STRING, description: 'Descripción específica en español de lo que hace esta funcionalidad' }
+												},
+												required: [ 'name', 'description' ]
+											}
+										}
+									},
+									required: [ 'name', 'features' ]
+								}
 							}
 						},
-						required: [ 'message', 'code' ]
+						required: [ 'message', 'code', 'features' ]
 					}
 				}
 			})
@@ -95,7 +118,7 @@ export class AssembleService {
 			const result = await chat.sendMessage(message)
 			const responseText = result.response.text()
 
-			let parsedResponse: { message: string, code: string }
+			let parsedResponse: { message: string, code: string, features: { name: string; features: { name: string; description: string }[] }[] }
 			try {
 				parsedResponse = JSON.parse(responseText)
 			} catch {
@@ -111,9 +134,10 @@ export class AssembleService {
 			
 			if (existingConfig) {
 				existingConfig.source = cleanSource
+				existingConfig.features = parsedResponse.features || []
 				await existingConfig.save()
 			} else {
-				await new this.assembleConfigModel({ projectId, source: cleanSource }).save()
+				await new this.assembleConfigModel({ projectId, source: cleanSource, features: parsedResponse.features || [] }).save()
 			}
 			
 			return parsedResponse.message

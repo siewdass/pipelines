@@ -13,7 +13,7 @@ export class ProjectGuard implements CanActivate {
 		 * Identificador Único del Proyecto (Token) envíado mediante X-Project-Id (o X-Pipeline-Id).
 		 * Este guard solo valida la pertenencia y validez del token del proyecto, no la autenticación del usuario.
 		 */
-		const projectToken = (request.headers['x-project-id'] || request.headers['x-pipeline-id']) as string
+		const projectToken = (request.headers['x-project-id'] || request.headers['project-id']) as string
 
 		if (!projectToken) {
 			this.logger.warn('[PROJECT] Project Token (X-Project-Id is missing')
@@ -25,13 +25,15 @@ export class ProjectGuard implements CanActivate {
 			const secret = process.env.ACCOUNT_JWT_SECRET || 'dev-account-secret'
 			const payload = jwt.verify(projectToken, secret) as any
 			
-			if (!payload.id) {
-				this.logger.error('[PROJECT] Invalid project token: missing id in payload')
-				throw new BadRequestException('Invalid project token')
+			const id = payload.id || payload.projectId
+
+			if (!id) {
+				this.logger.error('[PROJECT] Invalid project token: missing id/projectId in payload')
+				throw new BadRequestException('Invalid project token payload')
 			}
 
 			// Inyectamos el ID real del proyecto para que los servicios lo usen como contexto de base de datos
-			request.projectId = payload.id
+			request.projectId = id
 			
 			this.logger.log(`[PROJECT GUARD] Project identity established: ${String(request.projectId)}`)
 			

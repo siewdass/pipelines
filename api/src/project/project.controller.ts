@@ -36,7 +36,7 @@ export class ProjectController {
 		const _id = uuidv4()
 		const secret = process.env.ACCOUNT_JWT_SECRET || 'dev-account-secret'
 		// Include project id in token for traceability
-		const token = jwt.sign({ id: _id, accountId }, secret)
+		const token = jwt.sign({ projectId: _id, accountId }, secret)
 
 		try {
 			this.logger.log(`Creating project: ${body.name}`)
@@ -120,6 +120,15 @@ export class ProjectController {
 		const project = await this.projectModel.findOne({ _id: id, accountId }).lean().exec()
 		if (!project) throw new NotFoundException('project not found')
 		return project
+	}
+
+	@Get(':id/token')
+	async getProjectToken(@Req() req: Request & { accountId: string }, @Param('id') id: string) {
+		const { accountId } = req
+		this.logger.log(`Retrieving token for project: ${id}`)								
+		const project = await this.projectModel.findOne({ _id: id, accountId }).select('token').lean().exec()
+		if (!project) throw new NotFoundException('project not found')
+		return { token: project.token }
 	}
 
 	@Patch(':id/token')

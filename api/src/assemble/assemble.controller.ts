@@ -20,7 +20,14 @@ export class AssembleController {
 		this.logger.log(`Received generation request for project: ${projectId}`)
 		this.logger.log(`Prompt: ${prompt?.substring(0, 50)}...`)
 		const response = await this.assembleService.generatePrompt(projectId, prompt)
-		return { response }
+		const config = await this.assembleService.getConfig(projectId)
+		return { response, features: config?.features || [] }
+	}
+
+	@Get('features/:projectId')
+	async getFeatures(@Param('projectId') projectId: string) {
+		const config = await this.assembleService.getConfig(projectId)
+		return { features: config?.features || [] }
 	}
 
 	@Post('compile/:projectId')

@@ -21,6 +21,9 @@ export class AssembleConfig extends Document {
 
 	@Prop()
 	font: string
+
+	@Prop({ type: [{ name: String, features: [{ name: String, description: String }] }], default: [] })
+	features: { name: string; features: { name: string; description: string }[] }[]
 }
 
 export const AssembleConfigSchema = SchemaFactory.createForClass(AssembleConfig)

@@ -1,23 +1,20 @@
-import { Controller, Get, Query, UseGuards, Req, Logger, BadRequestException } from '@nestjs/common'
+import { Controller, Get, Query, UseGuards, Req, Logger } from '@nestjs/common'
 import type { Request } from 'express'
 import { DatabaseService } from './database.service'
-import { ProjectService } from '../project/project.service'
-import { AccountAuthGuard } from '../authorization/account.guard'
+import { ProjectGuard } from '../project/project.guard'
 
 @Controller('database')
-@UseGuards(AccountAuthGuard)
+@UseGuards(ProjectGuard)
 export class DatabaseController {
 	private readonly logger = new Logger(DatabaseController.name)
 
 	constructor(
-    private readonly databaseService: DatabaseService,
-    private readonly projectService: ProjectService
+    private readonly databaseService: DatabaseService
 	) {}
 
   @Get('tables')
-	async collections(@Req() req: Request): Promise<any> {
-		const projectId = req.headers['x-project-id'] as string
-		if (!projectId) throw new BadRequestException('Missing x-project-id header')
+	async collections(@Req() req: Request & { projectId: string }): Promise<any> {
+		const { projectId } = req
 		
 		this.logger.log(`Fetching tables for: ${projectId}`)
 		const tables = await this.databaseService.getTablesMetadata(projectId)
@@ -25,9 +22,8 @@ export class DatabaseController {
 	}
 
   @Get('fetch')
-  async fetch(@Query() queryParams: any, @Req() req: Request): Promise<any> {
-  	const projectId = req.headers['x-project-id'] as string
-  	if (!projectId) throw new BadRequestException('Missing x-project-id header')
+  async fetch(@Query() queryParams: any, @Req() req: Request & { projectId: string }): Promise<any> {
+  	const { projectId } = req
 
   	const { collection, doc, association } = this.databaseService.prepare(queryParams)
   	

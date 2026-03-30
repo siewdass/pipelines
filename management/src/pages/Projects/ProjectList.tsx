@@ -3,6 +3,7 @@ import { useState } from "react";
 import ComponentCard from "../../components/common/ComponentCard";
 import { DataGrid } from "../../components/tables/DataGrid";
 import { useQuery } from "../../hooks/useFetch";
+import { api } from "../../services/api";
 import { 
   HiPlus, 
   HiOutlineChartPie, 
@@ -84,7 +85,20 @@ export default function ProjectList() {
           data={projects || []}
           renderItem={(item) => (
             <div 
-              onClick={() => setSelected(selected === item._id ? null : item._id)}
+              onClick={async () => {
+                const isSelected = selected === item._id;
+                setSelected(isSelected ? null : item._id);
+                
+                // If selecting a project, pre-fetch its signed JWT token
+                if (!isSelected) {
+                  try {
+                    const { data } = await api.get(`/project/${item._id}/token`);
+                    localStorage.setItem('project-token', data.token);
+                  } catch (err) {
+                    console.error("Could not retrieve project identity token", err);
+                  }
+                }
+              }}
               className={`p-5 border rounded-2xl bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-all cursor-pointer group ${selected === item._id ? 'border-brand-500 ring-1 ring-brand-500 dark:ring-brand-500/50 dark:border-brand-500' : 'border-gray-200 dark:border-gray-800'}`}
             >
               <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800 mb-3">

@@ -4,7 +4,10 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import { 
   HiChevronLeft, 
-  HiSparkles 
+  HiSparkles,
+  HiOutlineCubeTransparent,
+  HiOutlineChatBubbleLeftRight,
+  HiChevronRight
 } from "react-icons/hi2";
 import { useQuery, useMutate } from "../../hooks/useFetch";
 import Button from "../../components/ui/button/Button";
@@ -14,10 +17,12 @@ export default function ProjectAssemble() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [promptInput, setPromptInput] = useState("");
+  const [activeTab, setActiveTab] = useState<'features' | 'prompts'>('features');
   const toast = useToast();
   
   const [project] = useQuery<any>(`project-${id}`, `/project/${id}`);
   const [prompts, loadingPrompts, refetch] = useQuery<any[]>(`assemble-prompts-${id}`, `/assemble/prompts/${id}`);
+  const [features, loadingFeatures, refetchFeatures] = useQuery<any>(`assemble-features-${id}`, `/assemble/features/${id}`);
   
   const [sendPrompt, sending] = useMutate('post', `/assemble/prompts`, `assemble-prompts-${id}`);
   const [compileRuntime, compiling] = useMutate('post', `/assemble/compile/${id}`, `compile-${id}`);
@@ -41,8 +46,9 @@ export default function ProjectAssemble() {
     try {
       await sendPrompt({ prompt: text, projectId: id });
       refetch();
+      refetchFeatures();
     } catch {
-      setPromptInput(text); // reset on error
+      setPromptInput(text);
       toast.error("Failed to send prompt.");
     }
   };
@@ -57,6 +63,13 @@ export default function ProjectAssemble() {
   };
 
   if (!project) return null;
+
+  const featuresList = features?.features || [];
+
+  const tabClass = (tab: string) =>
+    activeTab === tab
+      ? "text-brand-500 border-b-2 border-brand-500 font-semibold"
+      : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200";
 
   return (
     <div className="w-full flex flex-col lg:h-[calc(100vh-140px)] gap-6">
@@ -90,7 +103,7 @@ export default function ProjectAssemble() {
           >
             <HiChevronLeft className="size-5" />
           </button>
-          <div>
+          <div className="flex-1">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
               {project.name} - Studio
             </h3>
@@ -100,73 +113,134 @@ export default function ProjectAssemble() {
           </div>
         </div>
 
-        {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth">
-          {loadingPrompts ? (
-             <div className="flex items-center justify-center h-full">
-                <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-             </div>
-          ) : prompts?.length === 0 ? (
-             <div className="flex h-full items-center justify-center text-center">
-                <div className="max-w-md">
-                   <HiSparkles className="size-12 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
-                   <p className="text-gray-500 dark:text-gray-400">This project has no layout code yet. Describe your interface layout and Gemini will generate a production-ready JSX bundle.</p>
-                </div>
-             </div>
-          ) : (
-             prompts?.map(msg => (
-                <div key={msg._id} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                   <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 shadow-sm ${msg.role === 'user' ? 'bg-brand-500 text-white rounded-br-none' : 'bg-gray-50 border border-gray-200 dark:border-gray-800 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-tl-none'}`}>
-                      {msg.role === 'model' ? (
-                          <pre className="whitespace-pre-wrap font-mono text-[13px] leading-relaxed overflow-x-auto">{msg.content}</pre>
-                      ) : (
-                          <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{msg.content}</p>
-                      )}
-                   </div>
-                </div>
-             ))
-          )}
-          {sending && (
-             <div className="flex justify-start">
-               <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-2xl rounded-tl-none px-5 py-4 flex gap-1.5 shadow-sm">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
-               </div>
-             </div>
-          )}
-          <div ref={messagesEndRef} className="h-1 lg:h-4" />
+        {/* Tabs */}
+        <div className="flex gap-6 px-6 border-b border-gray-200 dark:border-gray-800">
+          <button
+            onClick={() => setActiveTab('features')}
+            className={`flex items-center gap-2 py-3 text-sm transition-colors ${tabClass('features')}`}
+          >
+            <HiOutlineCubeTransparent className="size-4" />
+            Features
+          </button>
+          <button
+            onClick={() => setActiveTab('prompts')}
+            className={`flex items-center gap-2 py-3 text-sm transition-colors ${tabClass('prompts')}`}
+          >
+            <HiOutlineChatBubbleLeftRight className="size-4" />
+            Prompts
+          </button>
         </div>
 
-        {/* Input Area */}
-        <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-800">
-           <form 
-              onSubmit={e => { e.preventDefault(); handleSend(); }}
-              className="flex gap-3 max-w-4xl mx-auto items-end"
-           >
-              <textarea 
-                 value={promptInput}
-                 onChange={e => setPromptInput(e.target.value)}
-                 onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                       e.preventDefault();
-                       handleSend();
-                    }
-                 }}
-                 placeholder="Ej. Añade una tabla para visualizar a los usuarios, la tabla toma un array 'users'..."
-                 className="w-full flex-1 max-h-40 min-h-[52px] p-3.5 text-sm border border-gray-200 dark:border-gray-700/60 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-xl bg-white dark:bg-gray-800 dark:text-white resize-y outline-none transition-all shadow-sm"
-                 disabled={sending}
-                 autoFocus
-              />
-              <Button 
-                type="submit" 
-                disabled={!promptInput.trim() || sending} 
-                className="h-[52px] px-6 shrink-0 shadow-sm"
-              >
-                 Send
-              </Button>
-           </form>
-        </div>
+        {/* Tab Content */}
+        {activeTab === 'features' ? (
+          <div className="flex-1 overflow-y-auto p-6">
+            {loadingFeatures ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : featuresList.length === 0 ? (
+              <div className="flex h-full items-center justify-center text-center">
+                <div className="max-w-md">
+                  <HiOutlineCubeTransparent className="size-12 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">No features yet. Go to the Prompts tab and describe your application to start generating features.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {featuresList.map((section: any, i: number) => (
+                  <div key={i} className="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+                    <div className="flex items-center gap-3 px-5 py-3.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800">
+                      <div className="w-2 h-2 rounded-full bg-brand-500"></div>
+                      <h4 className="font-semibold text-sm text-gray-800 dark:text-white/90">{section.name}</h4>
+                      <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{section.features?.length || 0}</span>
+                    </div>
+                    <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {section.features?.map((feat: any, j: number) => (
+                        <div key={j} className="flex items-start gap-3 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                          <HiChevronRight className="size-4 text-gray-400 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{feat.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{feat.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Chat Area */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth">
+              {loadingPrompts ? (
+                 <div className="flex items-center justify-center h-full">
+                    <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                 </div>
+              ) : prompts?.length === 0 ? (
+                 <div className="flex h-full items-center justify-center text-center">
+                    <div className="max-w-md">
+                       <HiSparkles className="size-12 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
+                       <p className="text-gray-500 dark:text-gray-400">This project has no layout code yet. Describe your interface layout and Gemini will generate a production-ready JSX bundle.</p>
+                    </div>
+                 </div>
+              ) : (
+                 prompts?.map(msg => (
+                    <div key={msg._id} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                       <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 shadow-sm ${msg.role === 'user' ? 'bg-brand-500 text-white rounded-br-none' : 'bg-gray-50 border border-gray-200 dark:border-gray-800 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-tl-none'}`}>
+                          {msg.role === 'model' ? (
+                              <pre className="whitespace-pre-wrap font-mono text-[13px] leading-relaxed overflow-x-auto">{msg.content}</pre>
+                          ) : (
+                              <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{msg.content}</p>
+                          )}
+                       </div>
+                    </div>
+                 ))
+              )}
+              {sending && (
+                 <div className="flex justify-start">
+                   <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-2xl rounded-tl-none px-5 py-4 flex gap-1.5 shadow-sm">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
+                   </div>
+                 </div>
+              )}
+              <div ref={messagesEndRef} className="h-1 lg:h-4" />
+            </div>
+
+            {/* Input Area */}
+            <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-800">
+               <form 
+                  onSubmit={e => { e.preventDefault(); handleSend(); }}
+                  className="flex gap-3 max-w-4xl mx-auto items-end"
+               >
+                  <textarea 
+                     value={promptInput}
+                     onChange={e => setPromptInput(e.target.value)}
+                     onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                           e.preventDefault();
+                           handleSend();
+                        }
+                     }}
+                     placeholder="Ej. Añade una tabla para visualizar a los usuarios, la tabla toma un array 'users'..."
+                     className="w-full flex-1 max-h-40 min-h-[52px] p-3.5 text-sm border border-gray-200 dark:border-gray-700/60 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-xl bg-white dark:bg-gray-800 dark:text-white resize-y outline-none transition-all shadow-sm"
+                     disabled={sending}
+                     autoFocus
+                  />
+                  <Button 
+                    type="submit" 
+                    disabled={!promptInput.trim() || sending} 
+                    className="h-[52px] px-6 shrink-0 shadow-sm"
+                  >
+                     Send
+                  </Button>
+               </form>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
