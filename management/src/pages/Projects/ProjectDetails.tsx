@@ -2,7 +2,12 @@ import { useNavigate, useParams } from "react-router";
 import { useState } from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import { ChevronLeftIcon, PlusIcon, TrashBinIcon, ShootingStarIcon } from "../../icons";
+import { 
+  HiChevronLeft, 
+  HiPlus, 
+  HiOutlineTrash, 
+  HiSparkles 
+} from "react-icons/hi2";
 import { useQuery, useMutate } from "../../hooks/useFetch";
 import Button from "../../components/ui/button/Button";
 import { Switch } from "../../components/ui/Switch";
@@ -81,7 +86,7 @@ export default function ProjectDetails() {
               onClick={() => navigate('/projects')}
               className="flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
             >
-              <ChevronLeftIcon className="size-6" />
+              <HiChevronLeft className="size-6" />
             </button>
             <div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -97,7 +102,7 @@ export default function ProjectDetails() {
             {/* General Info */}
             <div className="space-y-4">
               <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                <ShootingStarIcon className="size-4 text-brand-500" />
+                <HiSparkles className="size-4 text-brand-500" />
                 General Information
               </h4>
               <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 space-y-4">
@@ -187,7 +192,7 @@ export default function ProjectDetails() {
                 className="shrink-0 gap-2"
                 size="sm"
               >
-                <PlusIcon className="size-4" />
+                <HiPlus className="size-4" />
                 Add
               </Button>
             </div>
@@ -220,7 +225,7 @@ export default function ProjectDetails() {
                       onClick={() => handleRemoveOrigin(origin._id)}
                       disabled={removing}
                     >
-                      <TrashBinIcon className={`size-4 ${removing ? 'animate-pulse' : ''}`} />
+                      <HiOutlineTrash className={`size-4 ${removing ? 'animate-pulse' : ''}`} />
                     </button>
                   </div>
                 ))}

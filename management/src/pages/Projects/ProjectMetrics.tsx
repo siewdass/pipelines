@@ -1,7 +1,13 @@
 import { useNavigate, useParams } from "react-router";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import { ChevronLeftIcon, BoltIcon, PieChartIcon, GroupIcon, ArrowUpIcon } from "../../icons";
+import { 
+  HiChevronLeft, 
+  HiOutlineBolt, 
+  HiOutlineChartPie, 
+  HiOutlineUsers, 
+  HiOutlineArrowUp 
+} from "react-icons/hi2";
 import { useQuery } from "../../hooks/useFetch";
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
@@ -47,7 +53,7 @@ export default function ProjectMetrics() {
               onClick={() => navigate('/projects')}
               className="flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
             >
-              <ChevronLeftIcon className="size-6" />
+              <HiChevronLeft className="size-6" />
             </button>
             <div>
               <h3 className="text-xl font-bold text-gray-800 dark:text-white/90">
@@ -60,17 +66,17 @@ export default function ProjectMetrics() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <MetricCard title="Total Traffic" value="1.2M" sub="↑ 12%" icon={<BoltIcon className="size-6" />} color="text-brand-500" />
-            <MetricCard title="Active Users" value="42.5K" sub="↑ 5.4%" icon={<GroupIcon className="size-6" />} color="text-success-500" />
-            <MetricCard title="Avg Latency" value="142ms" sub="↓ 2ms" icon={<PieChartIcon className="size-6" />} color="text-orange-500" />
-            <MetricCard title="Errors" value="0.04%" sub="Normal" icon={<BoltIcon className="size-6" />} color="text-error-500" />
+            <MetricCard title="Total Traffic" value="1.2M" sub="↑ 12%" icon={<HiOutlineBolt className="size-6" />} color="text-brand-500" />
+            <MetricCard title="Active Users" value="42.5K" sub="↑ 5.4%" icon={<HiOutlineUsers className="size-6" />} color="text-success-500" />
+            <MetricCard title="Avg Latency" value="142ms" sub="↓ 2ms" icon={<HiOutlineChartPie className="size-6" />} color="text-orange-500" />
+            <MetricCard title="Errors" value="0.04%" sub="Normal" icon={<HiOutlineBolt className="size-6" />} color="text-error-500" />
           </div>
 
           <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-black/10 p-6">
             <div className="flex items-center justify-between mb-6">
               <h4 className="font-bold text-gray-800 dark:text-white/90">Request Volume</h4>
               <span className="text-xs font-bold text-brand-500 bg-brand-50 dark:bg-brand-500/10 px-3 py-1 rounded-full flex items-center gap-1">
-                <ArrowUpIcon className="size-3" /> Latest Window
+                <HiOutlineArrowUp className="size-3" /> Latest Window
               </span>
             </div>
             <Chart options={trafficChartOptions} series={trafficChartSeries} type="area" height={350} />

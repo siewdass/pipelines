@@ -1,6 +1,6 @@
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { Base } from './base';
-import { MiniChevronUpIcon, MiniChevronDownIcon } from '../../icons';
+import { HiChevronUp, HiChevronDown } from "react-icons/hi2";
 
 interface NumberInputProps {
   value: number | string;
@@ -39,10 +39,10 @@ export const NumberInput = ({
         <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-800 mx-1" />
         <div className="flex flex-col justify-center">
           <button type="button" onClick={onIncrement} className="p-0.5 text-gray-400 hover:text-brand-500 transition-colors">
-            <MiniChevronUpIcon className="w-3 h-3" />
+            <HiChevronUp className="w-3 h-3" />
           </button>
           <button type="button" onClick={onDecrement} className="p-0.5 text-gray-400 hover:text-brand-500 transition-colors">
-            <MiniChevronDownIcon className="w-3 h-3" />
+            <HiChevronDown className="w-3 h-3" />
           </button>
         </div>
       </div>

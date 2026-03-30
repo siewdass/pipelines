@@ -2,7 +2,10 @@ import { useNavigate, useParams } from "react-router";
 import { useState, useRef, useEffect } from "react";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import { ChevronLeftIcon, ShootingStarIcon } from "../../icons";
+import { 
+  HiChevronLeft, 
+  HiSparkles 
+} from "react-icons/hi2";
 import { useQuery, useMutate } from "../../hooks/useFetch";
 import Button from "../../components/ui/button/Button";
 import { useToast } from "../../hooks/useToast";
@@ -72,7 +75,7 @@ export default function ProjectAssemble() {
           {compiling ? (
              <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>
           ) : (
-             <ShootingStarIcon className="size-4" />
+             <HiSparkles className="size-4" />
           )}
           {compiling ? 'Compiling...' : 'Compile Runtime Build'}
         </Button>
@@ -85,7 +88,7 @@ export default function ProjectAssemble() {
             onClick={() => navigate('/projects')}
             className="flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-10 w-10 shrink-0 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
           >
-            <ChevronLeftIcon className="size-5" />
+            <HiChevronLeft className="size-5" />
           </button>
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -106,7 +109,7 @@ export default function ProjectAssemble() {
           ) : prompts?.length === 0 ? (
              <div className="flex h-full items-center justify-center text-center">
                 <div className="max-w-md">
-                   <ShootingStarIcon className="size-12 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
+                   <HiSparkles className="size-12 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
                    <p className="text-gray-500 dark:text-gray-400">This project has no layout code yet. Describe your interface layout and Gemini will generate a production-ready JSX bundle.</p>
                 </div>
              </div>

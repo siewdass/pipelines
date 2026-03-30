@@ -31,9 +31,11 @@ api.interceptors.request.use(
     const pathParts = window.location.pathname.split('/'); // e.g. ["", "projects", "details", "123"]
     const projectsIndex = pathParts.indexOf('projects');
     if (projectsIndex !== -1 && pathParts[projectsIndex + 2]) {
-      const allowedPaths = ['details', 'projectdata', 'projecttables'];
+      const allowedPaths = ['details', 'projectdata', 'projecttables', 'metrics', 'assemble', 'users'];
       if (allowedPaths.includes(pathParts[projectsIndex + 1])) {
-        config.headers['x-project-id'] = pathParts[projectsIndex + 2];
+        const pId = pathParts[projectsIndex + 2];
+        config.headers['x-project-id'] = pId;
+        config.headers['project-id'] = pId; // Force project-id for identity endpoints
       }
     }
 

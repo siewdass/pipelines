@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import { useEffect } from "react";
-import { ChevronLeftIcon } from "../../icons";
+import { HiChevronLeft } from "react-icons/hi2";
 import { useForm } from "../../hooks/useForm";
 import Button from "../../components/ui/button/Button";
 import { useMutate } from "../../hooks/useFetch";
@@ -35,7 +35,7 @@ export default function ProjectCreate() {
           onClick={() => navigate('/projects')}
           className="flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
         >
-          <ChevronLeftIcon className="size-6" />
+          <HiChevronLeft className="size-6" />
         </button>
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Project Details

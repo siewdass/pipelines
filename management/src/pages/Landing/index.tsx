@@ -1,6 +1,12 @@
 import { useNavigate } from "react-router";
 import { useAuthStore } from "../../state/auth";
-import { GridIcon, BoltIcon, PlugInIcon, ShootingStarIcon, ArrowRightIcon } from "../../icons";
+import { 
+  HiOutlineSquares2X2, 
+  HiOutlineBolt, 
+  HiOutlinePuzzlePiece, 
+  HiSparkles, 
+  HiOutlineArrowRight 
+} from "react-icons/hi2";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -26,7 +32,7 @@ export default function Landing() {
       <nav className="relative z-50 flex items-center justify-between px-6 py-6 mx-auto max-w-7xl lg:px-8">
         <div className="flex items-center gap-2 group cursor-pointer" onClick={() => navigate("/")}>
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-white shadow-lg shadow-brand-500/20 group-hover:scale-110 transition-transform">
-            <GridIcon className="size-6" />
+            <HiOutlineSquares2X2 className="size-6" />
           </div>
           <span className="text-xl font-black text-gray-900 dark:text-white tracking-tighter">
             PIPELINES<span className="text-brand-500">.</span>
@@ -69,7 +75,7 @@ export default function Landing() {
       {/* Hero Section */}
       <section className="relative z-10 px-6 pt-20 pb-32 mx-auto max-w-7xl lg:px-8 flex flex-col items-center text-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 dark:bg-brand-500/10 border border-brand-100 dark:border-brand-500/20 mb-8 animate-fade-in-down">
-          <ShootingStarIcon className="size-4 text-brand-500" />
+          <HiSparkles className="size-4 text-brand-500" />
           <span className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-widest">Version 1.0 is now live</span>
         </div>
 
@@ -86,7 +92,7 @@ export default function Landing() {
             onClick={handleStart}
             className="w-full sm:w-auto px-8 py-4 bg-brand-500 text-white rounded-2xl font-black text-lg hover:bg-brand-600 transition-all flex items-center justify-center gap-2 shadow-2xl shadow-brand-500/30 group"
           >
-            Get Started Free <ArrowRightIcon className="group-hover:translate-x-1 transition-transform" />
+            Get Started Free <HiOutlineArrowRight className="group-hover:translate-x-1 transition-transform" />
           </button>
           <button className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-white/5 text-gray-900 dark:text-white border border-gray-200 dark:border-white/10 rounded-2xl font-bold text-lg hover:bg-gray-50 dark:hover:bg-white/10 transition-all">
             View Demo
@@ -97,7 +103,7 @@ export default function Landing() {
         <div className="mt-20 w-full max-w-5xl p-2 rounded-[2.5rem] bg-gradient-to-b from-gray-200/50 to-transparent dark:from-white/10 border border-white/20 shadow-2xl animate-reveal">
            <div className="w-full h-[500px] bg-gray-100 dark:bg-gray-900 rounded-[2rem] overflow-hidden relative border border-white/10">
               <div className="absolute inset-0 flex items-center justify-center opacity-20 grayscale select-none">
-                 <GridIcon className="size-64 text-brand-500" />
+                 <HiOutlineSquares2X2 className="size-64 text-brand-500" />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900/50 via-transparent to-transparent"></div>
            </div>
@@ -113,17 +119,17 @@ export default function Landing() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <FeatureCard 
-            icon={<BoltIcon />} 
+            icon={<HiOutlineBolt />} 
             title="Real-time Metrics" 
             desc="Track every request, error, and latency peak in real-time with beautiful charts."
           />
           <FeatureCard 
-            icon={<PlugInIcon />} 
+            icon={<HiOutlinePuzzlePiece />} 
             title="Dynamic Relations" 
             desc="One-to-many, many-to-many. Define relationships in JSON and we handle the pivot logic."
           />
           <FeatureCard 
-            icon={<ShootingStarIcon />} 
+            icon={<HiSparkles />} 
             title="Security First" 
             desc="Built-in JWT authentication and project-level guards out of the box."
           />

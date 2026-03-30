@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { ChevronLeftIcon, GoogleIcon, XIcon } from "../../icons";
+import { HiChevronLeft } from "react-icons/hi2";
+import { FcGoogle } from "react-icons/fc";
+import { FaXTwitter } from "react-icons/fa6";
 import { useForm } from "../../hooks/useForm";
 import { useAuthStore } from "../../state/auth";
 import Button from "../ui/button/Button";
@@ -63,7 +65,7 @@ export default function SignUpForm() {
           to="/"
           className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
         >
-          <ChevronLeftIcon className="size-5" />
+          <HiChevronLeft className="size-5" />
           Back to dashboard
         </Link>
       </div>
@@ -80,11 +82,11 @@ export default function SignUpForm() {
           <div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
               <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
-                <GoogleIcon className="size-5" />
+                <FcGoogle className="size-5" />
                 Sign up with Google
               </button>
               <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
-                <XIcon className="size-5" />
+                <FaXTwitter className="size-5" />
                 Sign up with X
               </button>
             </div>

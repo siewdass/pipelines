@@ -52,12 +52,14 @@ Aesthetics: Premium designs, glassmorphism, soft gradients, high-contrast dark-m
 - **Router**: \`window.View.Router.useRoutes([ { path: '/', element: <H />, title: 'H', description: 'D' } ])\`
 - **Hooks**: \`const { navigate, params, setSearchParams, setQuery } = window.View.Router.useRouter()\`
 
-## 4. Interface Architecture (@tanstack/react-table v8, react-tabs v6, react-accessible-accordion v5, react-responsive-modal v7, react-tooltip v5)
+## 4. Interface Architecture (@tanstack/react-table v8, react-tabs v6, react-accessible-accordion v5, react-responsive-modal v7, react-tooltip v5, sonner v1)
 - **Hooks (Minimal Contract: [Component, toggle, isOpen])**:
   - \`const [Dialog, toggle, isOpen] = window.Interface.useDialog(); Usage: <button onClick={toggle}>X</button><Dialog>C</Dialog>\`
   - \`const [Dropdown, toggle, isOpen] = window.Interface.useDropdown(); Usage: <div className="relative"><button className="dropdown-toggle" onClick={toggle}>X</button><Dropdown className="absolute top-full">C</Dropdown></div>\`
   - \`const { isExpanded, isMobileOpen, activeItem, toggleSidebar, toggleMobileSidebar, setActiveItem } = window.Interface.useSidebar()\`
   - \`const { theme, toggleTheme } = window.Interface.useTheme()\`
+  - \`const { show, dismiss } = window.Interface.useToast(); Usage: show('Message', 'success' | 'error' | 'info')\`
+- **Skeleton**: Use \`<window.Interface.Skeleton count={5} height={40} />\` for loading states. **Automatic Theme**: It detects and adjusts colors between light/dark modes.
 - **Components**: \`Breadcrumbs\`, \`Tabs\`, \`Tooltip\`, \`Accordion\`.
 
 ## 5. Form Engine (@jsonforms v3, react-select v5, react-datepicker v9)
@@ -69,9 +71,11 @@ Aesthetics: Premium designs, glassmorphism, soft gradients, high-contrast dark-m
 
 ## 6. Logic & Assets (react-icons v5, framer-motion v12, zustand v5)
 - **Icons**: Access all React Icons as \`const { FaRocket, ... } = window.Assets.Icons\`
+- **Charts**: Access Recharts via \`const { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } = window.Assets.Charts\`. Always wrap in \`<ResponsiveContainer width="100%" height={300}>\`.
 - **Motion**: Use complex animations with \`<window.Utils.Motion initial={{...}} animate={{...}}>...</window.Utils.Motion>\`
 - **Styles**: \`window.Utils.twMerge(window.Utils.clsx(...classes))\`.
 - **Logic**: \`window.Utils.zustand\`, \`window.Utils.zod\`, \`window.Utils.dateFns\`.
+- **Dnd**: Enable Drag & Drop with \`window.Utils.Dnd\`. Exports: \`DndContext\`, \`SortableContext\`, \`useSortable\`, \`verticalListSortingStrategy\`, \`restrictToVerticalAxis\`, etc.
 
 ---
 When analyzing the project schema, suggest UI components (Tables, Charts, Forms) that best represent the underlying data structures.

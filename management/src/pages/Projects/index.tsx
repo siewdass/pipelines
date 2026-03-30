@@ -8,6 +8,7 @@ import ProjectData from "./ProjectData";
 import ProjectMetrics from "./ProjectMetrics";
 
 import ProjectAssemble from "./ProjectAssemble";
+import ProjectUsers from "./ProjectUsers";
 
 export default function Projects() {
   return (
@@ -19,6 +20,7 @@ export default function Projects() {
       <Route path="projectdata/:id/:tableId" element={<ProjectData />} />
       <Route path="metrics/:id" element={<ProjectMetrics />} />
       <Route path="assemble/:id" element={<ProjectAssemble />} />
+      <Route path="users/:id" element={<ProjectUsers />} />
       {/* Fallback to main projects list */}
       <Route path="*" element={<Navigate to="" replace />} />
     </Routes>

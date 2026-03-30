@@ -3,7 +3,14 @@ import { useState } from "react";
 import ComponentCard from "../../components/common/ComponentCard";
 import { DataGrid } from "../../components/tables/DataGrid";
 import { useQuery } from "../../hooks/useFetch";
-import { PlusIcon, PieChartIcon, TableIcon, ShootingStarIcon, SettingsIcon } from "../../icons";
+import { 
+  HiPlus, 
+  HiOutlineChartPie, 
+  HiOutlineTableCells, 
+  HiSparkles, 
+  HiOutlineCog8Tooth, 
+  HiOutlineUsers 
+} from "react-icons/hi2";
 
 export default function ProjectList() {
   const [projects, loading] = useQuery<any[]>('projects', '/project/list');
@@ -16,19 +23,25 @@ export default function ProjectList() {
         onClick={() => navigate(`/projects/metrics/${selected}`)}
         className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-theme-xs"
       >
-        <PieChartIcon className="size-4" /> <span className="hidden md:inline">Metrics</span>
+        <HiOutlineChartPie className="size-4" /> <span className="hidden md:inline">Metrics</span>
       </button>
       <button 
         onClick={() => navigate(`/projects/projecttables/${selected}`)}
         className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-theme-xs"
       >
-        <TableIcon className="size-4" /> <span className="hidden md:inline">Database</span>
+        <HiOutlineTableCells className="size-4" /> <span className="hidden md:inline">Database</span>
       </button>
       <button 
         onClick={() => navigate(`/projects/assemble/${selected}`)}
         className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-theme-xs"
       >
-        <ShootingStarIcon className="size-4" /> <span className="hidden md:inline">Assemble</span>
+        <HiSparkles className="size-4" /> <span className="hidden md:inline">Assemble</span>
+      </button>
+      <button 
+        onClick={() => navigate(`/projects/users/${selected}`)}
+        className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-theme-xs"
+      >
+        <HiOutlineUsers className="size-4" /> <span className="hidden md:inline">Users</span>
       </button>
 
       <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
@@ -37,7 +50,7 @@ export default function ProjectList() {
         onClick={() => navigate(`/projects/details/${selected}`)}
         className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-theme-xs"
       >
-        <SettingsIcon className="size-4" /> <span className="hidden md:inline">Settings</span>
+        <HiOutlineCog8Tooth className="size-4" /> <span className="hidden md:inline">Settings</span>
       </button>
     </div>
   ) : (
@@ -46,7 +59,7 @@ export default function ProjectList() {
         onClick={() => navigate('/projects/create')}
         className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-theme-sm font-medium text-white shadow-theme-xs hover:bg-brand-600 transition-colors"
       >
-        <PlusIcon className="size-5" />
+        <HiPlus className="size-5" />
         Create Project
       </button>
     </div>

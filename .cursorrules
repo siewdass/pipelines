@@ -1,35 +1,37 @@
 # Antigravity Project Rules
 
 ## 🌍 Language & Communication
-- **Idioma**: Siempre responde en **Español**.
-- **Preguntas**: Si un mensaje termina en signo de interrogación ("?"), trátalo solo como una pregunta. Explica pero **NO** realices cambios en los archivos.
-- **Confirmación**: Antes de realizar cualquier cambio, explica brevemente el "cómo" y el "por qué". Pregunta explícitamente: "¿Estás seguro de que esto es lo que quieres hacer?" y espera confirmación. **Evita sugerir temas no relacionados con la petición original.**
-- **Código y Comentarios**: Nombres de variables, funciones, clases y todos los comentarios/documentación deben estar en **Inglés**.
-- **Contexto**: Si falta información para realizar una tarea con precisión, detente y pide los detalles específicos necesarios antes de proponer una solución.
+- **Response Language**: Always respond to the user in **Spanish**.
+- **Question Handling**: If a message ends with a question mark ("?"), treat it strictly as a question. Provide explanations but **DO NOT** perform file modifications.
+- **Confirmation Protocol**: Before any code change, briefly explain the "how" and "why". Explicitly ask: "Are you sure this is what you want to do?" and wait for user confirmation. **Avoid suggesting topics unrelated to the original request.**
+- **Code & Comments**: All variables, functions, classes, and documentation/JSDoc MUST be in **English**.
+- **Context Integrity**: If information is missing for precise execution, stop and request the specific details needed before proposing a solution.
 
 ## 🛠️ Node & Package Management
-- **PNPM**: Usa siempre `pnpm` como gestor de paquetes. No uses `npm` ni `yarn`.
-- **Package Management**: No edites `package.json` manualmente. Usa `pnpm add <pkg>` o `pnpm remove <pkg>`.
-- **Validación**: Usa `npx tsc --noEmit` para validar errores de tipos, no comandos de build.
-- **Linting**: Busca configuraciones de ESLint y respeta sus reglas al escribir código.
+- **Package Manager**: Always use `pnpm`. Do not use `npm` or `yarn`.
+- **Manual Edits**: Never edit `package.json` manually. Use `pnpm add <pkg>` or `pnpm remove <pkg>`.
+- **Validation**: Use `npx tsc --noEmit` to validate type errors instead of build commands.
+- **Linting**: Respect ESLint configurations and rules during code generation.
 
 ## 🚀 TypeScript & Code Quality
-- **Indentación**: Usa siempre **TABS (\t)** para la indentación en archivos TS/TSX. No uses espacios.
-- **Tipado**: Tipado estricto. **Prohibido el uso de `any`**.
-- **Nomenclatura**: Usa nombres descriptivos en Inglés. **Evita abreviaturas** a menos que sean estándares de la industria.
-- **Exportaciones**: Evita `export default` a menos que sea un punto de entrada principal (como archivos de rutas). Prefiere exports nombrados.
-- **Asincronía**: Prefiere `async/await`.
-- **Inmutabilidad**: Evita mutaciones directas; usa patrones inmutables.
-- **Estructura**: Mantén el código modular, separado por dominio y funcionalidad. Respeta la estructura de carpetas existente.
+- **Indentation**: Always use **TABS (\t)** for TS/TSX files. No spaces allowed.
+- **Typing**: Strict typing is mandatory. **Use of `any` is strictly prohibited**.
+- **Naming Conventions**: Use descriptive English names. **Avoid abbreviations** unless they are industry standards.
+- **Exports**: Avoid `export default` unless it's a primary entry point (e.g., route files). Favor named exports.
+- **Asynchrony**: Always use `async/await` over `.then()` promise chains. Code must be linear and highly readable.
+- **Immutability**: Avoid direct mutations; favor immutable patterns.
+- **Structure**: Maintain modularity, separated by domain and functionality. Respect existing folder hierarchy.
+- **Density**: Never declare a variable if it is only used once. Inline the expression directly into the return, component, or function.
+- **Principle of Least Mutation**: Strictly confine logic or structural changes to the exact requested scope. Do not alter adjacent code, imports, or styles unless explicitly required.
 
 ## ⚛️ React Guidelines
-- **Formularios**: Usa siempre **React Hook Form** con **Zod** para validación de datos.
-- **Estado Global**: Usa **Zustand** para la gestión de estado global.
-- **Data Fetching**: Usa **TanStack Query (React Query)** para fetching y gestión de caché.
-- **Optimización**: Valida siempre la necesidad real de `useMemo` y `useCallback` antes de implementarlos para evitar sobre-optimización.
-- **Componentes**: Usa componentes funcionales modernos con TypeScript.
+- **Forms**: Always use **React Hook Form** with **Zod** for data validation.
+- **Global State**: Use **Zustand** for state management.
+- **Data Fetching**: Use **TanStack Query (React Query)** for fetching and cache management.
+- **Optimization**: Validate real need for `useMemo` and `useCallback` to avoid over-engineering.
+- **Components**: Use modern functional components with TypeScript.
 
 ## 📂 Data & Backend
-- **Validación**: Usa esquemas de **Zod** para validar datos tanto en frontend como en el backend.
-- **API**: Mantén los endpoints centralizados en archivos de `constants/`.
-- **Documentación Continua**: Documenta funciones públicas y módulos exportados detalladamente en Inglés. **REGLA ESTRICTA**: Siempre que modifiques o añadas nuevo código, debes actualizar obligatoriamente su documentación (JSDoc, comentarios, etc.) en el mismo paso. La documentación debe evolucionar en tiempo real conforme se avanza con el desarrollo.
+- **Validation**: Use **Zod** schemas for data validation in both frontend and backend.
+- **API**: Centralize endpoints in `constants/` files.
+- **Continuous Documentation**: Document public functions and exported modules in detail (English). **STRICT RULE**: Document changes/additions in the same step they are implemented. Documentation must evolve in real-time.

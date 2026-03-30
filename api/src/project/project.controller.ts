@@ -34,7 +34,7 @@ export class ProjectController {
 	async createProject(@Req() req: Request & { accountId: string }, @Body() body: CreateProjectDto) {
 		const { accountId } = req
 		const _id = uuidv4()
-		const secret = process.env.USER_JWT_SECRET || 'dev-user-secret'
+		const secret = process.env.ACCOUNT_JWT_SECRET || 'dev-account-secret'
 		// Include project id in token for traceability
 		const token = jwt.sign({ id: _id, accountId }, secret)
 
@@ -126,7 +126,7 @@ export class ProjectController {
 	async regenerateToken(@Req() req: Request & { accountId: string }, @Param('id') id: string) {
 		const { accountId } = req
 		this.logger.log(`Regenerating token for project: ${id}`)
-		const secret = process.env.USER_JWT_SECRET || 'dev-user-secret'
+		const secret = process.env.ACCOUNT_JWT_SECRET || 'dev-account-secret'
 		// Include project id in token for traceability
 		const token = jwt.sign({ id, accountId }, secret)
 		const project = await this.projectModel.findOneAndUpdate(

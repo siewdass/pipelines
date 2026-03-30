@@ -2,7 +2,7 @@ import { useRef } from "react";
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 import ChartTab from "../common/ChartTab";
-import { CalenderIcon } from "../../icons";
+import { HiOutlineCalendarDays } from "react-icons/hi2";
 
 export default function StatisticsChart() {
   const datePickerRef = useRef<HTMLInputElement>(null);
@@ -130,7 +130,7 @@ export default function StatisticsChart() {
         <div className="flex items-center gap-3 sm:justify-end">
           <ChartTab />
           <div className="relative inline-flex items-center">
-            <CalenderIcon className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:left-3 lg:top-1/2 lg:translate-x-0 lg:-translate-y-1/2 size-5 text-gray-500 dark:text-gray-400 pointer-events-none z-10" />
+            <HiOutlineCalendarDays className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:left-3 lg:top-1/2 lg:translate-x-0 lg:-translate-y-1/2 size-5 text-gray-500 dark:text-gray-400 pointer-events-none z-10" />
             <input
               type="date"
               ref={datePickerRef}

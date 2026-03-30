@@ -3,15 +3,15 @@ import { Link, useLocation } from "react-router";
 
 // Assume these icons are imported from an icon library
 import {
-  BoxCubeIcon,
-  ChevronDownIcon,
-  GridIcon,
-  HorizontaLDots,
-  FolderIcon,
-  PageIcon,
-  PieChartIcon,
-  TableIcon,
-} from "../icons";
+  HiOutlineCubeTransparent,
+  HiChevronDown,
+  HiOutlineSquares2X2,
+  HiOutlineEllipsisHorizontal,
+  HiOutlineFolder,
+  HiOutlineDocumentText,
+  HiOutlineChartPie,
+  HiOutlineTableCells,
+} from "react-icons/hi2";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
 
@@ -24,23 +24,23 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    icon: <GridIcon />,
+    icon: <HiOutlineSquares2X2 />,
     name: "Dashboard",
     subItems: [{ name: "Ecommerce", path: "/dashboard"}],
   },
   {
     name: "Projects",
-    icon: <FolderIcon />,
+    icon: <HiOutlineFolder />,
     path: "/projects",
   },
   {
     name: "Tables",
-    icon: <TableIcon />,
+    icon: <HiOutlineTableCells />,
     subItems: [{ name: "Basic Tables", path: "/basic-tables"}],
   },
   {
     name: "Pages",
-    icon: <PageIcon />,
+    icon: <HiOutlineDocumentText />,
     subItems: [
       { name: "Blank Page", path: "/blank" },
       { name: "404 Error", path: "/error-404" },
@@ -50,7 +50,7 @@ const navItems: NavItem[] = [
 
 const othersItems: NavItem[] = [
   {
-    icon: <PieChartIcon />,
+    icon: <HiOutlineChartPie />,
     name: "Charts",
     subItems: [
       { name: "Line Chart", path: "/line-chart", pro: false },
@@ -58,7 +58,7 @@ const othersItems: NavItem[] = [
     ],
   },
   {
-    icon: <BoxCubeIcon />,
+    icon: <HiOutlineCubeTransparent />,
     name: "UI Elements",
     subItems: [
       { name: "Alerts", path: "/alerts", pro: false },
@@ -174,7 +174,7 @@ const AppSidebar: React.FC = () => {
                 <span className="menu-item-text">{nav.name}</span>
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
-                <ChevronDownIcon
+                <HiChevronDown
                   className={`ml-auto w-5 h-5 transition-transform duration-200 ${
                     openSubmenu?.type === menuType &&
                     openSubmenu?.index === index
@@ -329,7 +329,7 @@ const AppSidebar: React.FC = () => {
                 {isExpanded || isHovered || isMobileOpen ? (
                   "Menu"
                 ) : (
-                  <HorizontaLDots className="size-6" />
+                  <HiOutlineEllipsisHorizontal className="size-6" />
                 )}
               </h2>
               {renderMenuItems(navItems, "main")}
@@ -345,7 +345,7 @@ const AppSidebar: React.FC = () => {
                 {isExpanded || isHovered || isMobileOpen ? (
                   "Others"
                 ) : (
-                  <HorizontaLDots />
+                  <HiOutlineEllipsisHorizontal />
                 )}
               </h2>
               {renderMenuItems(othersItems, "others")}

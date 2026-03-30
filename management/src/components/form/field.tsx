@@ -1,7 +1,7 @@
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { useState } from 'react';
 import { Base } from './base';
-import { EyeIcon, EyeCloseIcon } from '../../icons';
+import { HiOutlineEye, HiOutlineEyeSlash } from "react-icons/hi2";
 
 export const FieldRenderer = withJsonFormsControlProps(
   ({ data, handleChange, path, label, errors, schema }) => {
@@ -44,9 +44,9 @@ export const FieldRenderer = withJsonFormsControlProps(
                 className="cursor-pointer text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 flex items-center justify-center"
               >
                 {showPassword ? (
-                  <EyeIcon className="fill-current w-[18px] h-[18px]" />
+                  <HiOutlineEye className="fill-current w-[18px] h-[18px]" />
                 ) : (
-                  <EyeCloseIcon className="fill-current w-[18px] h-[18px]" />
+                  <HiOutlineEyeSlash className="fill-current w-[18px] h-[18px]" />
                 )}
               </button>
             </div>

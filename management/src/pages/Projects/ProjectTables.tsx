@@ -1,7 +1,13 @@
 import { useNavigate, useParams } from "react-router";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import { ChevronLeftIcon, TableIcon, GridIcon, PlugInIcon, BoltIcon } from "../../icons";
+import { 
+  HiChevronLeft, 
+  HiOutlineTableCells, 
+  HiOutlineSquares2X2, 
+  HiOutlinePuzzlePiece, 
+  HiOutlineBolt 
+} from "react-icons/hi2";
 import { useQuery } from "../../hooks/useFetch";
 import ComponentCard from "../../components/common/ComponentCard";
 
@@ -40,7 +46,7 @@ export default function ProjectTables() {
               onClick={() => navigate('/projects')}
               className="flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
             >
-              <ChevronLeftIcon className="size-6" />
+              <HiChevronLeft className="size-6" />
             </button>
             <div>
               <h3 className="text-xl font-bold text-gray-800 dark:text-white/90">
@@ -67,7 +73,7 @@ export default function ProjectTables() {
                     
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/10">
-                        <TableIcon className="size-6" />
+                        <HiOutlineTableCells className="size-6" />
                       </div>
                       <div className="flex flex-col items-end">
                         <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Total Storage</span>
@@ -82,7 +88,7 @@ export default function ProjectTables() {
                     <div className="grid grid-cols-2 gap-3 mt-6">
                       <div className="flex flex-col p-3 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-gray-800">
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                          <GridIcon className="size-3" /> Count
+                          <HiOutlineSquares2X2 className="size-3" /> Count
                         </span>
                         <span className="text-lg font-black text-gray-800 dark:text-white">
                           {table.count.toLocaleString()}
@@ -90,7 +96,7 @@ export default function ProjectTables() {
                       </div>
                       <div className="flex flex-col p-3 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-gray-800">
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                          <PlugInIcon className="size-3" /> Relations
+                          <HiOutlinePuzzlePiece className="size-3" /> Relations
                         </span>
                         <span className="text-lg font-black text-gray-800 dark:text-white">
                           {associationsCount}
@@ -99,7 +105,7 @@ export default function ProjectTables() {
                       <div className="flex flex-col p-3 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-gray-800 col-span-2">
                         <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                              <BoltIcon className="size-3" /> Average Object Size
+                              <HiOutlineBolt className="size-3" /> Average Object Size
                             </span>
                             <span className="text-xs font-bold text-brand-500 bg-brand-50 dark:bg-brand-500/10 px-2 py-0.5 rounded-full">
                                 {table.avgObjSize} bytes
@@ -122,7 +128,7 @@ export default function ProjectTables() {
             <ComponentCard title="Empty Schema" desc="No tables have been registered for this project yet.">
               <div className="p-12 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-3xl bg-gray-50/30 dark:bg-black/10">
                 <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gray-100 text-gray-400 dark:bg-gray-800 mb-4">
-                  <TableIcon className="size-10" />
+                  <HiOutlineTableCells className="size-10" />
                 </div>
                 <h5 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">No Data Detected</h5>
                 <p className="max-w-xs mx-auto text-sm text-gray-500 dark:text-gray-400">

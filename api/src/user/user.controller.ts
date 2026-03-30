@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Get, Body, Param, HttpException, HttpStatus, Headers, Logger } from '@nestjs/common'
+import { Controller, Post, Patch, Get, Delete, Body, Param, HttpException, HttpStatus, Headers, Logger } from '@nestjs/common'
 import { ProjectService } from '../project/project.service'
 import { User, UserSchema } from './user.schema'
 import { Role, RoleSchema } from './role.schema'
@@ -56,14 +56,24 @@ export class UserController {
 		return { success: true, users: list }
 	}
 
+	@Delete(':id')
+	async deleteUser(@Headers('project-id') projectId: string, @Param('id') id: string) {
+		this.logger.log(`Deleting user: ${id}`)
+		const UserModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
+		await UserModel.findByIdAndDelete(id).exec()
+		return { success: true }
+	}
+
+	// --- Roles Management ---
+
 	@Post('roles')
-	async createRole(@Headers('project-id') projectId: string, @Body() body: { name: string; description?: string }) {
+	async createRole(@Headers('project-id') projectId: string, @Body() body: { name: string; description?: string; permissions?: string[] }) {
 		this.logger.log(`Creating role: ${body.name}`)
 		try {
 			const RoleModel = await this.projectService.getProjectModel(projectId, RoleSchema, Role.name)
 			const exists = await RoleModel.findOne({ name: body.name }).select('_id').lean().exec()
 			if (exists) throw new HttpException('Role already exists', HttpStatus.CONFLICT)
-			const created = new RoleModel({ name: body.name, description: body.description })
+			const created = new RoleModel(body)
 			await created.save()
 			return { success: true, id: created._id }
 		} catch (err: unknown) {
@@ -72,19 +82,65 @@ export class UserController {
 		}
 	}
 
+	@Get('roles')
+	async getAllRoles(@Headers('project-id') projectId: string) {
+		const RoleModel = await this.projectService.getProjectModel(projectId, RoleSchema, Role.name)
+		const list = await RoleModel.find().lean().exec()
+		return { success: true, roles: list }
+	}
+
+	@Patch('roles/:id')
+	async updateRole(@Headers('project-id') projectId: string, @Param('id') id: string, @Body() body: Record<string, unknown>) {
+		const RoleModel = await this.projectService.getProjectModel(projectId, RoleSchema, Role.name)
+		const updated = await RoleModel.findByIdAndUpdate(id, { $set: body }, { new: true }).lean().exec()
+		if (!updated) throw new HttpException('Role not found', HttpStatus.NOT_FOUND)
+		return { success: true, role: updated }
+	}
+
+	@Delete('roles/:id')
+	async deleteRole(@Headers('project-id') projectId: string, @Param('id') id: string) {
+		const RoleModel = await this.projectService.getProjectModel(projectId, RoleSchema, Role.name)
+		await RoleModel.findByIdAndDelete(id).exec()
+		return { success: true }
+	}
+
+	// --- Permissions Management ---
+
 	@Post('roles/permissions')
-	async createPermission(@Headers('project-id') projectId: string, @Body() body: { name: string; description?: string }) {
+	async createPermission(@Headers('project-id') projectId: string, @Body() body: Record<string, unknown>) {
 		this.logger.log(`Creating permission: ${body.name}`)
 		try {
-			const PermissionModel = await this.projectService.getProjectModel(projectId, PermissionSchema, Permission.name	)
+			const PermissionModel = await this.projectService.getProjectModel(projectId, PermissionSchema, Permission.name)
 			const exists = await PermissionModel.findOne({ name: body.name }).select('_id').lean().exec()
 			if (exists) throw new HttpException('Permission already exists', HttpStatus.CONFLICT)
-			const created = new PermissionModel({ name: body.name, description: body.description })
+			const created = new PermissionModel(body)
 			await created.save()
 			return { success: true, id: created._id }
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : String(err ?? 'Unknown')
 			throw new HttpException(message, HttpStatus.BAD_REQUEST)
 		}
+	}
+
+	@Get('roles/permissions')
+	async getAllPermissions(@Headers('project-id') projectId: string) {
+		const PermissionModel = await this.projectService.getProjectModel(projectId, PermissionSchema, Permission.name)
+		const list = await PermissionModel.find().lean().exec()
+		return { success: true, permissions: list }
+	}
+
+	@Patch('roles/permissions/:id')
+	async updatePermission(@Headers('project-id') projectId: string, @Param('id') id: string, @Body() body: Record<string, unknown>) {
+		const PermissionModel = await this.projectService.getProjectModel(projectId, PermissionSchema, Permission.name)
+		const updated = await PermissionModel.findByIdAndUpdate(id, { $set: body }, { new: true }).lean().exec()
+		if (!updated) throw new HttpException('Permission not found', HttpStatus.NOT_FOUND)
+		return { success: true, permission: updated }
+	}
+
+	@Delete('roles/permissions/:id')
+	async deletePermission(@Headers('project-id') projectId: string, @Param('id') id: string) {
+		const PermissionModel = await this.projectService.getProjectModel(projectId, PermissionSchema, Permission.name)
+		await PermissionModel.findByIdAndDelete(id).exec()
+		return { success: true }
 	}
 }

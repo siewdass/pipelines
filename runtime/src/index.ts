@@ -1,6 +1,15 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 
+// Visual & Logic
+import * as Charts from 'recharts';
+
+// Drag & Drop
+import * as DndCore from '@dnd-kit/core';
+import * as DndSortable from '@dnd-kit/sortable';
+import * as DndModifiers from '@dnd-kit/modifiers';
+import * as DndUtilities from '@dnd-kit/utilities';
+
 // Network & Core Logic
 import * as Network from './network';
 import { useForm } from './library/form';
@@ -14,6 +23,8 @@ import { Breadcrumbs } from './components/breadcrumbs';
 import { useDropdown } from './components/dropdown';
 import { useTable } from './components/table';
 import { useDialog } from './components/dialog';
+import { useToast } from './components/notification';
+import { Skeleton } from './components/skeleton';
 
 // Extra Visual (Productivity & UI)
 import { Tabs } from 'react-tabs';
@@ -33,38 +44,48 @@ import { z as zod } from 'zod';
 // Assets
 import * as FaLegacy from "react-icons/fa";
 import * as Fa6 from "react-icons/fa6";
+import * as Hi2 from "react-icons/hi2";
+import * as Fc from "react-icons/fc";
 
 (window as any).React = React;
+(window as any).ReactDOM = ReactDOM;
+(window as any).Main = Main;
 (window as any).Network = Network;
+
 (window as any).Interface = {
 	Form: { useForm },
+	Theme: { useTheme },
 	// Flattened Hooks
-	useTheme, useSidebar, useTable, useDialog, useDropdown,
+	useTheme, useSidebar, useTable, useDialog, useDropdown, useToast,
 	// Components
-	Breadcrumbs, Tabs, Tooltip, Accordion,
+	Breadcrumbs, Tabs, Tooltip, Accordion, Skeleton,
 };
+
 (window as any).View = { Router };
-(window as any).Assets = { Icons: { ...FaLegacy, ...Fa6 } };
+(window as any).Assets = { Icons: { ...FaLegacy, ...Fa6, ...Hi2, ...Fc }, Charts };
+
 (window as any).Utils = {
 	Motion: motion.div,
 	clsx,
 	twMerge,
-	reactUse: { ...useHooks },
+	reactUse: { ...useHooks },	
 	reactHotkeys: { useHotkeys },
 	dateFns,
 	zustand,
 	zod,
+	Dnd: { ...DndCore, ...DndSortable, ...DndModifiers, ...DndUtilities },
 };
+
 (window as any).Bootstrap = (A: any) => {
 	ReactDOM.createRoot(document.getElementById('root')!).render(React.createElement(Main, null, React.createElement(A)));
 }
 
 // --- Expose to Window ---
-/*console.log("[Runtime] V2 Core initialized.", { 
-	NetworkKeys: Object.keys(Network), 
-	InterfaceKeys: Object.keys(Interface),
-	UtilsKeys: Object.keys(Utils),
-	View: Object.keys(View),
-	Assets: Object.keys({ ...FaLegacy, ...Fa6 }),
+console.log("[Runtime] V2 Core initialized.", { 
+	Network: Object.keys((window as any).Network), 
+	Interface: Object.keys((window as any).Interface),
+	Utils: Object.keys((window as any).Utils),
+	View: Object.keys((window as any).View),
+	Assets: Object.keys((window as any).Assets),
 	Main: Main 
-});*/
+});

@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common'
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common'
 import { Request } from 'express'
 import * as jwt from 'jsonwebtoken'
 
@@ -11,16 +11,14 @@ export class UserAuthGuard implements CanActivate {
 		const authorization = request.headers.authorization
 		const token = authorization?.replace('Bearer ', '').trim()
 
-		if (!token) {
-			throw new UnauthorizedException('Token is missing')
-		}
-
-		try {
-			const secret = process.env.USER_JWT_SECRET || 'dev-user-secret'
-			const payload = jwt.verify(token, secret) as JwtPayload
-			request.userId = payload?.id
-		} catch (_) {
-			throw new UnauthorizedException('Invalid or expired token')
+		if (token) {
+			try {
+				const secret = process.env.USER_JWT_SECRET || 'dev-user-secret'
+				const payload = jwt.verify(token, secret) as JwtPayload
+				request.userId = payload?.id
+			} catch {
+				// Avoid throwing, allowing public endpoints to process
+			}
 		}
 
 		return true

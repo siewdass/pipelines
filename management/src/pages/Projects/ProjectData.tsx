@@ -1,7 +1,12 @@
 import { useNavigate, useParams } from "react-router";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import { ChevronLeftIcon, TableIcon, PlugInIcon, GridIcon } from "../../icons";
+import { 
+  HiChevronLeft, 
+  HiOutlineTableCells, 
+  HiOutlinePuzzlePiece, 
+  HiOutlineSquares2X2 
+} from "react-icons/hi2";
 import { useQuery } from "../../hooks/useFetch";
 import { DataGrid } from "../../components/tables/DataGrid";
 
@@ -39,7 +44,7 @@ export default function ProjectData() {
           onClick={() => navigate(`/projects/projectdata/${id}/${assoc.collection}`)}
           className="inline-flex items-center gap-1.5 hover:text-brand-500 font-semibold text-brand-600 dark:text-brand-400 transition-colors group"
         >
-          <PlugInIcon className="size-4" />
+          <HiOutlinePuzzlePiece className="size-4" />
           {assoc.collection} ({count} items)
         </button>
       );
@@ -75,11 +80,11 @@ export default function ProjectData() {
                 onClick={() => navigate(`/projects/projecttables/${id}`)}
                 className="flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
               >
-                <ChevronLeftIcon className="size-6" />
+                <HiChevronLeft className="size-6" />
               </button>
               <div>
                 <h3 className="text-xl font-bold text-gray-800 dark:text-white/90 uppercase tracking-tight flex items-center gap-2">
-                  <TableIcon className="size-6 text-brand-500" />
+                  <HiOutlineTableCells className="size-6 text-brand-500" />
                   {tableId}
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -89,7 +94,7 @@ export default function ProjectData() {
             </div>
             
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800">
-               <GridIcon className="size-4 text-gray-400" />
+               <HiOutlineSquares2X2 className="size-4 text-gray-400" />
                <span className="text-xs font-bold text-gray-600 dark:text-gray-400">
                  {docs.length} Documents
                </span>
@@ -129,7 +134,7 @@ export default function ProjectData() {
           ) : (
             <div className="p-12 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-3xl bg-gray-50/30 dark:bg-black/10">
               <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gray-100 text-gray-400 dark:bg-gray-800 mb-4">
-                <TableIcon className="size-10" />
+                <HiOutlineTableCells className="size-10" />
               </div>
               <h5 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">Table is Empty</h5>
               <p className="max-w-xs mx-auto text-sm text-gray-500 dark:text-gray-400">
