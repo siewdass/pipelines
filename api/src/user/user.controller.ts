@@ -1,17 +1,22 @@
-import { Controller, Post, Patch, Get, Delete, Body, Param, HttpException, HttpStatus, Headers, Logger } from '@nestjs/common'
+import { Controller, Post, Patch, Get, Delete, Body, Param, HttpException, HttpStatus, Headers, Logger, UseGuards, Req } from '@nestjs/common'
 import { ProjectService } from '../project/project.service'
 import { User, UserSchema } from './user.schema'
 import { Role, RoleSchema } from './role.schema'
 import { Permission, PermissionSchema } from './permission.schema'
 import { CreateUserDto, UpdateUserDto } from './user.dto'
+import { ProjectGuard } from '../project/project.guard'
+import { UserAuthGuard } from '../authorization/user.guard'
+import { Request } from 'express'
 
 @Controller('user')
+@UseGuards(ProjectGuard, UserAuthGuard)
 export class UserController {
 	private readonly logger = new Logger(UserController.name)
 	constructor(private readonly projectService: ProjectService) {}
 
 	@Post()
-	async create(@Headers('project-id') projectId: string, @Body() body: CreateUserDto) {
+	async create(@Req() req: Request & { projectId: string }, @Body() body: CreateUserDto) {
+		const { projectId } = req
 		this.logger.log(`Creating user: ${body.email} (Project: ${projectId})`)
 		const UserModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
 		try {

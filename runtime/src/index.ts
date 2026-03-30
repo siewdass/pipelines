@@ -55,9 +55,7 @@ import * as Fc from "react-icons/fc";
 (window as any).Interface = {
 	Form: { useForm },
 	Theme: { useTheme },
-	// Flattened Hooks
 	useTheme, useSidebar, useTable, useDialog, useDropdown, useToast,
-	// Components
 	Breadcrumbs, Tabs, Tooltip, Accordion, Skeleton,
 };
 
@@ -81,7 +79,7 @@ import * as Fc from "react-icons/fc";
 }
 
 // --- Expose to Window ---
-console.log("[Runtime] V2 Core initialized.", { 
+console.log("[Runtime] Core initialized.", { 
 	Network: Object.keys((window as any).Network), 
 	Interface: Object.keys((window as any).Interface),
 	Utils: Object.keys((window as any).Utils),
@@ -89,3 +87,5 @@ console.log("[Runtime] V2 Core initialized.", {
 	Assets: Object.keys((window as any).Assets),
 	Main: Main 
 });
+
+// users perimsons y 
