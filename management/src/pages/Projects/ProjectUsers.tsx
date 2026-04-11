@@ -7,12 +7,15 @@ import {
   HiOutlineKey,
   HiXMark,
   HiPlus,
-  HiChevronLeft
+  HiChevronLeft,
+  HiCheck,
+  HiOutlineTrash
 } from "react-icons/hi2";
 import PageMeta from "../../components/common/PageMeta";
 import ComponentCard from "../../components/common/ComponentCard";
 import { useQuery, useMutate } from "../../hooks/useFetch";
 import { useToast } from "../../hooks/useToast";
+import { api } from "../../services/api";
 
 const ProjectUsers: React.FC = () => {
   const [activeView, setActiveView] = useState<'users' | 'roles' | 'permissions'>('users');
@@ -24,6 +27,7 @@ const ProjectUsers: React.FC = () => {
   const [showUserForm, setShowUserForm] = useState(false);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [assigningUser, setAssigningUser] = useState<string | null>(null);
 
   // --- Roles ---
   const [rolesData, loadingRoles, refetchRoles] = useQuery<{ success: boolean; roles: any[] }>('project-roles', '/user/roles');
@@ -31,6 +35,7 @@ const ProjectUsers: React.FC = () => {
   const [showRoleForm, setShowRoleForm] = useState(false);
   const [roleName, setRoleName] = useState("");
   const [roleDesc, setRoleDesc] = useState("");
+  const [assigningRole, setAssigningRole] = useState<string | null>(null);
 
   // --- Permissions ---
   const [permsData, loadingPerms, refetchPerms] = useQuery<{ success: boolean; permissions: any[] }>('project-permissions', '/user/roles/permissions');
@@ -38,6 +43,8 @@ const ProjectUsers: React.FC = () => {
   const [showPermForm, setShowPermForm] = useState(false);
   const [permName, setPermName] = useState("");
   const [permResources, setPermResources] = useState("");
+  const [permRead, setPermRead] = useState(true);
+  const [permWrite, setPermWrite] = useState(true);
 
   const handleCreateUser = async () => {
     if (!email.trim()) return;
@@ -66,13 +73,67 @@ const ProjectUsers: React.FC = () => {
   const handleCreatePerm = async () => {
     if (!permName.trim()) return;
     try {
-      const resources = permResources.trim() ? permResources.split(',').map(r => r.trim()) : ['*'];
-      await createPerm({ name: permName.trim(), resources, read: true, write: true });
+      const resources = permResources.trim() ? permResources.split(',').map(r => r.trim()) : [];
+      await createPerm({ name: permName.trim(), resources, read: permRead, write: permWrite });
       toast.success("Permission created successfully!");
-      setPermName(""); setPermResources(""); setShowPermForm(false);
+      setPermName(""); setPermResources(""); setPermRead(true); setPermWrite(true); setShowPermForm(false);
       refetchPerms();
     } catch (e: any) {
       toast.error(e.response?.data?.message || "Failed to create permission.");
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await api.delete(`/user/${userId}`);
+      toast.success("User deleted");
+      refetchUsers();
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to delete user.");
+    }
+  };
+
+  const handleDeleteRole = async (roleId: string) => {
+    try {
+      await api.delete(`/user/roles/${roleId}`);
+      toast.success("Role deleted");
+      refetchRoles();
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to delete role.");
+    }
+  };
+
+  const handleDeletePerm = async (permId: string) => {
+    try {
+      await api.delete(`/user/roles/permissions/${permId}`);
+      toast.success("Permission deleted");
+      refetchPerms();
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to delete permission.");
+    }
+  };
+
+  const toggleRoleForUser = async (userId: string, roleId: string, currentRoles: string[]) => {
+    const hasRole = currentRoles.includes(roleId);
+    const newRoles = hasRole ? currentRoles.filter(r => r !== roleId) : [...currentRoles, roleId];
+    try {
+      await api.patch(`/user/${userId}`, { roles: newRoles });
+      toast.success(hasRole ? "Role removed" : "Role assigned");
+      refetchUsers();
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to update roles.");
+    }
+  };
+
+  const togglePermForRole = async (roleId: string, permId: string, currentPerms: string[]) => {
+    const hasPerm = currentPerms.includes(permId);
+    const newPerms = hasPerm ? currentPerms.filter(p => p !== permId) : [...currentPerms, permId];
+    try {
+      await api.patch(`/user/roles/${roleId}`, { permissions: newPerms });
+      toast.success(hasPerm ? "Permission removed" : "Permission assigned");
+      refetchRoles();
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to update permissions.");
     }
   };
 
@@ -84,7 +145,6 @@ const ProjectUsers: React.FC = () => {
 
   const current = viewConfig[activeView];
 
-  // Lookup maps for cross-referencing
   const rolesMap = new Map((rolesData?.roles || []).map((r: any) => [r._id, r]));
   const permsMap = new Map((permsData?.permissions || []).map((p: any) => [p._id, p]));
 
@@ -101,7 +161,7 @@ const ProjectUsers: React.FC = () => {
           <div className="flex items-center gap-3">
             {activeView !== 'users' && (
               <button
-                onClick={() => setActiveView(activeView === 'permissions' ? 'roles' : 'users')}
+                onClick={() => { setActiveView(activeView === 'permissions' ? 'roles' : 'users'); setAssigningRole(null); setAssigningUser(null); }}
                 className="flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-10 w-10 shrink-0 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
               >
                 <HiChevronLeft className="size-5" />
@@ -119,7 +179,7 @@ const ProjectUsers: React.FC = () => {
           <div className="flex items-center gap-3">
             {activeView === 'users' && (
               <button 
-                onClick={() => setActiveView('roles')}
+                onClick={() => { setActiveView('roles'); setAssigningUser(null); }}
                 className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all border border-gray-200 dark:border-gray-700"
               >
                 <HiOutlineShieldCheck className="size-4" /> Roles
@@ -127,7 +187,7 @@ const ProjectUsers: React.FC = () => {
             )}
             {activeView === 'roles' && (
               <button 
-                onClick={() => setActiveView('permissions')}
+                onClick={() => { setActiveView('permissions'); setAssigningRole(null); }}
                 className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all border border-gray-200 dark:border-gray-700"
               >
                 <HiOutlineKey className="size-4" /> Permissions
@@ -185,11 +245,21 @@ const ProjectUsers: React.FC = () => {
         {activeView === 'permissions' && showPermForm && (
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-theme-sm">
             <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90 mb-4">New Permission</h3>
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 items-end">
               <input type="text" value={permName} onChange={e => setPermName(e.target.value)} placeholder="Permission name *"
                 className="flex-1 px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 dark:text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all" autoFocus />
               <input type="text" value={permResources} onChange={e => setPermResources(e.target.value)} placeholder="Resources (comma separated, default: *)"
                 className="flex-1 px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 dark:text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all" />
+              <div className="flex gap-2 shrink-0">
+                <button type="button" onClick={() => setPermRead(!permRead)}
+                  className={`px-3 py-2.5 text-sm font-semibold rounded-xl transition-all ${permRead ? 'bg-green-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
+                  Read
+                </button>
+                <button type="button" onClick={() => setPermWrite(!permWrite)}
+                  className={`px-3 py-2.5 text-sm font-semibold rounded-xl transition-all ${permWrite ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
+                  Write
+                </button>
+              </div>
               <button onClick={handleCreatePerm} disabled={!permName.trim() || creatingPerm}
                 className="px-6 py-2.5 bg-brand-500 text-white rounded-xl font-semibold text-sm hover:bg-brand-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
                 {creatingPerm ? 'Creating...' : 'Create'}
@@ -208,7 +278,7 @@ const ProjectUsers: React.FC = () => {
             ) : data?.users && data.users.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {data.users.map((user) => (
-                  <div key={user._id} className="p-4 border border-gray-100 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-white/5 hover:border-brand-500/30 transition-all group">
+                  <div key={user._id} className="p-4 border border-gray-100 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-white/5 hover:border-brand-500/30 transition-all">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 bg-brand-500/10 text-brand-500 rounded-xl flex items-center justify-center">
                         <HiOutlineUserCircle className="size-6" />
@@ -216,11 +286,28 @@ const ProjectUsers: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-gray-900 dark:text-white truncate">{user.name || 'Pipelines User'}</h4>
                       </div>
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => setAssigningUser(assigningUser === user._id ? null : user._id)}
+                          className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all ${assigningUser === user._id ? 'bg-brand-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                        >
+                          {assigningUser === user._id ? 'Done' : 'Roles'}
+                        </button>
+                        {user.roles?.some((r: string) => rolesMap.get(r)?.name === 'admin') ? null : (
+                          <button
+                            onClick={() => handleDeleteUser(user._id)}
+                            className="text-xs px-2 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                          >
+                            <HiOutlineTrash className="size-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm bg-white dark:bg-gray-900 p-2 rounded-lg border border-gray-100 dark:border-gray-800 mb-2">
                       <HiOutlineEnvelope className="size-4 opacity-50" />
                       <span className="truncate">{user.email}</span>
                     </div>
+                    {/* Current roles */}
                     {user.roles?.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-2">
                         {user.roles.map((roleId: string, i: number) => {
@@ -232,6 +319,30 @@ const ProjectUsers: React.FC = () => {
                             </span>
                           );
                         })}
+                      </div>
+                    )}
+                    {/* Assign roles panel */}
+                    {assigningUser === user._id && (
+                      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Assign Roles</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(rolesData?.roles || []).map((role: any) => {
+                            const isAssigned = (user.roles || []).includes(role._id);
+                            return (
+                              <button
+                                key={role._id}
+                                onClick={() => toggleRoleForUser(user._id, role._id, user.roles || [])}
+                                className={`text-[11px] font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all ${isAssigned ? 'bg-indigo-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10'}`}
+                              >
+                                {isAssigned ? <HiCheck className="size-3" /> : <HiPlus className="size-3" />}
+                                {role.name}
+                              </button>
+                            );
+                          })}
+                          {(rolesData?.roles || []).length === 0 && (
+                            <p className="text-xs text-gray-400">No roles available. Create one first.</p>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -258,7 +369,7 @@ const ProjectUsers: React.FC = () => {
             ) : rolesData?.roles && rolesData.roles.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {rolesData.roles.map((role) => (
-                  <div key={role._id} className="p-4 border border-gray-100 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-white/5 hover:border-brand-500/30 transition-all group">
+                  <div key={role._id} className="p-4 border border-gray-100 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-white/5 hover:border-brand-500/30 transition-all">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-10 h-10 bg-indigo-500/10 text-indigo-500 rounded-xl flex items-center justify-center">
                         <HiOutlineShieldCheck className="size-6" />
@@ -266,10 +377,27 @@ const ProjectUsers: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-gray-900 dark:text-white truncate">{role.name}</h4>
                       </div>
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => setAssigningRole(assigningRole === role._id ? null : role._id)}
+                          className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all ${assigningRole === role._id ? 'bg-indigo-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                        >
+                          {assigningRole === role._id ? 'Done' : 'Perms'}
+                        </button>
+                        {role.name === 'admin' ? null : (
+                          <button
+                            onClick={() => handleDeleteRole(role._id)}
+                            className="text-xs px-2 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                          >
+                            <HiOutlineTrash className="size-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                     {role.description && (
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 pl-[52px]">{role.description}</p>
                     )}
+                    {/* Current permissions */}
                     {role.permissions?.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-2">
                         {role.permissions.map((permId: string, i: number) => {
@@ -281,6 +409,30 @@ const ProjectUsers: React.FC = () => {
                             </span>
                           );
                         })}
+                      </div>
+                    )}
+                    {/* Assign permissions panel */}
+                    {assigningRole === role._id && (
+                      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Assign Permissions</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(permsData?.permissions || []).map((perm: any) => {
+                            const isAssigned = (role.permissions || []).includes(perm._id);
+                            return (
+                              <button
+                                key={perm._id}
+                                onClick={() => togglePermForRole(role._id, perm._id, role.permissions || [])}
+                                className={`text-[11px] font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all ${isAssigned ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-500/10'}`}
+                              >
+                                {isAssigned ? <HiCheck className="size-3" /> : <HiPlus className="size-3" />}
+                                {perm.name}
+                              </button>
+                            );
+                          })}
+                          {(permsData?.permissions || []).length === 0 && (
+                            <p className="text-xs text-gray-400">No permissions available. Create one first.</p>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -319,6 +471,14 @@ const ProjectUsers: React.FC = () => {
                           {perm.write && <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">Write</span>}
                         </div>
                       </div>
+                      {perm.name === 'all_access' ? null : (
+                        <button
+                          onClick={() => handleDeletePerm(perm._id)}
+                          className="text-xs px-2 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all shrink-0"
+                        >
+                          <HiOutlineTrash className="size-3.5" />
+                        </button>
+                      )}
                     </div>
                     {perm.resources?.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2 pl-[52px]">

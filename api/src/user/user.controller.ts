@@ -21,6 +21,11 @@ export class UserController {
 		const { projectId } = req
 		this.logger.log(`Creating permission: ${body.name}`)
 		try {
+			const resources = body.resources as string[] || []
+			if (resources.includes('*')) {
+				throw new HttpException('Wildcard (*) resource is reserved for the initial all_access permission', HttpStatus.FORBIDDEN)
+			}
+
 			const PermissionModel = await this.projectService.getProjectModel(projectId, PermissionSchema, Permission.name)
 			const exists = await PermissionModel.findOne({ name: body.name }).select('_id').lean().exec()
 			if (exists) throw new HttpException('Permission already exists', HttpStatus.CONFLICT)
