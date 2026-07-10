@@ -13,7 +13,6 @@ import {
   HiOutlineTableCells,
 } from "react-icons/hi2";
 import { useSidebar } from "../context/SidebarContext";
-import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
   name: string;
@@ -285,7 +284,7 @@ const AppSidebar: React.FC = () => {
       <div
         className={`py-8 flex ${
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-        }`}
+        } hidden lg:flex`}
       >
         <Link to="/">
           {isExpanded || isHovered || isMobileOpen ? (
@@ -315,7 +314,7 @@ const AppSidebar: React.FC = () => {
           )}
         </Link>
       </div>
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
+      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar pt-6 lg:pt-0">
         <nav className="mb-6">
           <div className="flex flex-col gap-4">
             <div>
@@ -352,7 +351,6 @@ const AppSidebar: React.FC = () => {
             </div>
           </div>
         </nav>
-        {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
       </div>
     </aside>
   );

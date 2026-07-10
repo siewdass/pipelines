@@ -1,8 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import './index.css';
+import datepickerStyles from 'react-datepicker/dist/react-datepicker.css';
+import formStyles from './index.css';
+const style = document.createElement('style');
+style.textContent = datepickerStyles;
+document.head.appendChild(style);
+const formStyle = document.createElement('style');
+formStyle.textContent = formStyles;
+document.head.appendChild(formStyle);
 import { Base } from './base';
 import { NumberInput } from './number';
 

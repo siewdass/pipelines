@@ -1,0 +1,97 @@
+services:
+  mongodb:
+    image: mongo:7
+    ports: ['27017:27017']
+    volumes: ['mongo_data:/data/db']
+    command: mongod --quiet --logpath /dev/null
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 5s
+      retries: 10
+
+  runtime:
+    image: guergeiro/pnpm:22-10-slim
+    working_dir: /app/runtime
+    ports: ['4002:4002']
+    depends_on:
+      mongodb: { condition: service_healthy }
+    volumes:
+      - ./runtime:/app/runtime
+      - /app/runtime/node_modules
+      - pnpm_store:/pnpm/store
+    environment:
+      - CI=true
+      - PNPM_HOME=/pnpm
+      - PNPM_STORE_DIR=/pnpm/store
+      - PORT=4002
+      - MONGO_URI=mongodb://mongodb:27017/default
+      - ACCOUNT_JWT_SECRET=dev-account-secret
+    command: >
+      sh -c "pnpm install && pnpm dev"
+
+  api:
+    image: guergeiro/pnpm:22-10-slim
+    working_dir: /app/api
+    ports: ['4000:4000']
+    depends_on:
+      mongodb: { condition: service_healthy }
+    volumes:
+      - ./api:/app/api
+      - /app/api/node_modules
+      - pnpm_store:/pnpm/store
+    environment:
+      - CI=true
+      - PNPM_HOME=/pnpm
+      - PNPM_STORE_DIR=/pnpm/store
+      - PORT=4000
+      - MONGO_URI=mongodb://mongodb:27017/default
+      - USER_JWT_SECRET=dev-user-secret
+      - ACCOUNT_JWT_SECRET=dev-account-secret
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+    command: >
+      sh -c "apt-get update -qq && apt-get install -y -qq procps && pnpm install --no-frozen-lockfile && pnpm dev"
+
+  storage:
+    image: guergeiro/pnpm:22-10-slim
+    working_dir: /app/storage
+    ports: ['4001:4001']
+    depends_on:
+      mongodb: { condition: service_healthy }
+    volumes:
+      - ./storage:/app/storage
+      - /app/storage/node_modules
+      - pnpm_store:/pnpm/store
+      - storage_uploads:/data/uploads
+    environment:
+      - CI=true
+      - PNPM_HOME=/pnpm
+      - PNPM_STORE_DIR=/pnpm/store
+      - PORT=4001
+      - MONGO_URI=mongodb://mongodb:27017/default
+      - USER_JWT_SECRET=dev-user-secret
+      - ACCOUNT_JWT_SECRET=dev-account-secret
+      - UPLOADS_DIR=/data/uploads
+    command: >
+      sh -c "pnpm install --no-frozen-lockfile && pnpm dev"
+
+  management:
+    image: guergeiro/pnpm:22-10-slim
+    working_dir: /app/management
+    ports: ['4003:4003']
+    depends_on: [api]
+    volumes:
+      - ./management:/app/management
+      - /app/management/node_modules
+      - pnpm_store:/pnpm/store
+    environment:
+      - CI=true
+      - PNPM_HOME=/pnpm
+      - PNPM_STORE_DIR=/pnpm/store
+    command: >
+      sh -c "pnpm install && pnpm dev --host --port 4003"
+
+volumes:
+  mongo_data:
+  pnpm_store:
+  storage_uploads:

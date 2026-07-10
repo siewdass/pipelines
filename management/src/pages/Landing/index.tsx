@@ -14,7 +14,7 @@ export default function Landing() {
 
   const handleStart = () => {
     if (isAuthenticated) {
-      navigate("/dashboard");
+      navigate("/projects");
     } else {
       navigate("/signup");
     }
@@ -35,7 +35,7 @@ export default function Landing() {
             <HiOutlineSquares2X2 className="size-6" />
           </div>
           <span className="text-xl font-black text-gray-900 dark:text-white tracking-tighter">
-            PIPELINES<span className="text-brand-500">.</span>
+            PIPELINES
           </span>
         </div>
 
@@ -63,10 +63,10 @@ export default function Landing() {
             </>
           ) : (
              <button 
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/projects")}
               className="bg-brand-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:scale-105 transition-all active:scale-95 shadow-xl shadow-brand-500/20"
             >
-              Go to Dashboard
+              Go to Projects
             </button>
           )}
         </div>
@@ -138,7 +138,7 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="relative z-10 px-6 py-12 border-t border-gray-100 dark:border-white/5 text-center">
-        <p className="text-sm text-gray-400 font-medium">© 2026 Pipelines. Designed with precision.</p>
+        <p className="text-sm text-gray-400 font-medium">© 2026 Pipelines — Designed with precision.</p>
       </footer>
 
       {/* Custom Styles for animations */}

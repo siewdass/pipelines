@@ -8,10 +8,12 @@
 	"editor.tabSize": 2,
 	"files.exclude": {
 		"**/node_modules": true,
+		"**/.pnpm-store": true
 		//"**/dist": true,
 	},
 	"search.exclude": {
 		"**/node_modules": true,
-		"**/dist": true
+		"**/dist": true,
+		"**/.pnpm-store": true
 	}
 }

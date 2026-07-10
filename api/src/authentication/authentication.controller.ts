@@ -1,5 +1,6 @@
 import { Controller, Post, Patch, Body, HttpException, HttpStatus, Headers, Logger } from '@nestjs/common'
 import * as bcrypt from 'bcrypt'
+import * as jwt from 'jsonwebtoken'
 import { ProjectService } from '../project/project.service'
 import { User, UserSchema } from '../user/user.schema'
 import { Account, AccountSchema } from '../account/account.schema'
@@ -31,63 +32,19 @@ export class AuthenticationController {
 		return await this.projectService.getProjectModel('default', AccountSchema, Account.name)
 	}
 
-	@Post('signup')
-	async register(@Headers('project-id') projectId: string, @Body() { email, password, name }: RegisterRequestDto): Promise<RegisterResponseDto> {
-		this.logger.log(`User registration attempt: ${email} (Project: ${projectId})`)
-		const userModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
-		const existingUser = await userModel.findOne({ email }).lean().exec()
-		if (existingUser) throw new HttpException('User already exists', HttpStatus.CONFLICT)
-		const newUser = new userModel({ email, password, name })
-		await newUser.save()
-		this.logger.log(`User registered successfully: ${newUser._id}`)
-		return { success: true, message: 'Register success' }
+	private resolveProjectId(token: string): string {
+		const secret = process.env.ACCOUNT_JWT_SECRET || 'dev-account-secret'
+		const payload = jwt.verify(token, secret) as { projectId?: string; id?: string }
+		return payload.projectId || payload.id || token
 	}
 
-	@Post('signin')
-	async login(@Headers('project-id') projectId: string, @Body() { email, password }: LoginRequestDto): Promise<LoginResponseDto & { user: any }> {
-		this.logger.log(`User login attempt: ${email}`)
-		const userModel = await this.projectService.getProjectModel(projectId, UserSchema, User.name)
-		const foundUser = (await this.authService.validateUser(userModel, email, password)) as any
-		const token = this.authService.generateToken({ id: foundUser._id, email: foundUser.email }, 'user')
-		this.logger.log(`User login success: ${foundUser._id}`)
+	// @Post('signup')
+	// async register(...) { ... }
 
-		// Fetch and Flatten Permissions
-		const permissions = await this.getUserPermissions(projectId, foundUser.roles || [])
+	// @Post('signin')
+	// async login(...) { ... }
 
-		return { 
-			success: true, 
-			message: 'Login success', 
-			token,
-			user: {
-				id: foundUser._id,
-				email: foundUser.email,
-				name: foundUser.name,
-				permissions
-			}
-		}
-	}
-
-	private async getUserPermissions(projectId: string, roleIds: string[]) {
-		const roleModel = await this.projectService.getProjectModel(projectId, RoleSchema, Role.name)
-		const permissionModel = await this.projectService.getProjectModel(projectId, PermissionSchema, Permission.name)
-		
-		const roles = await roleModel.find({ _id: { $in: roleIds } }).lean().exec()
-		const permissionIds = roles.flatMap((r: any) => r.permissions || [])
-		
-		const permissionDocs = await permissionModel.find({ _id: { $in: permissionIds } }).lean().exec()
-		
-		const flattenMap: Record<string, { read: boolean, write: boolean }> = {}
-		
-		for (const p of permissionDocs as any[]) {
-			for (const res of p.resources || []) {
-				if (!flattenMap[res]) flattenMap[res] = { read: false, write: false }
-				if (p.read) flattenMap[res].read = true
-				if (p.write) flattenMap[res].write = true
-			}
-		}
-		
-		return flattenMap
-	}
+	// private async getUserPermissions(...) { ... }
 
 	@Post('recover')
 	async recover(@Body() _: RecoverRequestDto): Promise<RecoverResponseDto> {

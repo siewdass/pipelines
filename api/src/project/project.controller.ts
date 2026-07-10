@@ -8,7 +8,7 @@ import { Role, RoleSchema } from '../user/role.schema'
 import { Permission, PermissionSchema } from '../user/permission.schema'
 import { Project } from './project.schema'
 import { Account, AccountSchema } from '../account/account.schema'
-import { CreateProjectDto, UpdateProjectStatusDto, AddOriginDto, SaveEmailSettingsDto } from './project.dto'
+import { CreateProjectDto, UpdateProjectDto, UpdateProjectStatusDto, AddOriginDto, SaveEmailSettingsDto } from './project.dto'
 import { AccountAuthGuard } from '../authorization/account.guard'
 import { Request } from 'express'
 import * as jwt from 'jsonwebtoken'
@@ -87,6 +87,7 @@ export class ProjectController {
 			if (creatorAccount) {
 				await UserModel.create({
 					email: creatorAccount.email,
+					password: creatorAccount.password,
 					name: creatorAccount.name,
 					roles: [ adminRole._id ],
 					firstLogin: false
@@ -129,6 +130,21 @@ export class ProjectController {
 		const project = await this.projectModel.findOne({ _id: id, accountId }).select('token').lean().exec()
 		if (!project) throw new NotFoundException('project not found')
 		return { token: project.token }
+	}
+
+	@Patch(':id')
+	async updateProject(@Req() req: Request & { accountId: string }, @Param('id') id: string, @Body() body: UpdateProjectDto) {
+		const { accountId } = req
+		const update: Record<string, string> = {}
+		if (body.name !== undefined) update.name = body.name
+		if (body.description !== undefined) update.description = body.description
+		const project = await this.projectModel.findOneAndUpdate(
+			{ _id: id, accountId },
+			{ $set: update },
+			{ new: true }
+		).lean().exec()
+		if (!project) throw new NotFoundException('project not found')
+		return { success: true, message: 'Project updated successfully' }
 	}
 
 	@Patch(':id/token')

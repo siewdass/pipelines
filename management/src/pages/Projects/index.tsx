@@ -15,8 +15,8 @@ export default function Projects() {
     <Routes>
       <Route index element={<ProjectList />} />
       <Route path="create" element={<ProjectCreate />} />
-      <Route path="details/:id" element={<ProjectDetails />} />
-      <Route path="projecttables/:id" element={<ProjectTables />} />
+      <Route path="settings/:id" element={<ProjectDetails />} />
+      <Route path="schema/:id" element={<ProjectTables />} />
       <Route path="projectdata/:id/:tableId" element={<ProjectData />} />
       <Route path="metrics/:id" element={<ProjectMetrics />} />
       <Route path="assemble/:id" element={<ProjectAssemble />} />

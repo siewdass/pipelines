@@ -37,7 +37,8 @@ export function useQuery<TData = any, TError = any>(
         const { data } = await api.get(url, { params });
         return data;
       } catch (err: any) {
-        toast.error(err.response?.data?.message || 'Error fetching data');
+        const fullUrl = `${err.config?.baseURL || ''}${err.config?.url || ''}`;
+        toast.error(`[${fullUrl}] ${err.response?.data?.message || err.message || 'Error fetching data'}`);
         throw err;
       }
     },
@@ -86,7 +87,8 @@ export function useMutate<TData = any, TVariables = any, TError = any>(
       if (data?.message) toast.success(data.message);
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Action failed');
+      const fullUrl = `${err.config?.baseURL || ''}${err.config?.url || ''}`;
+      toast.error(`[${fullUrl}] ${err.response?.data?.message || err.message || 'Action failed'}`);
     },
   });
 

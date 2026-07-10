@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { HiChevronLeft } from "react-icons/hi2";
 import { FcGoogle } from "react-icons/fc";
-import { FaXTwitter } from "react-icons/fa6";
+
 import { useForm } from "../../hooks/useForm";
 import { useAuthStore } from "../../state/auth";
 import Button from "../ui/button/Button";
@@ -30,11 +30,26 @@ export default function SignInForm() {
     try {
       console.log(formData)
       await auth.login(formData.email, formData.password);
-      navigate("/");
+      navigate("/projects");
       toast.success("Logged in successfully!");
     } catch (err: any) {
+      const fullUrl = `${err.config?.baseURL || ''}${err.config?.url || ''}`;
+      const code = err.code ? ` (${err.code})` : '';
+      const status = err.response?.status ? ` HTTP ${err.response.status}` : '';
       const msg = err.response?.data?.message || err.message || "Invalid credentials";
-      toast.error(msg);
+      toast.error(`[${fullUrl}${code}${status}] ${msg}`);
+      console.error('Login error (full):', JSON.stringify({
+        message: err.message,
+        code: err.code,
+        name: err.name,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        baseURL: err.config?.baseURL,
+        url: err.config?.url,
+        method: err.config?.method,
+        headers: err.config?.headers,
+      }, null, 2));
+      console.error('Login error (raw):', err);
     } finally {
       setLoading(false);
     }
@@ -47,7 +62,7 @@ export default function SignInForm() {
           className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
         >
           <HiChevronLeft className="size-5" />
-          Back to dashboard
+          Back to home
         </Link>
       </div>
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
@@ -61,14 +76,10 @@ export default function SignInForm() {
             </p>
           </div>
           <div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
+            <div className="grid grid-cols-1 gap-3 sm:gap-5">
               <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
                 <FcGoogle className="size-5" />
                 Sign in with Google
-              </button>
-              <button className="inline-flex items-center justify-center gap-3 py-3 text-sm font-normal text-gray-700 transition-colors bg-gray-100 rounded-lg px-7 hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
-                <FaXTwitter className="size-5" />
-                Sign in with X
               </button>
             </div>
             <div className="relative py-3 sm:py-5">

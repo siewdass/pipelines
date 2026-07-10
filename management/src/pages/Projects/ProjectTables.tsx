@@ -1,8 +1,7 @@
 import { useNavigate, useParams } from "react-router";
-import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import PageHeader from "../../components/common/PageHeader";
 import PageMeta from "../../components/common/PageMeta";
 import { 
-  HiChevronLeft, 
   HiOutlineTableCells, 
   HiOutlineSquares2X2, 
   HiOutlinePuzzlePiece, 
@@ -34,29 +33,18 @@ export default function ProjectTables() {
   return (
     <div className="w-full">
       <PageMeta
-        title={`${project?.name || 'Project'} | Project Tables`}
+        title={`${project?.name || 'Project'} | Project Schema`}
         description="Technical tables and schema for the project."
       />
-      <PageBreadcrumb pageTitle="Project Tables" />
       
-      <div className="space-y-6">
+      <div className="space-y-3">
+        <PageHeader 
+          back
+          title="Project Schema"
+          subtitle={`${project?.name} - Technical Configuration & Metrics`}
+          className="mb-3 md:mb-5 lg:mb-6"
+        />
         <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 transition-all duration-300">
-          <div className="flex items-center gap-4 mb-8">
-            <button 
-              onClick={() => navigate('/projects')}
-              className="flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-            >
-              <HiChevronLeft className="size-6" />
-            </button>
-            <div>
-              <h3 className="text-xl font-bold text-gray-800 dark:text-white/90">
-                Project Tables
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {project?.name} - Technical Configuration & Metrics
-              </p>
-            </div>
-          </div>
           
           {tables.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -125,23 +113,15 @@ export default function ProjectTables() {
               })}
             </div>
           ) : (
-            <ComponentCard title="Empty Schema" desc="No tables have been registered for this project yet.">
-              <div className="p-12 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-3xl bg-gray-50/30 dark:bg-black/10">
-                <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gray-100 text-gray-400 dark:bg-gray-800 mb-4">
-                  <HiOutlineTableCells className="size-10" />
-                </div>
-                <h5 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">No Data Detected</h5>
-                <p className="max-w-xs mx-auto text-sm text-gray-500 dark:text-gray-400">
-                  Schemas are automatically created when you perform mutations with associations. 
-                </p>
-                <button 
-                   onClick={() => navigate(`/projects/details/${id}`)}
-                   className="mt-6 text-brand-500 font-semibold hover:underline"
-                >
-                  Go back to instructions
-                </button>
+            <div className="p-12 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-3xl bg-gray-50/30 dark:bg-black/10">
+              <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gray-100 text-gray-400 dark:bg-gray-800 mb-4">
+                <HiOutlineTableCells className="size-10" />
               </div>
-            </ComponentCard>
+              <h5 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">No Data Detected</h5>
+              <p className="max-w-xs mx-auto text-sm text-gray-500 dark:text-gray-400">
+                Schemas are automatically created when you perform mutations with associations. 
+              </p>
+            </div>
           )}
         </div>
       </div>

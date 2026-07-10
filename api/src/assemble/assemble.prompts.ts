@@ -6,6 +6,7 @@ Aesthetics: Premium designs, glassmorphism, soft gradients, high-contrast dark-m
 - **Core**: At the end of the code add: \`window.Bootstrap(App);\`
 
 ## 2. Network Layer (axios v1 & socket.io-client v4)
+- **Toast Feedback**: The network layer (mutations, auth) automatically shows toasts for errors and success. Do NOT call \`show()\` manually — the system handles it.
 - **Architecture**: All interactions with the provided **Database Schema** must be performed via this layer (\`window.Network\`).
 ### 2.1 Inquiries (Read - Http)
 - **\`source\`**: The root collection name.
@@ -50,8 +51,15 @@ Aesthetics: Premium designs, glassmorphism, soft gradients, high-contrast dark-m
 - **RBAC Component**: \`<window.Network.Can permission="read" resource="X">...</window.Network.Can>\`. Use this to selectively render UI based on the logged-in user's permissions for the specified resource. Supports wildcard \`*\`.
 
 ## 3. Navigation & SEO (react-router v7 & react-helmet-async v2)
-- **Router**: \`window.View.Router.useRoutes([ { path: '/', element: <H />, title: 'H', description: 'D' } ])\`
-- **Hooks**: \`const { navigate, params, setSearchParams, setQuery } = window.View.Router.useRouter()\`
+- **Router**: \`useRoutes\` is a hook that returns JSX. Call it as a JavaScript expression INSIDE your component body, NEVER as a JSX tag:
+  \`\`\`jsx
+  const App = () => {
+    return window.View.Router.useRoutes([
+      { path: '/', element: <Home />, title: 'Home', description: 'Landing page' }
+    ])
+  }
+  \`\`\`
+- **Hooks**: \`const { navigate, location, params, pathname, searchParams, setQuery } = window.View.Router.useRouter()\`
 
 ## 4. Interface Architecture (@tanstack/react-table v8, react-tabs v6, react-accessible-accordion v5, react-responsive-modal v7, react-tooltip v5, sonner v1)
 - **Hooks (Minimal Contract: [Component, toggle, isOpen])**:
@@ -71,7 +79,11 @@ Aesthetics: Premium designs, glassmorphism, soft gradients, high-contrast dark-m
 - **Render**: \`return <><Form initial={{}}/><button onClick={()=>onSub(d=>mutate(d))}>S</button></>;\`
 
 ## 6. Logic & Assets (react-icons v5, framer-motion v12, zustand v5)
-- **Icons**: Access all React Icons as \`const { FaRocket, ... } = window.Assets.Icons\`
+- **Icons (FontAwesome 6 via react-icons/fa6)**: \`const { FaRocket, FaUser, ... } = window.Assets.Icons\`
+  Examples: { FaRocket, FaUser, FaHome, FaCog, FaSearch, FaBell, FaEnvelope,
+  FaStar, FaHeart, FaCheck, FaPlus, FaTrash, FaPencil, FaEye, FaArrowRight,
+  FaBars, FaMoon, FaSun, FaBolt, FaCube, FaLock, FaGlobe, FaGear, FaTag }
+  ONLY use Fa* prefix (FontAwesome 6). Never invent icon names.
 - **Charts**: Access Recharts via \`const { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } = window.Assets.Charts\`. Always wrap in \`<ResponsiveContainer width="100%" height={300}>\`.
 - **Motion**: Use complex animations with \`<window.Utils.Motion initial={{...}} animate={{...}}>...</window.Utils.Motion>\`
 - **Styles**: \`window.Utils.twMerge(window.Utils.clsx(...classes))\`.
@@ -83,4 +95,31 @@ When analyzing the project schema, suggest UI components (Tables, Charts, Forms)
 
 ## 7. Features Catalog
 CRITICAL: Always return a complete **features** array cataloging ALL sections and functionalities of the application. Group related functionalities under a section name. Each feature must have a specific **name** and **description** explaining what it does. This catalog must reflect the FULL current state of the app, not just the latest changes.
+
+IMPORTANT - Message field: The "message" in the tool response must ONLY describe the improvements, changes, or new features added. NEVER include meta-commentary about code conventions, format rules, or how you followed instructions (e.g., don't say "El código sigue las directrices..." or "utilizando solo window globals"). Just describe qué hiciste y qué mejoraste.
+
+## 8. Code Format - CRITICAL
+The "code" field MUST be a complete React JSX application, never plain HTML. Follow this EXACT pattern:
+const Home = () => {
+  const [count, setCount] = React.useState(0)
+  return (
+    <div className="min-h-screen bg-gray-900 text-white p-8">
+      <h1 className="text-4xl font-bold">{count}</h1>
+      <button className="bg-blue-600 px-4 py-2 rounded" onClick={() => setCount(c => c + 1)}>+</button>
+    </div>
+  )
+}
+const App = () => {
+  return window.View.Router.useRoutes([
+    { path: '/', element: <Home />, title: 'Home', description: 'My app' }
+  ])
+}
+window.Bootstrap(App)
+Rules:
+- Use "className" NEVER "class", "htmlFor" NEVER "for"
+- Self-closing tags: <input />, <br />, <hr />, <img />, <textarea /> NEVER <input>
+- All tags must be properly closed and nested
+- Always call window.Bootstrap(App) at the end
+- Never output HTML fragments without a React component wrapper
+- NUNCA uses hooks como si fueran componentes JSX (<hookName>...</hookName>). Los hooks se llaman como expresiones JavaScript: \`return hookName(...)\` o \`{hookName(...)}\`.
 `

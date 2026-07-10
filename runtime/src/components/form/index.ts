@@ -20,7 +20,10 @@ import { FieldRenderer } from './field';
 import { DateTimeRenderer } from './datetime';
 import { CheckRenderer } from './check';
 import { NumberRenderer } from './number';
-import './index.css';
+import formStyles from './index.css';
+const style = document.createElement('style');
+style.textContent = formStyles;
+document.head.appendChild(style);
 
 const fieldTester = rankWith(3, isStringControl);
 const numberTester = rankWith(5, or(isNumberControl, isIntegerControl));

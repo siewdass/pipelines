@@ -22,9 +22,11 @@ import Home from "./pages/Dashboard/Home";
 import { useAuthStore } from "./state/auth";
 import { NavigateSetter } from "./hooks/useRouter";
 import Landing from "./pages/Landing";
+import { useTheme } from "./context/ThemeContext";
 
 export default function App() {
   const { isAuthenticated } = useAuthStore();
+  const { theme } = useTheme();
 
   const routes = useRoutes([
     {
@@ -51,11 +53,11 @@ export default function App() {
     },
     {
       path: "/signin",
-      element: isAuthenticated ? <Navigate to="/dashboard" /> : <SignIn />,
+      element: isAuthenticated ? <Navigate to="/projects" /> : <SignIn />,
     },
     {
       path: "/signup",
-      element: isAuthenticated ? <Navigate to="/dashboard" /> : <SignUp />,
+      element: isAuthenticated ? <Navigate to="/projects" /> : <SignUp />,
     },
     {
       path: "*",
@@ -77,7 +79,13 @@ export default function App() {
 
   return (  
     <>
-      <Toaster richColors position="top-right" />
+      <Toaster
+        position="top-right"
+        theme={theme}
+        toastOptions={{
+          className: '!bg-white !text-gray-700 !border !border-gray-200 dark:!bg-gray-900 dark:!text-gray-300 dark:!border-gray-700',
+        }}
+      />
       <NavigateSetter />
       <ScrollToTop />
       {routes}

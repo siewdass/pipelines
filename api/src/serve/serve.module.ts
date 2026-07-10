@@ -1,11 +1,11 @@
-import { Module } from '@nestjs/common'
-import { ServeController } from './serve.controller'
-import { AssembleModule } from '../assemble/assemble.module'
-import { ProjectModule } from '../project/project.module'
+// import { Module } from '@nestjs/common'
+// import { ServeController } from './serve.controller'
+// import { SourceModule } from '../source/source.module'
+// import { ProjectModule } from '../project/project.module'
 
-@Module({
-	imports: [ AssembleModule, ProjectModule ],
-	controllers: [ ServeController ],
-	providers: [],
-})
-export class ServeModule {}
+// @Module({
+// 	imports: [ SourceModule, ProjectModule ],
+// 	controllers: [ ServeController ],
+// 	providers: [],
+// })
+// export class ServeModule {}

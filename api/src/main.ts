@@ -11,8 +11,12 @@ async function bootstrap() {
 		}),
 	})
 	app.enableCors({
-		origin: '*',
-		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+		origin: (origin, callback) => {
+			callback(null, origin || true)
+		},
+		credentials: true,
+		methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+		allowedHeaders: ['Content-Type', 'Authorization', 'project-id', 'x-project-id'],
 		preflightContinue: false,
 		optionsSuccessStatus: 204,
 	})
@@ -27,7 +31,7 @@ async function bootstrap() {
 	const document = SwaggerModule.createDocument(app, config)
 	SwaggerModule.setup('docs', app, document)
 
-	await app.listen(process.env.PORT ? Number(process.env.PORT) : 8000)
+	await app.listen(process.env.PORT ? Number(process.env.PORT) : 4000, '0.0.0.0')
 }
 
 bootstrap()

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import { useState } from "react";
-import ComponentCard from "../../components/common/ComponentCard";
+import PageHeader from "../../components/common/PageHeader";
 import { DataGrid } from "../../components/tables/DataGrid";
 import { useQuery } from "../../hooks/useFetch";
 import { api } from "../../services/api";
@@ -21,34 +21,14 @@ export default function ProjectList() {
   const toolbar = selected ? (
     <div className="flex items-center gap-2">
       <button 
-        onClick={() => navigate(`/projects/metrics/${selected}`)}
-        className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-theme-xs"
-      >
-        <HiOutlineChartPie className="size-4" /> <span className="hidden md:inline">Metrics</span>
-      </button>
-      <button 
-        onClick={() => navigate(`/projects/projecttables/${selected}`)}
-        className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-theme-xs"
-      >
-        <HiOutlineTableCells className="size-4" /> <span className="hidden md:inline">Database</span>
-      </button>
-      <button 
         onClick={() => navigate(`/projects/assemble/${selected}`)}
         className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-theme-xs"
       >
         <HiSparkles className="size-4" /> <span className="hidden md:inline">Assemble</span>
       </button>
-      <button 
-        onClick={() => navigate(`/projects/users/${selected}`)}
-        className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-theme-xs"
-      >
-        <HiOutlineUsers className="size-4" /> <span className="hidden md:inline">Users</span>
-      </button>
-
-      <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
 
       <button 
-        onClick={() => navigate(`/projects/details/${selected}`)}
+        onClick={() => navigate(`/projects/settings/${selected}`)}
         className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 shadow-theme-xs"
       >
         <HiOutlineCog8Tooth className="size-4" /> <span className="hidden md:inline">Settings</span>
@@ -58,20 +38,24 @@ export default function ProjectList() {
     <div className="flex items-center gap-3">
       <button 
         onClick={() => navigate('/projects/create')}
-        className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-theme-sm font-medium text-white shadow-theme-xs hover:bg-brand-600 transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600 transition-colors"
       >
-        <HiPlus className="size-5" />
-        Create Project
+        <HiPlus className="size-4" />
+        <span className="hidden md:inline">Create Project</span>
       </button>
     </div>
   );
 
   return (
-    <ComponentCard 
-      title="Projects List" 
-      desc="A list of all your current projects and their status."
-      toolbar={toolbar}
-    >
+    <div className="w-full">
+      <div className="space-y-3">
+        <PageHeader
+          title="Projects List"
+          subtitle="A list of all your projects"
+          className="mb-4 md:mb-5 lg:mb-6"
+        >
+          {toolbar}
+        </PageHeader>
       {loading ? (
         <div className="flex items-center justify-center p-12">
           <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
@@ -105,9 +89,36 @@ export default function ProjectList() {
                 <h4 className="font-semibold text-gray-800 dark:text-white/90 group-hover:text-brand-500 transition-colors">
                   {item.name}
                 </h4>
-                <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${item.status === 'active' ? 'bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}>
-                  {item.status || 'Active'}
-                </span>
+                <div className="flex items-center gap-2">
+                  {selected === item._id && (
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); navigate(`/projects/metrics/${selected}`); }}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        title="Metrics"
+                      >
+                        <HiOutlineChartPie className="size-4" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); navigate(`/projects/schema/${selected}`); }}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        title="Database"
+                      >
+                        <HiOutlineTableCells className="size-4" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); navigate(`/projects/users/${selected}`); }}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        title="Users"
+                      >
+                        <HiOutlineUsers className="size-4" />
+                      </button>
+                    </>
+                  )}
+                  <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${item.status === 'active' ? 'bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}>
+                    {item.status || 'Active'}
+                  </span>
+                </div>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-3 min-h-[50px]">
                 {item.description || 'No description provided.'}
@@ -116,6 +127,7 @@ export default function ProjectList() {
           )}
         />
       )}
-    </ComponentCard>
+      </div>
+    </div>
   );
 }

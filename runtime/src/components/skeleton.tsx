@@ -1,6 +1,10 @@
 import * as React from 'react';
 import SkeletonBase, { SkeletonTheme, SkeletonProps } from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css';
+import skeletonStyles from 'react-loading-skeleton/dist/skeleton.css';
+
+const style = document.createElement('style');
+style.textContent = skeletonStyles;
+document.head.appendChild(style);
 import { useTheme } from '../library/theme';
 
 /**

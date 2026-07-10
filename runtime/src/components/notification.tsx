@@ -1,5 +1,10 @@
 import { toast, Toaster } from "sonner";
 import { useCallback } from "react";
+import sonnerStyles from 'sonner/dist/styles.css';
+
+const style = document.createElement('style');
+style.textContent = sonnerStyles;
+document.head.appendChild(style);
 
 export type NotificationType = 'success' | 'error' | 'info';
 

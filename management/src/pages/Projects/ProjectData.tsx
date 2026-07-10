@@ -1,8 +1,7 @@
 import { useNavigate, useParams } from "react-router";
-import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import PageHeader from "../../components/common/PageHeader";
 import PageMeta from "../../components/common/PageMeta";
 import { 
-  HiChevronLeft, 
   HiOutlineTableCells, 
   HiOutlinePuzzlePiece, 
   HiOutlineSquares2X2 
@@ -70,36 +69,21 @@ export default function ProjectData() {
         title={`${tableId} | Project Data`}
         description={`Browsing data for table ${tableId}`}
       />
-      <PageBreadcrumb pageTitle="Table Data" />
       
       <div className="space-y-6">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 transition-all duration-300">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => navigate(`/projects/projecttables/${id}`)}
-                className="flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-              >
-                <HiChevronLeft className="size-6" />
-              </button>
-              <div>
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white/90 uppercase tracking-tight flex items-center gap-2">
-                  <HiOutlineTableCells className="size-6 text-brand-500" />
-                  {tableId}
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Browsing all records in this table
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800">
-               <HiOutlineSquares2X2 className="size-4 text-gray-400" />
-               <span className="text-xs font-bold text-gray-600 dark:text-gray-400">
-                 {docs.length} Documents
-               </span>
-            </div>
+        <PageHeader 
+          backTo={`/projects/schema/${id}`}
+          title={tableId || ''}
+          subtitle="Browsing all records in this table"
+        >
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800">
+             <HiOutlineSquares2X2 className="size-4 text-gray-400" />
+             <span className="text-xs font-bold text-gray-600 dark:text-gray-400">
+               {docs.length} Documents
+             </span>
           </div>
+        </PageHeader>
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 transition-all duration-300">
 
           {loading ? (
             <div className="flex items-center justify-center p-20">

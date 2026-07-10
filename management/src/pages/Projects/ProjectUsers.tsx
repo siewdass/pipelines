@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useParams } from "react-router";
 import { 
   HiOutlineUsers, 
   HiOutlineUserCircle, 
@@ -7,17 +8,19 @@ import {
   HiOutlineKey,
   HiXMark,
   HiPlus,
-  HiChevronLeft,
   HiCheck,
   HiOutlineTrash
 } from "react-icons/hi2";
 import PageMeta from "../../components/common/PageMeta";
+import PageHeader from "../../components/common/PageHeader";
 import ComponentCard from "../../components/common/ComponentCard";
 import { useQuery, useMutate } from "../../hooks/useFetch";
 import { useToast } from "../../hooks/useToast";
 import { api } from "../../services/api";
 
 const ProjectUsers: React.FC = () => {
+  const { id } = useParams();
+  const [project] = useQuery<any>(`project-${id}`, `/project/${id}`);
   const [activeView, setActiveView] = useState<'users' | 'roles' | 'permissions'>('users');
   const toast = useToast();
 
@@ -138,7 +141,7 @@ const ProjectUsers: React.FC = () => {
   };
 
   const viewConfig = {
-    users: { title: "Project Identity", desc: "Manage project users and granular access control.", icon: HiOutlineUsers },
+    users: { title: "Project Identity", desc: "Manage users and granular access control.", icon: HiOutlineUsers },
     roles: { title: "Roles", desc: "Define roles and assign them to users.", icon: HiOutlineShieldCheck },
     permissions: { title: "Permissions", desc: "Configure granular resource access.", icon: HiOutlineKey }
   };
@@ -156,33 +159,18 @@ const ProjectUsers: React.FC = () => {
       />
       
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            {activeView !== 'users' && (
-              <button
-                onClick={() => { setActiveView(activeView === 'permissions' ? 'roles' : 'users'); setAssigningRole(null); setAssigningUser(null); }}
-                className="flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-10 w-10 shrink-0 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-              >
-                <HiChevronLeft className="size-5" />
-              </button>
-            )}
-            <div className="w-12 h-12 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 text-brand-500 rounded-2xl flex items-center justify-center shadow-inner">
-               <current.icon className="size-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{current.title}</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{current.desc}</p>
-            </div>
-          </div>
-          
+        <PageHeader
+          back
+          title="Project Access"
+          subtitle={`${project?.name || ''} - Manage Access`}
+        >
           <div className="flex items-center gap-3">
             {activeView === 'users' && (
               <button 
                 onClick={() => { setActiveView('roles'); setAssigningUser(null); }}
                 className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all border border-gray-200 dark:border-gray-700"
               >
-                <HiOutlineShieldCheck className="size-4" /> Roles
+                <HiOutlineShieldCheck className="size-4" /> <span className="hidden md:inline">Roles</span>
               </button>
             )}
             {activeView === 'roles' && (
@@ -190,7 +178,7 @@ const ProjectUsers: React.FC = () => {
                 onClick={() => { setActiveView('permissions'); setAssigningRole(null); }}
                 className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100/80 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all border border-gray-200 dark:border-gray-700"
               >
-                <HiOutlineKey className="size-4" /> Permissions
+                <HiOutlineKey className="size-4" /> <span className="hidden md:inline">Permissions</span>
               </button>
             )}
             <button 
@@ -199,15 +187,15 @@ const ProjectUsers: React.FC = () => {
                 if (activeView === 'roles') setShowRoleForm(!showRoleForm);
                 if (activeView === 'permissions') setShowPermForm(!showPermForm);
               }}
-              className="flex items-center gap-2 px-5 py-2.5 bg-brand-500 text-white rounded-xl font-bold hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/20 active:scale-95 text-sm"
+              className="flex items-center gap-2 px-4 py-2.5 bg-brand-500 text-white rounded-xl font-bold hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/20 active:scale-95 text-sm"
             >
               {(activeView === 'users' ? showUserForm : activeView === 'roles' ? showRoleForm : showPermForm) 
-                ? <><HiXMark className="size-4" /> Cancel</>
-                : <><HiPlus className="size-4" /> Create {activeView === 'users' ? 'User' : activeView === 'roles' ? 'Role' : 'Permission'}</>
+                ? <><HiXMark className="size-4" /> <span className="hidden md:inline">Cancel</span></>
+                : <><HiPlus className="size-4" /> <span className="hidden md:inline">Create {activeView === 'users' ? 'User' : activeView === 'roles' ? 'Role' : 'Permission'}</span></>
               }
             </button>
           </div>
-        </div>
+        </PageHeader>
 
         {/* Create Forms */}
         {activeView === 'users' && showUserForm && (

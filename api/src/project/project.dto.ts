@@ -9,6 +9,16 @@ export class CreateProjectDto {
 	description?: string
 }
 
+export class UpdateProjectDto {
+	@IsOptional()
+	@IsString()
+	name?: string
+
+	@IsOptional()
+	@IsString()
+	description?: string
+}
+
 export class UpdateProjectStatusDto {
 	@IsString()
 	@IsIn([ 'active', 'inactive' ])

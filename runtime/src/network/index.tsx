@@ -22,7 +22,7 @@ api.interceptors.request.use((config) => {
 	
 	if (token) {
 		config.headers.Authorization = `Bearer ${token}`;
-		config.headers['x-project-id'] = token;
+		config.headers['project-id'] = token;
 	}
 	return config;
 }, (error) => Promise.reject(error));

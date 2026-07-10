@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router";
 import { useEffect } from "react";
-import { HiChevronLeft } from "react-icons/hi2";
+import { HiCheck } from "react-icons/hi2";
 import { useForm } from "../../hooks/useForm";
 import Button from "../../components/ui/button/Button";
 import { useMutate } from "../../hooks/useFetch";
+import PageMeta from "../../components/common/PageMeta";
+import PageHeader from "../../components/common/PageHeader";
 
 const SCHEMA = {
   type: 'vertical',
@@ -29,30 +31,28 @@ export default function ProjectCreate() {
   };
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 transition-all duration-300">
-      <div className="flex items-center gap-4 mb-5 lg:mb-7">
-        <button 
-          onClick={() => navigate('/projects')}
-          className="flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
+    <div className="w-full">
+      <PageMeta
+        title="Project Creation | Pipelines Infrastructure"
+        description="Create a new project in Pipelines."
+      />
+      <div className="space-y-5">
+        <PageHeader
+          backTo="/projects"
+          title="Project Creation"
+          subtitle="Create a new project to get started."
         >
-          <HiChevronLeft className="size-6" />
-        </button>
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Project Details
-        </h3>
-      </div>
-      
-      <div className="space-y-6 w-full">
-        <Form className="w-full" />
-        <div className="flex w-full mt-8">
           <Button 
             onClick={() => onSubmit(handleSave)}
             size="sm" 
             disabled={creating}
-            className="w-full sm:w-auto transition-all"
+            className="gap-2 bg-brand-500 hover:bg-brand-600 text-white border-0 shadow-sm !py-2.5"
           >
-            {creating ? 'Creating...' : 'Save Project'}
+            {creating ? <><div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin"></div><span className="hidden md:inline"> Saving...</span></> : <><HiCheck className="size-4" /><span className="hidden md:inline">Save</span></>}
           </Button>
+        </PageHeader>
+        <div className="w-full">
+          <Form className="w-full" />
         </div>
       </div>
     </div>

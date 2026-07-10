@@ -1,8 +1,7 @@
-import { useNavigate, useParams } from "react-router";
-import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import { useParams } from "react-router";
+import PageHeader from "../../components/common/PageHeader";
 import PageMeta from "../../components/common/PageMeta";
 import { 
-  HiChevronLeft, 
   HiOutlineBolt, 
   HiOutlineChartPie, 
   HiOutlineUsers, 
@@ -14,7 +13,6 @@ import { ApexOptions } from "apexcharts";
 
 export default function ProjectMetrics() {
   const { id } = useParams();
-  const navigate = useNavigate();
   
   const [project, loading] = useQuery<any>(`project-${id}`, `/project/${id}`);
 
@@ -44,35 +42,22 @@ export default function ProjectMetrics() {
   return (
     <div className="w-full">
       <PageMeta title={`${project?.name || 'Project'} | Metrics`} description="Project performance metrics and analytics." />
-      <PageBreadcrumb pageTitle="Project Metrics" />
       
-      <div className="space-y-6">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 transition-all duration-300">
-          <div className="flex items-center gap-4 mb-8">
-            <button 
-              onClick={() => navigate('/projects')}
-              className="flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-            >
-              <HiChevronLeft className="size-6" />
-            </button>
-            <div>
-              <h3 className="text-xl font-bold text-gray-800 dark:text-white/90">
-                Performance Analytics
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {project?.name} - Real-time statistics
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="space-y-3">
+        <PageHeader 
+          back
+          title="Project Metrics"
+          subtitle={`${project?.name} - Real-time statistics`}
+          className="mb-3 md:mb-5 lg:mb-6"
+        />
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MetricCard title="Total Traffic" value="1.2M" sub="↑ 12%" icon={<HiOutlineBolt className="size-6" />} color="text-brand-500" />
             <MetricCard title="Active Users" value="42.5K" sub="↑ 5.4%" icon={<HiOutlineUsers className="size-6" />} color="text-success-500" />
             <MetricCard title="Avg Latency" value="142ms" sub="↓ 2ms" icon={<HiOutlineChartPie className="size-6" />} color="text-orange-500" />
             <MetricCard title="Errors" value="0.04%" sub="Normal" icon={<HiOutlineBolt className="size-6" />} color="text-error-500" />
           </div>
 
-          <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-black/10 p-6">
+          <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-black/10 p-6 mt-6">
             <div className="flex items-center justify-between mb-6">
               <h4 className="font-bold text-gray-800 dark:text-white/90">Request Volume</h4>
               <span className="text-xs font-bold text-brand-500 bg-brand-50 dark:bg-brand-500/10 px-3 py-1 rounded-full flex items-center gap-1">
@@ -83,7 +68,6 @@ export default function ProjectMetrics() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
 

@@ -1,12 +1,14 @@
 import { useNavigate, useParams } from "react-router";
 import { useState } from "react";
-import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import PageHeader from "../../components/common/PageHeader";
 import PageMeta from "../../components/common/PageMeta";
 import { 
-  HiChevronLeft, 
   HiPlus, 
   HiOutlineTrash, 
-  HiSparkles 
+  HiSparkles,
+  HiCheck,
+  HiOutlinePencilSquare,
+  HiXMark
 } from "react-icons/hi2";
 import { useQuery, useMutate } from "../../hooks/useFetch";
 import Button from "../../components/ui/button/Button";
@@ -18,6 +20,10 @@ export default function ProjectDetails() {
   const [newOriginUrl, setNewOriginUrl] = useState("");
   const [emailInput, setEmailInput] = useState<string | null>(null);
   const [tokenInput, setTokenInput] = useState<string | null>(null);
+  const [nameInput, setNameInput] = useState<string | null>(null);
+  const [descInput, setDescInput] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [editingDesc, setEditingDesc] = useState(false);
   
   // Queries
   const [project, loadingProject] = useQuery<any>(`project-${id}`, `/project/${id}`);
@@ -25,15 +31,36 @@ export default function ProjectDetails() {
   const [emailSettings, loadingEmail] = useQuery<any>(`email-${id}`, `/project/${id}/email-settings`);
 
   // Mutations
+  const [updateProject, updating] = useMutate('patch', `/project/${id}`, `project-${id}`);
   const [regenerate, regenerating] = useMutate('patch', `/project/${id}/token`, `project-${id}`);
   const [updateStatus, updatingStatus] = useMutate('patch', `/project/${id}/status`, `project-${id}`);
   const [addOrigin, adding] = useMutate('post', `/project/${id}/origins`, `origins-${id}`);
   const [removeOrigin, removing] = useMutate('delete', `/project/${id}/origins`, `origins-${id}`);
   const [saveEmail, savingEmail] = useMutate('post', `/project/${id}/email-settings`, `email-${id}`);
 
-  // Derived state to avoid sync setState in useEffect
+  // Derived state
   const currentEmail = emailInput !== null ? emailInput : (emailSettings?.email || "");
   const currentToken = tokenInput !== null ? tokenInput : (emailSettings?.token || "");
+  const currentName = nameInput !== null ? nameInput : (project?.name || "");
+  const currentDesc = descInput !== null ? descInput : (project?.description || "");
+
+  const hasChanges = currentName !== project?.name || currentDesc !== (project?.description || "");
+
+  const handleSaveProject = (fields?: Record<string, string>) => {
+    const updates = fields || (() => {
+      const u: Record<string, string> = {};
+      if (currentName !== project?.name) u.name = currentName;
+      if (currentDesc !== (project?.description || "")) u.description = currentDesc;
+      return u;
+    })();
+    if (Object.keys(updates).length > 0) {
+      updateProject(updates);
+      setNameInput(null);
+      setDescInput(null);
+      setEditingName(false);
+      setEditingDesc(false);
+    }
+  };
 
   const handleAddOrigin = () => {
     if (!newOriginUrl.trim()) return;
@@ -76,27 +103,27 @@ export default function ProjectDetails() {
         title={`${project.name} | Project Details`}
         description="View and manage specific project details."
       />
-      <PageBreadcrumb pageTitle="Project Details" />
-      
-      <div className="space-y-6">
+      <div className="space-y-3">
+        <PageHeader
+          back
+          title="Project Settings"
+          subtitle="Overview & Security"
+          className="mb-3 md:mb-5 lg:mb-6"
+        >
+          {hasChanges && (
+            <Button
+              size="sm"
+              onClick={() => handleSaveProject()}
+              disabled={updating}
+              className="gap-2"
+            >
+              <HiCheck className="size-4" />
+              <span>Save</span>
+            </Button>
+          )}
+        </PageHeader>
         {/* Main Header Card */}
         <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 transition-all duration-300">
-          <div className="flex items-center gap-4 mb-5 lg:mb-7">
-            <button 
-              onClick={() => navigate('/projects')}
-              className="flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-            >
-              <HiChevronLeft className="size-6" />
-            </button>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                {project.name}
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Overview & Security
-              </p>
-            </div>
-          </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* General Info */}
@@ -107,10 +134,75 @@ export default function ProjectDetails() {
               </h4>
               <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 space-y-4">
                 <div>
+                  <label className="text-xs text-gray-400 block font-medium">Project Name</label>
+                  {editingName ? (
+                    <input
+                      type="text"
+                      value={currentName}
+                      onChange={(e) => setNameInput(e.target.value)}
+                      className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all text-gray-700 dark:text-gray-300"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') { handleSaveProject({ name: currentName }); }
+                        if (e.key === 'Escape') { setNameInput(null); setEditingName(false); }
+                      }}
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm font-medium text-gray-800 dark:text-white/90">
+                        {currentName}
+                      </span>
+                      <button
+                        onClick={() => { setNameInput(currentName); setEditingName(true); }}
+                        className="p-1 text-gray-400 hover:text-brand-500 transition-all shrink-0"
+                      >
+                        <HiOutlinePencilSquare className="size-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div>
                   <label className="text-xs text-gray-400 block font-medium">Description</label>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
-                    {project.description || 'No description provided.'}
-                  </p>
+                  {editingDesc ? (
+                    <div className="flex gap-2 mt-1">
+                      <textarea
+                        value={currentDesc}
+                        onChange={(e) => setDescInput(e.target.value)}
+                        rows={3}
+                        className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all text-gray-700 dark:text-gray-300 resize-none"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') { setDescInput(null); setEditingDesc(false); }
+                        }}
+                      />
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => handleSaveProject({ description: currentDesc })}
+                          className="p-1.5 text-gray-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-500/10 rounded-lg transition-all"
+                        >
+                          <HiCheck className="size-4" />
+                        </button>
+                        <button
+                          onClick={() => { setDescInput(null); setEditingDesc(false); }}
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                        >
+                          <HiXMark className="size-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-2 mt-1">
+                      <p className="flex-1 text-sm text-gray-700 dark:text-gray-300">
+                        {currentDesc || 'No description provided.'}
+                      </p>
+                      <button
+                        onClick={() => { setDescInput(currentDesc); setEditingDesc(true); }}
+                        className="p-1 text-gray-400 hover:text-brand-500 transition-all mt-0.5 shrink-0"
+                      >
+                        <HiOutlinePencilSquare className="size-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
                   <div>
@@ -198,7 +290,7 @@ export default function ProjectDetails() {
             </div>
           </div>
 
-          <div className="space-y-3">
+      <div className="space-y-3">
             {loadingOrigins ? (
               <div className="flex justify-center py-8">
                 <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>

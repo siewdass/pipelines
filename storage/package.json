@@ -1,0 +1,27 @@
+{
+  "name": "storage",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "mongoose": "^8.16.0",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^11.1.0",
+    "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/uuid": "^10.0.0",
+    "@types/multer": "^1.4.12",
+    "tsx": "^4.19.0",
+    "typescript": "~5.7.3"
+  }
+}

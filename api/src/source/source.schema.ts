@@ -2,28 +2,22 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Document } from 'mongoose'
 import { v4 as uuidv4 } from 'uuid'
 
-@Schema({ collection: 'configs' })
-export class AssembleConfig extends Document {
+@Schema({ collection: 'sources', timestamps: true })
+export class Source extends Document {
 	@Prop({ type: String, default: () => uuidv4() })
 	declare _id: string
 
-	@Prop({ required: true, unique: true })
+	@Prop({ required: true, index: true })
 	projectId: string
 
-	@Prop()
-	source: string
+	@Prop({ type: String, default: null })
+	basedOn: string | null
 
-	@Prop()
-	build: string
-
-	@Prop()
-	icon: string
-
-	@Prop()
-	font: string
+	@Prop({ required: true })
+	code: string
 
 	@Prop({ type: [{ name: String, features: [{ name: String, description: String }] }], default: [] })
 	features: { name: string; features: { name: string; description: string }[] }[]
 }
 
-export const AssembleConfigSchema = SchemaFactory.createForClass(AssembleConfig)
+export const SourceSchema = SchemaFactory.createForClass(Source)

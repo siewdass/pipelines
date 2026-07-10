@@ -42,27 +42,49 @@ import { create as zustand } from 'zustand';
 import { z as zod } from 'zod';
 
 // Assets
-import * as FaLegacy from "react-icons/fa";
 import * as Fa6 from "react-icons/fa6";
-import * as Hi2 from "react-icons/hi2";
-import * as Fc from "react-icons/fc";
 
-(window as any).React = React;
-(window as any).ReactDOM = ReactDOM;
-(window as any).Main = Main;
-(window as any).Network = Network;
+const FallbackIcon = () => React.createElement('div', {
+	style: { width: 24, height: 24, borderRadius: 6, background: 'rgba(255,255,255,0.1)' }
+})
 
-(window as any).Interface = {
+const Fa6Any = Fa6 as Record<string, any>;
+
+const iconCache: Record<string, any> = {};
+
+const w = window as any;
+
+w.React = React;
+w.ReactDOM = ReactDOM;
+w.Main = Main;
+w.Network = Network;
+
+w.Interface = {
 	Form: { useForm },
 	Theme: { useTheme },
 	useTheme, useSidebar, useTable, useDialog, useDropdown, useToast,
 	Breadcrumbs, Tabs, Tooltip, Accordion, Skeleton,
 };
 
-(window as any).View = { Router };
-(window as any).Assets = { Icons: { ...FaLegacy, ...Fa6, ...Hi2, ...Fc }, Charts };
+w.View = { Router };
 
-(window as any).Utils = {
+w.Assets = {
+	Icons: new Proxy({}, {
+		get(_, name) {
+			const actualName = name.startsWith('Fa6') ? 'Fa' + name.slice(3) : name;
+			const icon = iconCache[name] ?? Fa6Any[actualName] ?? Fa6Any[name];
+			if (icon) {
+				iconCache[name] = icon;
+				return icon;
+			}
+			console.warn(`[Icons] icon not found: "${name}"`);
+			return FallbackIcon;
+		}
+	}),
+	Charts: Charts
+};
+
+w.Utils = {
 	Motion: motion.div,
 	clsx,
 	twMerge,
@@ -74,17 +96,17 @@ import * as Fc from "react-icons/fc";
 	Dnd: { ...DndCore, ...DndSortable, ...DndModifiers, ...DndUtilities },
 };
 
-(window as any).Bootstrap = (A: any) => {
+w.Bootstrap = (A: any) => {
 	ReactDOM.createRoot(document.getElementById('root')!).render(React.createElement(Main, null, React.createElement(A)));
 }
 
 // --- Expose to Window ---
 console.log("[Runtime] Core initialized.", { 
-	Network: Object.keys((window as any).Network), 
-	Interface: Object.keys((window as any).Interface),
-	Utils: Object.keys((window as any).Utils),
-	View: Object.keys((window as any).View),
-	Assets: Object.keys((window as any).Assets),
+	Network: Object.keys(w.Network), 
+	Interface: Object.keys(w.Interface),
+	Utils: Object.keys(w.Utils),
+	View: Object.keys(w.View),
+	Assets: Object.keys(w.Assets),
 	Main: Main 
 });
 

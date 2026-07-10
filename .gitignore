@@ -20,3 +20,6 @@ Thumbs.db
 # Other
 .Spotlight-V100
 .Trashes
+
+.pnpm-store
+**/.pnpm-store

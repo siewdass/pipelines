@@ -8,7 +8,14 @@ import { Helmet } from 'react-helmet-async';
  * and dynamic metadata management (Titles/Descriptions) based on 
  * route configuration.
  */
-export function useRoutes(routes: any[]) {
+export function useRoutes(routes: any[] | { routes?: any[] }) {
+  if (!Array.isArray(routes)) {
+    if (routes && typeof routes === 'object' && 'routes' in routes) {
+      routes = (routes as any).routes || []
+    } else {
+      routes = []
+    }
+  }
   const element = useRoutesBase(routes);
   const location = useLocation();
 
