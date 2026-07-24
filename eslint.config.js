@@ -1,5 +1,4 @@
 import tseslint from 'typescript-eslint'
-import js from '@eslint/js'
 
 const rules = {
 	semi: ['warn', 'never'],
@@ -26,7 +25,6 @@ export default tseslint.config(
 			'**/.opencode/**',
 		]
 	},
-	js.configs.recommended,
 	...tseslint.configs.recommended,
 	{
 		files: ['**/*.ts', '**/*.tsx'],
