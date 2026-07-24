@@ -1,44 +1,101 @@
-# Pipelines Core Reference
+# Pipelines
 
-A simple reference of the key systems, hooks, and libraries used in this project.
+Platform for building AI-generated web applications. Users describe interfaces in natural language, the AI generates JSX code, compiles it, and serves it as a standalone app.
 
-## 🔑 Authentication System
-- **Library**: `zustand`
-- **What it does**: Centralizes user session logic, login/registration API calls, and persistent authentication state using the `useAuthStore` hook. It also provides the `isAuthenticated` flag used for route protection in `App.tsx`.
+## Prerequisites
 
-## 📦 Form Engine
-- **Library**: `@jsonforms` / Custom Bridge
-- **What it does**: Powered by the `useForm` hook, it dynamically renders complex UI forms from simple schemas. Features stable focus management and support for cross-field custom validation logic.
+- [Docker](https://www.docker.com/products/docker-desktop/) (includes Docker Compose)
+- Git
 
-## 🪝 Custom Hooks
+## Quick Start
 
-### Data Fetching & Mutations (`useFetch.ts`)
-- **`useQuery<T>(key, url, params?)`**: 
-  - The standard for **GET** requests.
-  - Automatically handles caching (via React Query), loading states, and error toasts.
-  - If `params` are provided, they are sent as URL query parameters.
-  - **Returns**: `[data, isLoading]`
-- **`useMutate<T>(method, url, keys?)`**:
-  - Used for **POST, PUT, PATCH, DELETE** operations.
-  - **Returns**: `[execute, isPending, data]`
-  - Automatically invalidates queries matching the `keys` string or array to keep the UI in sync.
-  - Shows success messages if the backend returns a `message` field.
+```bash
+git clone <repo-url> && cd pipelines
+```
 
-### Form Management (`useForm.tsx`)
-- **`useForm<T>(schema)`**:
-  - Binds a JSON schema to a stable, robust form component.
-  - **Returns**: `[onSubmit, FormComponent]`
-  - `onSubmit` validates the form and triggers a callback with typed data.
+Create a `.env` file in the project root:
 
-### Utilities & UI
-- **`useToast()`**: A clean interface for `sonner` notifications (`success`, `error`, `info`, `warning`).
-- **`useModal(initialState?)`**: Boilerplate-free state management for modals (`isOpen`, `openModal`, `closeModal`, `toggleModal`).
-- **`useGoBack()`**: Navigation helper that returns to the previous page or falls back to `/` if there is no history.
+```env
+MISTRAL_API_KEY=your-mistral-key
+GROQ_API_KEY=your-groq-key
+```
 
-## 🧩 Context & UI State
-- **Library**: React Context API
-- **What it does**: Manages global UI-specific states like the sidebar visibility (`SidebarContext`). Ideal for state that affects layout or shared UI components.
+Start all services:
 
-## 🔔 Notifications
-- **Library**: `sonner`
-- **What it does**: Global toast system rendered in the main layout. Intercepts API errors and mutation success messages automatically.
+```bash
+docker compose up --build
+```
+
+The services will be available at:
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| Studio | http://localhost:4003 | Frontend UI (React/Vite) |
+| Management | http://localhost:4000 | Backend API (Express) |
+| Storage | http://localhost:4001 | Runtime data layer for built apps |
+| Runtime | http://localhost:4002 | Serves compiled app bundles |
+| MongoDB | localhost:27017 | Database |
+
+## Stopping
+
+```bash
+docker compose down
+```
+
+To remove volumes (resets database):
+
+```bash
+docker compose down -v
+```
+
+## Project Structure
+
+```
+pipelines/
+  management/     Backend API (Express + MongoDB driver)
+  storage/        Runtime data layer (CRUD, auth, realtime for built apps)
+  runtime/        Serves compiled app bundles + React SDK
+  studio/         Frontend UI (React + Vite)
+```
+
+### Services Overview
+
+**Studio** (`:4003`) — React/Vite frontend. Uses React Query, Zustand, Tailwind CSS. Proxies API calls via Vite dev server to the appropriate backend.
+
+**Management** (`:4000`) — Express backend. Handles account auth, project management, user/roles/permissions CRUD, AI code generation (Assemble), source compilation, database queries, and schema management.
+
+**Storage** (`:4001`) — The runtime data layer that end-user apps (built via Assemble) use for user authentication, CRUD operations, file uploads, and realtime via Socket.IO.
+
+**Runtime** (`:4002`) — Serves compiled app bundles. When an app is built, this service generates the HTML shell, loads the React SDK (runtime.js), fetches the compiled code from MongoDB, and mounts it in the browser.
+
+**MongoDB** (`:27017`) — Shared database. Each project gets its own isolated database.
+
+## Environment Variables
+
+| Variable | Service | Description |
+|----------|---------|-------------|
+| `MISTRAL_API_KEY` | Management | Mistral AI API key for code generation |
+| `GROQ_API_KEY` | Management | Groq API key (fallback AI provider) |
+
+Internal variables (set in docker-compose.yml, no need to change for local dev):
+
+| Variable | Description |
+|----------|-------------|
+| `PORT` | Service port (4000-4002) |
+| `NODE_ENV` | `development` or `production` |
+| `MONGO_URI` | MongoDB connection string |
+| `ACCOUNT_JWT_SECRET` | Secret for account JWT tokens |
+| `USER_JWT_SECRET` | Secret for user JWT tokens |
+| `UPLOADS_DIR` | File upload directory (Storage) |
+
+## Development
+
+All services run with hot-reload in development. Edit files locally and changes are reflected immediately (except the Runtime server, which requires a container restart):
+
+```bash
+docker restart pipelines-runtime-1
+```
+
+## Building for Production
+
+Currently development-only. Production builds are pending (see [TODO.md](TODO.md)).

@@ -24,33 +24,34 @@ services:
       - PNPM_HOME=/pnpm
       - PNPM_STORE_DIR=/pnpm/store
       - PORT=4002
+      - NODE_ENV=development
       - MONGO_URI=mongodb://mongodb:27017/default
       - ACCOUNT_JWT_SECRET=dev-account-secret
     command: >
-      sh -c "pnpm install && pnpm dev"
+      sh -c "pnpm install --no-frozen-lockfile --config.allow-builds=true && pnpm dev"
 
-  api:
+  management:
     image: guergeiro/pnpm:22-10-slim
-    working_dir: /app/api
+    working_dir: /app/management
     ports: ['4000:4000']
     depends_on:
       mongodb: { condition: service_healthy }
     volumes:
-      - ./api:/app/api
-      - /app/api/node_modules
+      - ./management:/app/management
       - pnpm_store:/pnpm/store
     environment:
       - CI=true
       - PNPM_HOME=/pnpm
       - PNPM_STORE_DIR=/pnpm/store
       - PORT=4000
+      - NODE_ENV=development
       - MONGO_URI=mongodb://mongodb:27017/default
       - USER_JWT_SECRET=dev-user-secret
       - ACCOUNT_JWT_SECRET=dev-account-secret
       - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
       - GROQ_API_KEY=${GROQ_API_KEY:-}
     command: >
-      sh -c "apt-get update -qq && apt-get install -y -qq procps && pnpm install --no-frozen-lockfile && pnpm dev"
+      sh -c "pnpm install --no-frozen-lockfile --config.allow-builds=true && pnpm dev"
 
   storage:
     image: guergeiro/pnpm:22-10-slim
@@ -68,21 +69,22 @@ services:
       - PNPM_HOME=/pnpm
       - PNPM_STORE_DIR=/pnpm/store
       - PORT=4001
+      - NODE_ENV=development
       - MONGO_URI=mongodb://mongodb:27017/default
       - USER_JWT_SECRET=dev-user-secret
       - ACCOUNT_JWT_SECRET=dev-account-secret
       - UPLOADS_DIR=/data/uploads
     command: >
-      sh -c "pnpm install --no-frozen-lockfile && pnpm dev"
+      sh -c "pnpm install --no-frozen-lockfile --config.allow-builds=true && pnpm dev"
 
-  management:
+  studio:
     image: guergeiro/pnpm:22-10-slim
-    working_dir: /app/management
+    working_dir: /app/studio
     ports: ['4003:4003']
-    depends_on: [api]
+    depends_on: [management]
     volumes:
-      - ./management:/app/management
-      - /app/management/node_modules
+      - ./studio:/app/studio
+      - /app/studio/node_modules
       - pnpm_store:/pnpm/store
     environment:
       - CI=true

@@ -1,4 +1,5 @@
 import express from 'express'
+import { createServer } from 'http'
 import { config } from './config'
 import { projectMiddleware } from './middleware/project'
 import { userMiddleware } from './middleware/user'
@@ -6,8 +7,10 @@ import { inquiryRouter } from './routes/inquiry'
 import { mutationRouter } from './routes/mutation'
 import { authRouter } from './routes/auth'
 import { assetsRouter } from './routes/assets'
+import { setupRealtime } from './services/realtime-gateway'
 
 const app = express()
+const httpServer = createServer(app)
 
 app.use(express.json())
 
@@ -33,6 +36,8 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   res.status(500).json({ error: err.message || 'Internal server error' })
 })
 
-app.listen(config.port, () => {
+setupRealtime(httpServer)
+
+httpServer.listen(config.port, () => {
   console.log(`[Storage] API running on http://0.0.0.0:${config.port}`)
 })

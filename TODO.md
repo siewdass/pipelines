@@ -1,62 +1,81 @@
-# Estado del Proyecto: Pipelines
+# TODO
 
-Esta lista de tareas (TODO) ayuda a visualizar qué componentes están terminados, cuáles están pendientes y qué integraciones faltan entre la API (NestJS) y la App (React/Vite).
-
-## 🚀 Fase 1: Backend API (NestJS)
-
-### ✅ Completado (Según README y código actual)
-- [x] Configuración inicial de NestJS.
-- [x] Conexión a MongoDB (usando Mongoose).
-- [x] **Módulo de Autenticación (`/authentication`)**: Registro, Login, Recuperación y Restablecimiento de contraseña.
-- [x] **Módulo de Autorización (`/authorization`)**: Middleware para validación de tokens JWT.
-- [x] **Módulo de Usuarios (`/user`)**: Operaciones CRUD, gestión de roles y permisos.
-- [x] **Módulo de Cuentas (`/account`)**: Registro y Login para cuentas de administrador.
-- [x] **Módulo de Proyectos (`/project`)**: Creación dinámica de proyectos y gestión de bases de datos aisladas.
-- [x] **Módulo de Consultas (`/inquiry`)**: Recuperación de documentos con filtros, ordenamiento y paginación (`index`, `retrieve`).
-- [x] **Módulo de Mutaciones (`/mutation`)**: Inserciones, actualizaciones (`upsert`) y eliminaciones (`purge`) con soporte para relaciones uno-a-uno, uno-a-muchos y muchos-a-muchos. (Maneja payloads dinámicos por diseño).
-
-### 🚧 En Progreso / ❌ Pendiente
-- [x] Implementar validaciones estrictas (Pipes/DTOs) en módulos core (`Authentication`, `Account`, `Project`). *(Inquiry y Mutation no requieren validaciones de payload por ser motores dinámicos).*
-- [x] Documentación de API (Swagger/OpenAPI): Implementado en `main.ts` en la ruta `/docs`.
-
-### 🚧 En Progreso / ❌ Pendiente
-- [ ] Implementar control de tasa (Rate Limiting) para endpoints públicos (ej. Login/Registro).
-- [ ] Configurar variables de entorno robustas (`.env`) para distintos ambientes (Desarrollo, Staging, Producción).
-- [ ] Configurar logs estructurados (Winston o Pino en lugar del `ConsoleLogger` inicial).
-- [ ] Añadir pruebas unitarias (Unit Tests) para los controladores y servicios principales (Jest).
-- [ ] Añadir pruebas de integración (E2E Tests) para flujos críticos (ej. Login -> Mutación de datos -> Consulta).
+Estado actual del proyecto. Lo que está hecho y lo que falta.
 
 ---
 
-## 🎨 Fase 2: Frontend App (React + Vite)
+## Completado
 
-### ✅ Completado
-- [x] Configuración inicial (Vite, React, Tailwind CSS).
-- [x] Creación de sistema de Iconos y Contextos visuales (`ThemeContext`, `SidebarContext`).
-- [x] **Enrutamiento (Routing)**: Implementación de Layouts (Auth & Dashboard) y rutas protegidas en `App.tsx`.
-- [x] **Estado Global / Contexto**: Manejo de autenticación robusto mediante **Zustand** (`useAuthStore`).
-- [x] **Interceptor de peticiones HTTP**: Client `api.ts` inyectando tokens de autenticación y de proyecto dinámicamente (`x-project-id`).
-- [x] **Integración de Autenticación**: Formularios interactivos (Login/Registro) con callbacks y redirecciones.
-- [x] **Manejo Centralizado de Errores/Notificaciones**: Sistema global `useToast` (Sonner).
-- [x] **Dashboard y Vistas Core**: 
-  - Vista general de Proyectos, creación y edición (`ProjectDetails.tsx`).
-  - Representación de bases de datos/esquemas (`DataGrid` vertical en `ProjectData.tsx`).
-- [x] **Generación Dinámica de Formularios/Hooks**: Uso intensivo de abstracciones como `useFetch`, `useMutate`, y `useForm` para interactuar con la API estructurada.
+### Infraestructura
+- [x] Docker Compose con 4 servicios + MongoDB
+- [x] Healthchecks, volumes, hot-reload en desarrollo
+- [x] NODE_ENV configurado en todos los servicios
+- [x] .env.example por cada servicio (management, storage, runtime, studio)
 
-### 🚧 En Progreso / ❌ Pendiente
-- [ ] Interfaz gráfica extendida para manejar Mutaciones manuales complejas (`/mutation/upsert`, purge masivos).
-- [ ] Opciones para importar/exportar esquemas y datos del frontend al backend dinámico.
-- [ ] Implementar catálogos jerárquicos dependientes pre-cargados (ej. Países -> Estados -> Ciudades) en las interfaces de creación de cuentas de los proyectos hijos.
+### Management (port 4000)
+- [x] Autenticación de cuentas (register/login)
+- [x] Creación de proyectos con base de datos aislada por proyecto
+- [x] JWT dual: account token + project token
+- [x] CRUD completo de usuarios, roles y permisos
+- [x] Generación de código con IA (Mistral → Groq fallback)
+- [x] Compilación de JSX via esbuild
+- [x] Origen validation: production rechaza orígenes no registrados, development permite todo
+- [x] Features endpoint lee de la última source, no solo del build compilado
+- [x] Login devuelve name del usuario
+- [x] bcryptjs reemplaza bcrypt (evita compilación nativa)
+
+### Storage (port 4001)
+- [x] Auth de usuarios dentro de proyectos (signup/signin)
+- [x] CRUD con asociaciones (one-to-one, one-to-many, many-to-many)
+- [x] Upload/descarga de archivos
+- [x] Socket.IO realtime con auth dual
+
+### Runtime (port 4002)
+- [x] Sirve bundles compilados (runtime.js, loader.js, app code)
+- [x] loader.js acepta `baseUrl` query param para evitar ERR_NAME_NOT_RESOLVED
+- [x] HTML shell dinámico con Bootstrap
+
+### Studio (port 4003)
+- [x] Sistema de autenticación (login/registro de cuentas)
+- [x] CRUD de proyectos (crear, editar, configurar)
+- [x] Gestión de orígenes (whitelist de dominios por proyecto)
+- [x] Configuración de email por proyecto
+- [x] Gestión de usuarios, roles y permisos por proyecto
+- [x] Explorador de esquemas/colecciones de la base de datos
+- [x] Navegador de datos con expansión de asociaciones
+- [x] Assemble: interfaz de chat con IA para generar código
+- [x] Assemble: compilación de JSX → IIFE via esbuild
+- [x] Assemble: preview embebido (iframe con loader.js)
+- [x] Assemble: features se actualizan después de enviar prompt (sin F5)
+- [x] Assemble: dropdown de versiones de código fuente
+- [x] Descarga de index.html para despliegue
+- [x] Toaster position top-center
+- [x] Formularios con layout horizontal correcto (flex: 1 en campos)
 
 ---
 
-## 🛠 Fase 3: DevOps, CI/CD y Despliegue
+## Pendiente
 
-### ❌ Pendiente
-- [ ] Configurar un archivo `.env.example` en ambos repositorios.
-- [ ] Crear Dockerfiles para empaquetar la API y la App (Opcional, pero recomendado).
-- [ ] Configurar un archivo `docker-compose.yml` para levantar la base de datos (MongoDB) y servicios localmente con un solo comando.
-- [ ] Configurar linter y formateador (ESLint/Prettier) como pre-commit hooks (Husky).
-- [ ] CI/CD: Configurar GitHub Actions (o GitLab CI) para ejecutar pruebas automáticamente en cada PR.
-- [ ] Scripts para popular o limpiar la base de datos localmente (Seeding).
-- [ ] Preparar el despliegue a producción (Ej. Vercel/Netlify para la App, Render/Railway/AWS para la API NestJS).
+### Management
+- [ ] Rate limiting en endpoints públicos (login, registro)
+- [ ] Logs estructurados (Winston o Pino en vez de console.log)
+- [ ] Tests unitarios (Jest)
+- [ ] Tests de integración (E2E)
+
+### Storage
+- [ ] Mejorar funcionalidad de realtime y renombrar el servicio
+
+### Studio
+- [ ] UI para mutaciones manuales complejas (/mutation/upsert, purge masivos)
+- [ ] Importar/exportar esquemas y datos
+- [ ] Catálogos jerárquicos dependientes pre-cargados (Países → Estados → Ciudades)
+- [ ] Dashboard con métricas reales (actualmente usa datos placeholder)
+- [ ] Versionado del runtime y mostrar versión en la UI
+- [ ] Branding "Powered by Pipelines" en apps generadas
+
+### Infraestructura
+- [ ] Dockerfiles optimizados para producción (multi-stage builds)
+- [ ] CI/CD (GitHub Actions): tests + lint en cada PR
+- [ ] Linter/formateador (ESLint/Prettier) con pre-commit hooks (Husky)
+- [ ] Scripts de seeding para base de datos local
+- [ ] Despliegue a producción (frontend → Vercel/Netlify, backend → Render/Railway/AWS)

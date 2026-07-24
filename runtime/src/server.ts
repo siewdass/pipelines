@@ -25,6 +25,9 @@ app.use((_req, res, next) => {
 })
 
 function getBaseUrl(req: express.Request): string {
+  if (req.query['baseUrl']) {
+    return req.query['baseUrl'] as string
+  }
   const proto = req.headers['x-forwarded-proto'] || 'http'
   const host = req.headers.host || 'localhost:8002'
   return `${proto}://${host}`
@@ -187,9 +190,14 @@ serveRouter.get('/', async (req, res) => {
       }
     }
 
+    const isProduction = process.env.NODE_ENV === 'production'
     const origin = req.headers.origin || req.headers.referer || req.headers.host || 'unknown-origin'
     const originDoc = await db.collection('origins').findOne({ url: origin, projectId: decodedProjectId, status: 'active' })
     if (!originDoc) {
+      if (isProduction) {
+        res.status(403).json({ error: `Origin ${origin} not registered for this project` })
+        return
+      }
       console.warn(`[Serve] Origin ${origin} not registered for project ${decodedProjectId}. Allowing anyway (DEV MODE).`)
     }
 

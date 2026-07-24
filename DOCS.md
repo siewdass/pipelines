@@ -1,106 +1,253 @@
-# Pipelines
+# Architecture
 
-Este proyecto consta de dos componentes principales: una API backend construida con NestJS y una aplicación frontend.
+## System Overview
 
-## API
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Browser                              │
+│                                                             │
+│  ┌──────────────────┐     ┌──────────────────────────────┐  │
+│  │  Studio (:4003)  │     │  Built App (from Runtime)    │  │
+│  │  React/Vite      │     │  React SDK + Generated Code  │  │
+│  └────────┬─────────┘     └──────────────┬───────────────┘  │
+│           │                              │                  │
+└───────────┼──────────────────────────────┼──────────────────┘
+            │                              │
+            ▼                              ▼
+┌───────────────────────┐   ┌──────────────────────────────┐
+│  Management (:4000)   │   │  Storage (:4001)             │
+│  Express + Mongo      │◄──┤  Express + Socket.IO         │
+│  Auth, Projects,      │   │  User Auth, CRUD,            │
+│  Users, Assemble      │   │  Uploads, Realtime           │
+└───────────┬───────────┘   └──────────────┬───────────────┘
+            │                              │
+            ▼                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      MongoDB (:27017)                       │
+│                                                             │
+│  default DB: accounts, projects, origins, schemas           │
+│  project DBs: users, roles, permissions, builds,            │
+│               sources, prompts, <collections>               │
+└─────────────────────────────────────────────────────────────┘
+```
 
-La API está desarrollada con NestJS y utiliza MongoDB para el almacenamiento de datos. Proporciona endpoints para autenticación, autorización, mutaciones de datos, consultas, gestión de esquemas y más.
+## Service Responsibilities
 
-### Módulos
+### Studio (port 4003) — Frontend
 
-#### Authentication
-Maneja el registro de usuarios, inicio de sesión, recuperación de contraseña y restablecimiento.
+React/Vite SPA. The main interface for managing projects. Uses:
+- **React Query** (`useQuery`, `useMutate`) for data fetching and cache invalidation
+- **Zustand** for auth state (`useAuthStore`)
+- **React Router v7** for routing
+- **Tailwind CSS v4** for styling
+- **Vite dev proxy** routes `/api/*` calls to the appropriate backend service
 
-- `POST /authentication/register`: Registra un nuevo usuario.
-- `POST /authentication/login`: Inicia sesión de un usuario.
-- `POST /authentication/recover`: Inicia el proceso de recuperación de contraseña.
-- `PATCH /authentication/save`: Guarda/restablece la contraseña.
+Key pages:
+- `/signin`, `/signup` — Account authentication
+- `/projects` — List projects
+- `/projects/create` — Create project
+- `/projects/settings/:id` — Project config (origins, email, tokens)
+- `/projects/schema/:id` — Database schemas/tables
+- `/projects/projectdata/:id/:table` — Browse collection data
+- `/projects/assemble/:id` — AI code generation interface
+- `/projects/users/:id` — User/role/permission management
 
-#### Authorization
-Middleware que valida tokens JWT y establece el userId en la solicitud.
+### Management (port 4000) — Backend API
 
-#### Client
-Similar al módulo de autenticación, pero para clientes.
+Express + native MongoDB driver. Handles all management operations.
 
-- `POST /client/register`: Registra un nuevo cliente.
-- `POST /client/login`: Inicia sesión de un cliente.
+**Routes:**
+- `/authentication/*` — Account register/login
+- `/project/*` — Project CRUD, origins, email settings, token management
+- `/user/*` — Users, roles, permissions CRUD
+- `/database/*` — Schema listing, document fetching with association expansion
+- `/source/*` — Source code versioning
+- `/assemble/*` — AI code generation (Mistral/Groq), source compilation (esbuild)
 
-#### Database
-Gestiona la creación de bases de datos y el mapeo de tokens a nombres de base de datos.
+**Middleware:**
+- Account JWT validation (project management)
+- Project JWT validation (project-scoped operations)
+- User JWT validation (user-scoped operations)
+- Origin validation (production: reject unregistered, development: allow all)
 
-- `POST /database/create`: Crea una nueva base de datos y mapea un token.
+### Storage (port 4001) — Runtime Data Layer
 
-#### Inquiry
-Permite recuperar datos con filtrado, ordenamiento, paginación y asociaciones anidadas.
+What end-user apps (built via Assemble) use. Separate from the management API.
 
-- `POST /inquiry/index`: Recupera un documento único basado en filtros.
-- `POST /inquiry/retrieve`: Recupera múltiples documentos con opciones avanzadas.
+**Endpoints:**
+- `/auth/signup`, `/auth/signin` — User auth within a project
+- `/inquiry/index`, `/inquiry/retrieve` — Read operations (filters, sort, pagination, nested expansion)
+- `/mutation/upsert`, `/mutation/purge` — Write operations (with audit, unique checks, cascading)
+- `/assets/upload`, `/assets/:id`, `DELETE /assets/:id` — File management
+- Socket.IO — Realtime pub/sub with dual-token auth
 
-#### Management
-Gestiona esquemas y colecciones, y recupera datos con asociaciones.
+### Runtime (port 4002) — App Server
 
-- `GET /management/collections`: Lista las colecciones disponibles.
-- `POST /management/fetch`: Recupera documentos con expansiones de asociaciones.
+Serves compiled app bundles. Two components:
 
-#### Mutation
-Realiza mutaciones de datos (inserción, actualización, eliminación) con soporte para relaciones complejas (uno-a-uno, uno-a-muchos, muchos-a-muchos).
+**Server** (`server.ts`) — Express routes:
+- `/serve/html?project-id=<jwt>` — Returns HTML shell with SDK loader
+- `/serve/loader.js?project-id=<jwt>` — Dynamic JS that loads Tailwind, fonts, runtime.js, and app code
+- `/serve/runtime.js` — Pre-built React SDK bundle
+- `/serve/?project-id=<jwt>` — Returns compiled app code from MongoDB
 
-**Opciones admitidas:**
-- `uniques`: Array de campos que deben ser únicos.
-- `bridge`: Mapeo para relaciones muchos-a-muchos.
-- `audit`: Booleano para agregar campos de auditoría (createdAt, updatedAt).
+**Client SDK** (`index.ts` → `dist/runtime.js`) — React bundle exposed on `window`:
+- `window.React`, `window.ReactDOM`
+- `window.Network` — HTTP/Socket clients for Storage API
+- `window.Interface` — UI components (Form, Table, Dialog, Toast, etc.)
+- `window.View` — Router
+- `window.Bootstrap(App)` — Mounts the app
 
-**Relaciones:**
-- **Uno-a-uno**: Objetos anidados se upsertan primero.
-- **Uno-a-muchos**: Arrays de objetos se sincronizan (insertar/actualizar/eliminar).
-- **Muchos-a-muchos**: Usa tablas pivote para asociaciones.
+### Runtime SDK Reference
 
-- `POST /mutation/upsert`: Inserta o actualiza documentos con relaciones.
-  - **Parámetros**: `source` (colección), `input` (datos), `options` (opcional).
-  - **Ejemplo de solicitud**:
-    ```json
-    {
-      "source": "posts",
-      "input": {
-        "title": "My First Post",
-        "comments": [
-          { "text": "Great post!" },
-          { "text": "I agree." }
-        ]
-      },
-      "options": {
-        "uniques": ["title"]
-      }
-    }
-    ```
-  - **Respuesta**: `{ "success": true, "message": "Upsert operation completed successfully." }`
+#### Setup
 
-- `POST /mutation/purge`: Elimina documentos y maneja eliminaciones en cascada.
-  - **Parámetros**: `source`, `input` (array de documentos con `id`).
-  - **Ejemplo de solicitud**:
-    ```json
-    {
-      "source": "posts",
-      "input": [
-        { "id": "UUID" }
-      ]
-    }
-    ```
-  - **Respuesta**: `{ "success": true, "message": "Purge operation completed successfully." }`
+```html
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="./dist/runtime.js"></script>
+<div id="root"></div>
+<script>
+  window.PIPELINES = { TOKEN: "project-jwt-token" };
+  const { Main } = window;
+  ReactDOM.createRoot(document.getElementById('root')).render(<Main><App /></Main>);
+</script>
+```
 
-#### User
-Operaciones CRUD para usuarios, roles y permisos.
+#### Network — Data & Auth
 
-- `POST /user`: Crea un nuevo usuario.
-- `PATCH /user/:id`: Actualiza un usuario.
-- `GET /user/:id`: Obtiene un usuario por ID.
-- `GET /user`: Obtiene todos los usuarios.
-- `POST /user/roles`: Crea un nuevo rol.
-- `POST /user/roles/permissions`: Crea un nuevo permiso.
+```js
+const { useInquiry, useMutation, useSubscription, usePublish, useAuthentication } = window.Network;
 
-### Configuración
-- Base de datos: MongoDB en `mongodb://localhost:27017/default`.
-- Variables de entorno: `JWT_SECRET`, `BCRYPT_ROUNDS`.
+// Read (auto-refreshes via Socket)
+const [items, loading, pagination] = useInquiry({
+  source: "inventory", type: "retrieve",
+  output: { id: 1, stock: 1, name: 1 },
+  options: { filter: { status: 'active' }, limit: 10 }
+});
 
-## App
-La aplicación frontend está construida con Vite y proporciona la interfaz de usuario para interactuar con la API.
+// Write (invalidates queries automatically)
+const [save, saving] = useMutation({
+  source: "inventory", type: "upsert", refresh: ["inventory"]
+});
+save({ id: "123", stock: 100 }, (res) => res.success && alert("Saved"));
+
+// Realtime subscription
+const chatMessages = useSubscription({ source: "chat", filter: { id: "general" } });
+const publish = usePublish({ source: "chat", options: { id: "general" } });
+publish({ text: "Hello!", from: "User1" });
+
+// Auth
+const { isLogged, signin, signup, signout, loggedUser } = useAuthentication();
+```
+
+#### View — Router
+
+```js
+const { useRouter, useRoutes } = View.Router;
+const routes = [
+  { path: "/", element: <Home />, title: "Home" },
+  { path: "/app", element: <Dashboard />, title: "Dashboard" }
+];
+return useRoutes(routes);
+
+const { navigate, setQuery } = useRouter();
+setQuery({ status: "active" }); // ?status=active
+navigate('/app');
+```
+
+#### Interface — UI Components
+
+- `Interface.Form` — `useForm(schema)` returns `[submit, FormComponent, values, isValid]`
+- `Interface.Theme` — `useTheme()` returns `{ theme, toggleTheme }`
+- `Interface.Sidebar` — `useSidebar()` returns `{ isExpanded, toggleSidebar }`
+- `Interface.Breadcrumbs` — Auto-generated navigation paths
+- `Interface.Table`, `Interface.Dialog`, `Interface.Tabs`, `Interface.Notification`
+- `Interface.Icons` — FontAwesome 6
+- `window.Utils.cn` — Tailwind class concatenation
+
+## Data Flow
+
+### 1. Account Registration & Login
+
+```
+Browser → POST /authentication/account/login → Management
+Management validates credentials → returns JWT (contains accountId)
+Browser stores JWT in localStorage
+```
+
+### 2. Project Creation
+
+```
+Browser → POST /project/create → Management
+Management creates:
+  1. Project document in default.projects
+  2. Project database (<projectId>)
+  3. Admin role + user in project DB
+  4. Default origin (localhost)
+  5. Schema entry in default.schemas
+Returns project token (JWT containing projectId + accountId)
+```
+
+### 3. AI Code Generation (Assemble Flow)
+
+```
+User types prompt in Studio →
+  POST /assemble/prompts → Management
+    1. Fetches prompt history from project DB
+    2. Sends to AI (Mistral → Groq fallback)
+    3. AI returns { message, code, features } via tool_call
+    4. Saves prompt to project DB
+    5. Saves source (code + features) to project DB
+    6. Returns response + features to Studio
+Studio displays response, refetches features
+```
+
+### 4. Build & Preview
+
+```
+User clicks "Build" in Studio →
+  POST /assemble/compile/:projectId → Management
+    1. Reads source code from sources collection
+    2. Compiles JSX → IIFE via esbuild
+    3. Saves compiled code to builds collection
+Studio opens preview iframe →
+  GET /serve/html?project-id=<jwt> → Runtime
+    Returns HTML with window.PIPELINES_API = browser origin
+  HTML loads loader.js → Runtime
+    loader.js loads: Tailwind CDN → fonts → runtime.js → app code
+  GET /serve/?project-id=<jwt> → Runtime
+    Returns compiled JS from builds collection
+  window.Bootstrap(App) mounts the React app
+```
+
+### 5. Built App Runtime
+
+```
+Built app (in browser) →
+  User auth: POST /auth/signin → Storage (x-project-id header)
+  Data ops: POST /mutation/upsert, /inquiry/retrieve → Storage
+  Realtime: Socket.IO subscribe → Storage
+  Assets: POST /assets/upload → Storage
+```
+
+## Authentication Flow
+
+Two token types:
+
+**Account JWT** — Created at login. Contains `accountId`. Used for:
+- Managing projects (`/project/*`)
+- Studio session (stored in localStorage)
+
+**Project JWT** — Created per project. Contains `projectId` + `accountId`. Used for:
+- Project-scoped operations in Studio
+- End-user app authentication (sent as `x-project-id` header)
+
+**User JWT** — Created per user within a project. Contains `userId` + `projectId`. Used for:
+- CRUD operations on project data via Storage
+- Sent as `Authorization: Bearer <token>` header
+
+## Database Isolation
+
+Each project gets its own MongoDB database via `mongoose.createConnection().useDb(projectId)`:
+- **Default DB** (`default`): accounts, projects, origins, schemas
+- **Project DB** (`<projectId>`): users, roles, permissions, builds, sources, prompts, custom collections
