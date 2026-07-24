@@ -175,8 +175,6 @@ serveRouter.get('/', async (req, res) => {
 	}
 
 	try {
-		const db = mongoose.connection.useDb('default')
-
 		let decodedProjectId = ''
 		try {
 			const secret = ACCOUNT_JWT_SECRET

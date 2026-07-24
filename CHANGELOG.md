@@ -31,3 +31,9 @@ Verificar la fecha actual antes de agregar una nueva entrada.
 - Fixed: Runtime no encontraba builds (`No build found`) — usaba DB `default`
 - Fixed: DNS `ENOTFOUND` al conectar con Atlas desde Docker
 - Removed: NestJS API (`api/`)
+- Removed: `management/src/types.ts` (nunca se importaba)
+- Removed: `storage/pnpm-workspace.yaml` (basura)
+- Removed: `uuid` dependency de runtime (no se usaba)
+- Removed: `flattenPermissions` de management auth (solo se usaba en storage)
+- Changed: eliminado import `uuidv4` no usado en management/source.ts
+- Changed: eliminado variable `db` muerta en runtime/server.ts
