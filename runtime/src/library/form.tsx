@@ -1,6 +1,6 @@
-import * as React from 'react';
-import { useState, useCallback, ReactElement, useMemo, useRef } from "react";
-import { BaseForm, FormValues } from "../components/form/Form";
+import * as React from 'react'
+import { useState, useCallback, ReactElement, useMemo, useRef } from 'react'
+import { BaseForm, FormValues } from '../components/form/Form'
 
 export type SubmitCallback<T> = (data: T) => void;
 
@@ -15,64 +15,64 @@ export function useForm<T extends FormValues = FormValues>(schema: any): [
   T,
   boolean
 ] {
-  const [data, setData] = useState<T>({} as T);
-  const [isValid, setIsValid] = useState<boolean>(false);
-  const [showValidation, setShowValidation] = useState<boolean>(false);
+	const [ data, setData ] = useState<T>({} as T)
+	const [ isValid, setIsValid ] = useState<boolean>(false)
+	const [ showValidation, setShowValidation ] = useState<boolean>(false)
 
-  const onSubmit = useCallback(
-    (callback: SubmitCallback<T>) => {
-      setShowValidation(true);
-      if (isValid) {
-        callback(data);
-      }
-    },
-    [isValid, data]
-  );
+	const onSubmit = useCallback(
+		(callback: SubmitCallback<T>) => {
+			setShowValidation(true)
+			if (isValid) {
+				callback(data)
+			}
+		},
+		[ isValid, data ]
+	)
 
-  const handleChange = useCallback((newData: T, newIsValid: boolean) => {
-    setData(newData);
-    setIsValid(newIsValid);
-  }, []);
+	const handleChange = useCallback((newData: T, newIsValid: boolean) => {
+		setData(newData)
+		setIsValid(newIsValid)
+	}, [])
 
-  // Use a ref to keep the latest state accessible to the stable component.
-  // CRITICAL: We update this synchronously during render so that BoundFormComponent
-  // always has access to the *current* render's data, avoiding the "one render delay"
-  // that causes inputs to erase/overwrite characters.
-  const stateRef = useRef({ data, showValidation, handleChange });
-  // eslint-disable-next-line
+	// Use a ref to keep the latest state accessible to the stable component.
+	// CRITICAL: We update this synchronously during render so that BoundFormComponent
+	// always has access to the *current* render's data, avoiding the "one render delay"
+	// that causes inputs to erase/overwrite characters.
+	const stateRef = useRef({ data, showValidation, handleChange })
+	// eslint-disable-next-line
   stateRef.current = { data, showValidation, handleChange };
 
-  // Create a stable component identity that only changes if the schema changes
-  const BoundFormComponent = useMemo(() => {
-    return ({ className = "", initial }: BoundFormProps<T>) => {
-      // Grabbing values from ref during render to avoid stale closures 
-      // while keeping the component identity stable.
-      const { 
-        data: currentData, 
-        showValidation: currentShowValidation, 
-        handleChange: currentHandleChange 
-      } = stateRef.current;
+	// Create a stable component identity that only changes if the schema changes
+	const BoundFormComponent = useMemo(() => {
+		return ({ className = '', initial }: BoundFormProps<T>) => {
+			// Grabbing values from ref during render to avoid stale closures 
+			// while keeping the component identity stable.
+			const { 
+				data: currentData, 
+				showValidation: currentShowValidation, 
+				handleChange: currentHandleChange 
+			} = stateRef.current
 
-      // Synchronize initial data on mount if provided
-      // Use useMemo behavior logic: if initial is provided, we merge it.
-      // But a simple useEffect[initial] (once) is safer for "pre-fill" behavior.
-      const hasInitialized = useRef(false);
-      if (!hasInitialized.current && initial) {
-          currentHandleChange(initial, true); // Assume valid until AJV runs or keep current isValid
-          hasInitialized.current = true;
-      }
+			// Synchronize initial data on mount if provided
+			// Use useMemo behavior logic: if initial is provided, we merge it.
+			// But a simple useEffect[initial] (once) is safer for "pre-fill" behavior.
+			const hasInitialized = useRef(false)
+			if (!hasInitialized.current && initial) {
+				currentHandleChange(initial, true) // Assume valid until AJV runs or keep current isValid
+				hasInitialized.current = true
+			}
 
-      return (
-        <BaseForm<T>
-          schema={schema}
-          data={currentData}
-          onChange={currentHandleChange}
-          showValidation={currentShowValidation}
-          className={className}
-        />
-      );
-    };
-  }, [schema]);
+			return (
+				<BaseForm<T>
+					schema={schema}
+					data={currentData}
+					onChange={currentHandleChange}
+					showValidation={currentShowValidation}
+					className={className}
+				/>
+			)
+		}
+	}, [ schema ])
 
-  return [BoundFormComponent, onSubmit, data, isValid];
+	return [ BoundFormComponent, onSubmit, data, isValid ]
 }

@@ -1,17 +1,17 @@
-import React from 'react';
+import React from 'react'
 import { 
-  useReactTable, 
-  getCoreRowModel, 
-  flexRender, 
-  ColumnDef,
-  Row,
-  HeaderGroup,
-  Cell,
-  Header
-} from '@tanstack/react-table';
+	useReactTable, 
+	getCoreRowModel, 
+	flexRender, 
+	ColumnDef,
+	Row,
+	HeaderGroup,
+	Cell,
+	Header
+} from '@tanstack/react-table'
 
-export type { ColumnDef, Row, HeaderGroup, Cell, Header };
-export { flexRender };
+export type { ColumnDef, Row, HeaderGroup, Cell, Header }
+export { flexRender }
 
 export interface TableOptions<TData> {
   data: TData[];
@@ -24,12 +24,12 @@ export interface TableOptions<TData> {
  * Exposes the full TanStack Table instance for custom logic
  */
 export function useTable<TData>({ data, columns, getRowId }: TableOptions<TData>) {
-  return useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getRowId,
-  });
+	return useReactTable({
+		data,
+		columns,
+		getCoreRowModel: getCoreRowModel(),
+		getRowId,
+	})
 }
 
 /**
@@ -49,54 +49,54 @@ export interface DataGridProps<TData> {
 }
 
 export function DataGrid<TData>({
-  data,
-  columns,
-  renderHeaderGroup,
-  renderHeader,
-  renderRow,
-  renderCell,
-  className = '',
-  style
+	data,
+	columns,
+	renderHeaderGroup,
+	renderHeader,
+	renderRow,
+	renderCell,
+	className = '',
+	style
 }: DataGridProps<TData>) {
-  const table = useTable({ data, columns });
+	const table = useTable({ data, columns })
 
-  return (
-    <div className={className} style={style}>
-      {/* 1. Headers Section */}
-      <div className="grid-header-container">
-        {table.getHeaderGroups().map(headerGroup => (
-          renderHeaderGroup ? renderHeaderGroup(headerGroup) : (
-            <div key={headerGroup.id} className="grid-header-group">
-              {headerGroup.headers.map(header => (
-                <div key={header.id} className="grid-header-cell">
-                  {renderHeader ? renderHeader(header) : (
-                    header.isPlaceholder 
-                      ? null 
-                      : flexRender(header.column.columnDef.header, header.getContext())
-                  )}
-                </div>
-              ))}
-            </div>
-          )
-        ))}
-      </div>
+	return (
+		<div className={className} style={style}>
+			{/* 1. Headers Section */}
+			<div className="grid-header-container">
+				{table.getHeaderGroups().map(headerGroup => (
+					renderHeaderGroup ? renderHeaderGroup(headerGroup) : (
+						<div key={headerGroup.id} className="grid-header-group">
+							{headerGroup.headers.map(header => (
+								<div key={header.id} className="grid-header-cell">
+									{renderHeader ? renderHeader(header) : (
+										header.isPlaceholder 
+											? null 
+											: flexRender(header.column.columnDef.header, header.getContext())
+									)}
+								</div>
+							))}
+						</div>
+					)
+				))}
+			</div>
 
-      {/* 2. Body Section */}
-      <div className="grid-body-container">
-        {table.getRowModel().rows.map(row => (
-          renderRow ? renderRow(row) : (
-            <div key={row.id} className="grid-row">
-              {row.getVisibleCells().map(cell => (
-                <div key={cell.id} className="grid-cell">
-                  {renderCell ? renderCell(cell) : (
-                    flexRender(cell.column.columnDef.cell, cell.getContext())
-                  )}
-                </div>
-              ))}
-            </div>
-          )
-        ))}
-      </div>
-    </div>
-  );
+			{/* 2. Body Section */}
+			<div className="grid-body-container">
+				{table.getRowModel().rows.map(row => (
+					renderRow ? renderRow(row) : (
+						<div key={row.id} className="grid-row">
+							{row.getVisibleCells().map(cell => (
+								<div key={cell.id} className="grid-cell">
+									{renderCell ? renderCell(cell) : (
+										flexRender(cell.column.columnDef.cell, cell.getContext())
+									)}
+								</div>
+							))}
+						</div>
+					)
+				))}
+			</div>
+		</div>
+	)
 }

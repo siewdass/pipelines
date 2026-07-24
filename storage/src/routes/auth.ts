@@ -5,70 +5,70 @@ import { hashPassword, comparePassword, generateToken, flattenPermissions } from
 export const authRouter: RouterType = Router()
 
 authRouter.post('/signup', async (req, res) => {
-  try {
-    const projectId = (req as any).projectId as string
-    const { email, password, name } = req.body
-    const { db } = await getContext(projectId)
-    const users = db.collection('users')
+	try {
+		const projectId = (req as any).projectId as string
+		const { email, password, name } = req.body
+		const { db } = await getContext(projectId)
+		const users = db.collection('users')
 
-    const existing = await users.findOne({ email })
-    if (existing) {
-      res.status(409).json({ error: 'User already exists' })
-      return
-    }
+		const existing = await users.findOne({ email })
+		if (existing) {
+			res.status(409).json({ error: 'User already exists' })
+			return
+		}
 
-    const hashed = await hashPassword(password)
-    const { v4: uuidv4 } = await import('uuid')
-    await users.insertOne({
-      _id: uuidv4() as any,
-      email,
-      password: hashed,
-      name,
-      roles: [],
-      firstLogin: false,
-      createdAt: new Date(),
-    } as any)
+		const hashed = await hashPassword(password)
+		const { v4: uuidv4 } = await import('uuid')
+		await users.insertOne({
+			_id: uuidv4() as any,
+			email,
+			password: hashed,
+			name,
+			roles: [],
+			firstLogin: false,
+			createdAt: new Date(),
+		} as any)
 
-    res.json({ success: true, message: 'Register success' })
-  } catch (err: any) {
-    res.status(400).json({ error: err.message })
-  }
+		res.json({ success: true, message: 'Register success' })
+	} catch (err: any) {
+		res.status(400).json({ error: err.message })
+	}
 })
 
 authRouter.post('/signin', async (req, res) => {
-  try {
-    const projectId = (req as any).projectId as string
-    const { email, password } = req.body
-    const { db } = await getContext(projectId)
-    const users = db.collection('users')
+	try {
+		const projectId = (req as any).projectId as string
+		const { email, password } = req.body
+		const { db } = await getContext(projectId)
+		const users = db.collection('users')
 
-    const found = await users.findOne({ email })
-    if (!found) {
-      res.status(401).json({ error: 'Invalid credentials' })
-      return
-    }
+		const found = await users.findOne({ email })
+		if (!found) {
+			res.status(401).json({ error: 'Invalid credentials' })
+			return
+		}
 
-    const match = await comparePassword(password, found.password)
-    if (!match) {
-      res.status(401).json({ error: 'Invalid credentials' })
-      return
-    }
+		const match = await comparePassword(password, found.password)
+		if (!match) {
+			res.status(401).json({ error: 'Invalid credentials' })
+			return
+		}
 
-    const token = generateToken({ id: found._id, email: found.email }, 'user')
-    const permissions = await flattenPermissions(projectId, found.roles || [])
+		const token = generateToken({ id: found._id, email: found.email }, 'user')
+		const permissions = await flattenPermissions(projectId, found.roles || [])
 
-    res.json({
-      success: true,
-      message: 'Login success',
-      token,
-      user: {
-        id: found._id,
-        email: found.email,
-        name: found.name,
-        permissions,
-      },
-    })
-  } catch (err: any) {
-    res.status(400).json({ error: err.message })
-  }
+		res.json({
+			success: true,
+			message: 'Login success',
+			token,
+			user: {
+				id: found._id,
+				email: found.email,
+				name: found.name,
+				permissions,
+			},
+		})
+	} catch (err: any) {
+		res.status(400).json({ error: err.message })
+	}
 })

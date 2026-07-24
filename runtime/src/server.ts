@@ -14,50 +14,52 @@ const ACCOUNT_JWT_SECRET = process.env.ACCOUNT_JWT_SECRET || 'dev-account-secret
 const app = express()
 
 app.use((_req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,project-id')
-  if (_req.method === 'OPTIONS') {
-    res.status(204).end()
-    return
-  }
-  next()
+	res.setHeader('Access-Control-Allow-Origin', '*')
+	res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+	res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,project-id')
+	if (_req.method === 'OPTIONS') {
+		res.status(204).end()
+		return
+	}
+	next()
 })
 
 function getBaseUrl(req: express.Request): string {
-  if (req.query['baseUrl']) {
-    return req.query['baseUrl'] as string
-  }
-  const proto = req.headers['x-forwarded-proto'] || 'http'
-  const host = req.headers.host || 'localhost:8002'
-  return `${proto}://${host}`
+	if (req.query['baseUrl']) {
+		return req.query['baseUrl'] as string
+	}
+	const proto = req.headers['x-forwarded-proto'] || 'http'
+	const host = req.headers.host || 'localhost:8002'
+	return `${proto}://${host}`
 }
 
 const serveRouter = express.Router()
 
 serveRouter.get('/runtime.js', (_req, res) => {
-  const runtimePath = join(__dirname, '..', 'dist', 'runtime.js')
-  if (!existsSync(runtimePath)) {
-    res.status(404).send('console.error("[Runtime] Build not found. Run pnpm build first.")')
-    return
-  }
-  res.setHeader('Content-Type', 'application/javascript; charset=utf-8')
-  res.setHeader('Cache-Control', 'public, max-age=3600')
-  const file = createReadStream(runtimePath)
-  file.pipe(res)
+	const runtimePath = join(__dirname, '..', 'dist', 'runtime.js')
+	if (!existsSync(runtimePath)) {
+		res.status(404).send('console.error("[Runtime] Build not found. Run pnpm build first.")')
+		return
+	}
+	res.setHeader('Content-Type', 'application/javascript; charset=utf-8')
+	res.setHeader('Cache-Control', 'public, max-age=3600')
+	const file = createReadStream(runtimePath)
+	file.pipe(res)
 })
 
 serveRouter.get('/loader.js', (req, res) => {
-  const token = req.query['project-id'] as string
-  let decodedProjectId = 'unknown'
-  try {
-    const payload = jwt.decode(token) as { id?: string; projectId?: string }
-    decodedProjectId = payload?.projectId || payload?.id || 'unknown'
-  } catch {}
+	const token = req.query['project-id'] as string
+	let decodedProjectId = 'unknown'
+	try {
+		const payload = jwt.decode(token) as { id?: string; projectId?: string }
+		decodedProjectId = payload?.projectId || payload?.id || 'unknown'
+	} catch {
+		// invalid token, use 'unknown'
+	}
 
-  const baseUrl = getBaseUrl(req)
+	const baseUrl = getBaseUrl(req)
 
-  const loaderScript = `
+	const loaderScript = `
 (function() {
   for (var key in localStorage) { if (key.indexOf('socket.io') === 0) localStorage.removeItem(key); }
   for (var key in sessionStorage) { if (key.indexOf('socket.io') === 0) sessionStorage.removeItem(key); }
@@ -138,18 +140,18 @@ serveRouter.get('/loader.js', (req, res) => {
   load();
 })();
 `
-  res.setHeader('Content-Type', 'application/javascript; charset=utf-8')
-  res.end(loaderScript)
+	res.setHeader('Content-Type', 'application/javascript; charset=utf-8')
+	res.end(loaderScript)
 })
 
 serveRouter.get('/html', (req, res) => {
-  const token = req.query['project-id'] as string
-  if (!token) {
-    res.status(400).send('<h1>Missing project-id</h1>')
-    return
-  }
-  const baseUrl = getBaseUrl(req)
-  const html = `<!DOCTYPE html>
+	const token = req.query['project-id'] as string
+	if (!token) {
+		res.status(400).send('<h1>Missing project-id</h1>')
+		return
+	}
+	const baseUrl = getBaseUrl(req)
+	const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -157,77 +159,79 @@ serveRouter.get('/html', (req, res) => {
   <title>Pipelines | App</title>
 </head>
 <body style="background-color: #000; margin: 0;">
-  <script>window.PIPELINES = "${token}"; window.PIPELINES_API = "${baseUrl}";<\/script>
-  <script src="${baseUrl}/serve/loader.js?project-id=${token}"><\/script>
+  <script>window.PIPELINES = "${token}"; window.PIPELINES_API = "${baseUrl}";</script>
+  <script src="${baseUrl}/serve/loader.js?project-id=${token}"></script>
 </body>
 </html>`
-  res.setHeader('Content-Type', 'text/html; charset=utf-8')
-  res.end(html)
+	res.setHeader('Content-Type', 'text/html; charset=utf-8')
+	res.end(html)
 })
 
 serveRouter.get('/', async (req, res) => {
-  const token = req.query['project-id'] as string
-  if (!token) {
-    res.status(400).send('Missing project-id query parameter')
-    return
-  }
+	const token = req.query['project-id'] as string
+	if (!token) {
+		res.status(400).send('Missing project-id query parameter')
+		return
+	}
 
-  try {
-    const db = mongoose.connection.useDb('default')
+	try {
+		const db = mongoose.connection.useDb('default')
 
-    let decodedProjectId = ''
-    try {
-      const secret = ACCOUNT_JWT_SECRET
-      const payload = jwt.verify(token, secret) as { id?: string; projectId?: string }
-      decodedProjectId = payload.projectId || payload.id || ''
-      if (!decodedProjectId) throw new Error()
-    } catch {
-      const payload = jwt.decode(token) as { id?: string; projectId?: string }
-      decodedProjectId = payload?.projectId || payload?.id || ''
-      if (!decodedProjectId) {
-        res.status(403).json({ error: 'Invalid project token payload' })
-        return
-      }
-    }
+		let decodedProjectId = ''
+		try {
+			const secret = ACCOUNT_JWT_SECRET
+			const payload = jwt.verify(token, secret) as { id?: string; projectId?: string }
+			decodedProjectId = payload.projectId || payload.id || ''
+			if (!decodedProjectId) throw new Error()
+		} catch {
+			const payload = jwt.decode(token) as { id?: string; projectId?: string }
+			decodedProjectId = payload?.projectId || payload?.id || ''
+			if (!decodedProjectId) {
+				res.status(403).json({ error: 'Invalid project token payload' })
+				return
+			}
+		}
 
-    const isProduction = process.env.NODE_ENV === 'production'
-    const origin = req.headers.origin || req.headers.referer || req.headers.host || 'unknown-origin'
-    const originDoc = await db.collection('origins').findOne({ url: origin, projectId: decodedProjectId, status: 'active' })
-    if (!originDoc) {
-      if (isProduction) {
-        res.status(403).json({ error: `Origin ${origin} not registered for this project` })
-        return
-      }
-      console.warn(`[Serve] Origin ${origin} not registered for project ${decodedProjectId}. Allowing anyway (DEV MODE).`)
-    }
+		const projectDb = mongoose.connection.useDb(decodedProjectId)
 
-    const build = await db.collection('builds').findOne({ projectId: decodedProjectId })
-    res.setHeader('Content-Type', 'application/javascript; charset=utf-8')
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+		const isProduction = process.env.NODE_ENV === 'production'
+		const origin = req.headers.origin || req.headers.referer || req.headers.host || 'unknown-origin'
+		const originDoc = await projectDb.collection('origins').findOne({ url: origin, projectId: decodedProjectId, status: 'active' })
+		if (!originDoc) {
+			if (isProduction) {
+				res.status(403).json({ error: `Origin ${origin} not registered for this project` })
+				return
+			}
+			console.warn(`[Serve] Origin ${origin} not registered for project ${decodedProjectId}. Allowing anyway (DEV MODE).`)
+		}
 
-    if (!build || !build.code) {
-      res.send(`console.error('[Serve] No build found for project ${decodedProjectId}. Click Build in Studio first.');`)
-      return
-    }
+		const build = await projectDb.collection('builds').findOne({ projectId: decodedProjectId })
+		res.setHeader('Content-Type', 'application/javascript; charset=utf-8')
+		res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
 
-    res.send(build.code)
-  } catch (err: any) {
-    console.error('[Serve] Error serving project:', err.message)
-    res.status(500).json({ error: err.message })
-  }
+		if (!build || !build.code) {
+			res.send(`console.error('[Serve] No build found for project ${decodedProjectId}. Click Build in Studio first.');`)
+			return
+		}
+
+		res.send(build.code)
+	} catch (err: any) {
+		console.error('[Serve] Error serving project:', err.message)
+		res.status(500).json({ error: err.message })
+	}
 })
 
 app.use('/serve', serveRouter)
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('[Runtime] Error:', err.message)
-  res.status(500).json({ error: err.message || 'Internal server error' })
+	console.error('[Runtime] Error:', err.message)
+	res.status(500).json({ error: err.message || 'Internal server error' })
 })
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[Runtime] API running on http://0.0.0.0:${PORT}`)
+	console.log(`[Runtime] API running on http://0.0.0.0:${PORT}`)
 })
 
 mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 }).catch((err) => {
-  console.warn('[Runtime] MongoDB not available — serve route will return errors:', err.message)
+	console.warn('[Runtime] MongoDB not available — serve route will return errors:', err.message)
 })

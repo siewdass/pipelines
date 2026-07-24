@@ -57,13 +57,14 @@ Estado actual del proyecto. Lo que está hecho y lo que falta.
 ## Pendiente
 
 ### Management
-- [ ] Rate limiting en endpoints públicos (login, registro)
+- [x] Rate limiting en endpoints públicos (login, registro)
+- [x] Auto-build en primer prompt
 - [ ] Logs estructurados (Winston o Pino en vez de console.log)
 - [ ] Tests unitarios (Jest)
 - [ ] Tests de integración (E2E)
 
 ### Storage
-- [ ] Mejorar funcionalidad de realtime y renombrar el servicio
+- [ ] Reemplazar Socket.IO por SocketCluster (renombrar y reimplementar el servicio de realtime)
 
 ### Studio
 - [ ] UI para mutaciones manuales complejas (/mutation/upsert, purge masivos)
@@ -74,8 +75,8 @@ Estado actual del proyecto. Lo que está hecho y lo que falta.
 - [ ] Branding "Powered by Pipelines" en apps generadas
 
 ### Infraestructura
+- [x] ESLint v10 flat config con reglas de estilo TS
 - [ ] Dockerfiles optimizados para producción (multi-stage builds)
 - [ ] CI/CD (GitHub Actions): tests + lint en cada PR
-- [ ] Linter/formateador (ESLint/Prettier) con pre-commit hooks (Husky)
 - [ ] Scripts de seeding para base de datos local
 - [ ] Despliegue a producción (frontend → Vercel/Netlify, backend → Render/Railway/AWS)

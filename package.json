@@ -1,0 +1,14 @@
+{
+	"name": "pipelines",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix"
+	},
+	"devDependencies": {
+		"eslint": "^10.7.0",
+		"typescript-eslint": "^8.65.0",
+		"@eslint/js": "^10.0.1"
+	}
+}

@@ -1,7 +1,7 @@
-import React from 'react';
-import { Link, useLocation, matchRoutes } from 'react-router';
-import { motion } from 'framer-motion';
-import { FaChevronRight, FaHouse } from 'react-icons/fa6';
+import React from 'react'
+import { Link, useLocation, matchRoutes } from 'react-router'
+import { motion } from 'framer-motion'
+import { FaChevronRight, FaHouse } from 'react-icons/fa6'
 
 interface BreadcrumbsProps {
 	/**
@@ -23,34 +23,34 @@ interface BreadcrumbsProps {
  * Breadcrumbs component for automatic navigation paths.
  * Integrates with react-router to display the hierarchy of the current URL.
  */
-export function Breadcrumbs({ routes = [], separator, className = "" }: BreadcrumbsProps) {
-	const location = useLocation();
+export function Breadcrumbs({ routes = [], separator, className = '' }: BreadcrumbsProps) {
+	const location = useLocation()
 
 	// 1. Generate breadcrumbs from matches if routes are provided, or from pathname segments
-	let items: { label: string; path: string; current: boolean }[] = [];
+	let items: { label: string; path: string; current: boolean }[] = []
 
 	if (routes.length > 0) {
-		const matches = matchRoutes(routes, location);
+		const matches = matchRoutes(routes, location)
 		if (matches) {
 			items = matches.map((match, idx) => ({
 				label: (match.route as any).title || match.pathname.split('/').pop() || 'Home',
 				path: match.pathname,
 				current: idx === matches.length - 1
-			}));
+			}))
 		}
 	} else {
-		const segments = location.pathname.split('/').filter(Boolean);
+		const segments = location.pathname.split('/').filter(Boolean)
 		items = [
 			{ label: 'Home', path: '/', current: segments.length === 0 },
 			...segments.map((segment, idx) => {
-				const path = `/${segments.slice(0, idx + 1).join('/')}`;
+				const path = `/${segments.slice(0, idx + 1).join('/')}`
 				return {
 					label: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '),
 					path,
 					current: idx === segments.length - 1
-				};
+				}
 			})
-		];
+		]
 	}
 
 	return (
@@ -73,9 +73,9 @@ export function Breadcrumbs({ routes = [], separator, className = "" }: Breadcru
 								className={`
 									flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl transition-all duration-200
 									${item.current 
-										? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white cursor-default shadow-sm border border-slate-200 dark:border-slate-700' 
-										: 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'
-									}
+						? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white cursor-default shadow-sm border border-slate-200 dark:border-slate-700' 
+						: 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'
+					}
 								`}
 								aria-current={item.current ? 'page' : undefined}
 							>
@@ -87,5 +87,5 @@ export function Breadcrumbs({ routes = [], separator, className = "" }: Breadcru
 				))}
 			</ol>
 		</nav>
-	);
+	)
 }
