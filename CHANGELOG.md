@@ -45,3 +45,5 @@ Verificar la fecha actual antes de agregar una nueva entrada.
 - Changed: Studio auth store rehidrata sesión via `/me` al cargar la página
 - Changed: Studio logout limpia `project-token` de localStorage
 - Fixed: `loggedUser` se pería al recargar la página
+- Changed: project router lee token de cookie (no solo Authorization header)
+- Changed: iframe preview sin sandbox (contenido propio, no requiere restricciones)
