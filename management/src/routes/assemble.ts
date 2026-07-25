@@ -171,7 +171,7 @@ assembleRouter.post('/prompts', async (req, res) => {
 		if (provider === 'mistral' && mistralClient) {
 			try {
 				const response = await mistralClient.chat.completions.create({
-					model: 'mistral-large-latest',
+					model: 'mistral-small-latest',
 					messages,
 					temperature: 0.7,
 					tools: [ toolSchema ],
@@ -182,7 +182,7 @@ assembleRouter.post('/prompts', async (req, res) => {
 					parsedResponse = JSON.parse(toolCall.function.arguments)
 				}
 			} catch (e: any) {
-				// Fallback to Groq
+				console.error('[Assemble] Mistral error:', e.message)
 			}
 		}
 
@@ -200,7 +200,7 @@ assembleRouter.post('/prompts', async (req, res) => {
 					parsedResponse = JSON.parse(toolCall.function.arguments)
 				}
 			} catch (e: any) {
-				// Error
+				console.error('[Assemble] Groq error:', e.message)
 			}
 		}
 
