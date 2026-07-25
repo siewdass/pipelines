@@ -25,8 +25,14 @@ import Landing from "./pages/Landing";
 import { useTheme } from "./context/ThemeContext";
 
 export default function App() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isLoading, init } = useAuthStore();
   const { theme } = useTheme();
+
+  useEffect(() => {
+    init();
+  }, []);
+
+  if (isLoading) return null;
 
   const routes = useRoutes([
     {

@@ -37,3 +37,11 @@ Verificar la fecha actual antes de agregar una nueva entrada.
 - Removed: `flattenPermissions` de management auth (solo se usaba en storage)
 - Changed: eliminado import `uuidv4` no usado en management/source.ts
 - Changed: eliminado variable `db` muerta en runtime/server.ts
+- Added: auth con HttpOnly cookies (management login/logout)
+- Added: endpoint `GET /authentication/me` para verificar sesión
+- Added: endpoint `POST /authentication/account/logout` para limpiar cookie
+- Changed: CORS permite credentials con origen específico
+- Changed: Studio API client usa `withCredentials: true` en vez de header Authorization
+- Changed: Studio auth store rehidrata sesión via `/me` al cargar la página
+- Changed: Studio logout limpia `project-token` de localStorage
+- Fixed: `loggedUser` se pería al recargar la página

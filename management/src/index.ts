@@ -19,7 +19,8 @@ const authLimiter = rateLimit({
 })
 
 app.use((_req, res, next) => {
-	res.setHeader('Access-Control-Allow-Origin', '*')
+	const origin = _req.headers.origin || 'http://localhost:4003'
+	res.setHeader('Access-Control-Allow-Origin', origin)
 	res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
 	res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,project-id,x-project-id')
 	res.setHeader('Access-Control-Allow-Credentials', 'true')

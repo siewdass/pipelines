@@ -9,32 +9,47 @@ export interface LoggedUser {
 
 interface AuthState {
   isAuthenticated: boolean;
+  isLoading: boolean;
   loggedUser?: LoggedUser;
+  init: () => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  isAuthenticated: !!window.localStorage.getItem('token'), // isLogged
+  isAuthenticated: false,
+  isLoading: true,
   loggedUser: undefined,
+
+  init: async () => {
+    try {
+      const { data } = await api.get('/authentication/me');
+      set({ isAuthenticated: true, isLoading: false, loggedUser: { email: data.email, name: data.name } });
+    } catch {
+      set({ isAuthenticated: false, isLoading: false, loggedUser: undefined });
+    }
+  },
+
   register: async (email, password, name) => {
     const response = await api.post("/authentication/account/register", { email, password, name });
     if (!response.data.success) {
       throw new Error(response.data.message || "Registration failed");
     }
   },
+
   login: async (email, password) => {
     const response = await api.post("/authentication/account/login", { email, password });
     if (response.data.success) {
-      window.localStorage.setItem('token', response.data.token);
       set({ isAuthenticated: true, loggedUser: { email, name: response.data.user?.name || '' } });
     } else {
       throw new Error(response.data.message || "Login failed");
     }
   },
+
   logout: () => {
-    window.localStorage.removeItem('token');
+    api.post("/authentication/account/logout").catch(() => {});
+    localStorage.removeItem('project-token');
     navigate('/signin');
     set({ isAuthenticated: false, loggedUser: undefined });
   },
