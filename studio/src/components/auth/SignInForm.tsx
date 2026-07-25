@@ -28,7 +28,6 @@ export default function SignInForm() {
   const handleSave = async (formData: any) => {
     setLoading(true);
     try {
-      console.log(formData)
       await auth.login(formData.email, formData.password);
       navigate("/projects");
       toast.success("Logged in successfully!");

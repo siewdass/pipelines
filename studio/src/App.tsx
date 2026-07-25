@@ -32,8 +32,6 @@ export default function App() {
     init();
   }, []);
 
-  if (isLoading) return null;
-
   const routes = useRoutes([
     {
       path: "/",
@@ -82,6 +80,8 @@ export default function App() {
       }, 300); // Optional small hardcode delay so it doesn't flash infinitely fast
     }
   }, []);
+
+  if (isLoading) return null;
 
   return (  
     <>

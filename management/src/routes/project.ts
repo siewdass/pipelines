@@ -8,13 +8,20 @@ import { config } from '../config'
 export const projectRouter: RouterType = Router()
 
 projectRouter.use((req, res, next) => {
+	let token = ''
 	const auth = req.headers.authorization as string
-	if (!auth) {
+	if (auth) {
+		token = auth.replace('Bearer ', '').trim()
+	} else {
+		const cookieHeader = req.headers.cookie || ''
+		const match = cookieHeader.match(/token=([^;]+)/)
+		if (match) token = match[1]
+	}
+	if (!token) {
 		res.status(401).json({ error: 'Authorization required' })
 		return
 	}
 	try {
-		const token = auth.replace('Bearer ', '').trim()
 		const payload = verifyToken(token, config.accountJwtSecret)
     ;(req as any).accountId = payload.id
 		next()
