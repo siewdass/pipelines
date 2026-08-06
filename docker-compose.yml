@@ -13,7 +13,7 @@ services:
       - PNPM_STORE_DIR=/pnpm/store
       - PORT=4002
       - NODE_ENV=development
-      - MONGO_URI=mongodb+srv://samuel_db_user:pXos4q3JXjQPMHVN@pipelines.oib7xg1.mongodb.net/?appName=Pipelines
+      - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/default}
       - ACCOUNT_JWT_SECRET=dev-account-secret
       - EVENTS_URL=http://localhost:4013
     command: >
@@ -33,7 +33,7 @@ services:
       - PNPM_STORE_DIR=/pnpm/store
       - PORT=4010
       - NODE_ENV=development
-      - MONGO_URI=mongodb+srv://samuel_db_user:pXos4q3JXjQPMHVN@pipelines.oib7xg1.mongodb.net/?appName=Pipelines
+      - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/default}
       - USER_JWT_SECRET=dev-user-secret
       - ACCOUNT_JWT_SECRET=dev-account-secret
     command: >
@@ -53,7 +53,7 @@ services:
       - PNPM_STORE_DIR=/pnpm/store
       - PORT=4000
       - NODE_ENV=development
-      - MONGO_URI=mongodb+srv://samuel_db_user:pXos4q3JXjQPMHVN@pipelines.oib7xg1.mongodb.net/?appName=Pipelines
+      - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/default}
       - USER_JWT_SECRET=dev-user-secret
       - ACCOUNT_JWT_SECRET=dev-account-secret
       - IDENTITY_URL=http://identity:4010
@@ -76,7 +76,7 @@ services:
       - PNPM_STORE_DIR=/pnpm/store
       - PORT=4001
       - NODE_ENV=development
-      - MONGO_URI=mongodb+srv://samuel_db_user:pXos4q3JXjQPMHVN@pipelines.oib7xg1.mongodb.net/?appName=Pipelines
+      - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/default}
       - USER_JWT_SECRET=dev-user-secret
       - ACCOUNT_JWT_SECRET=dev-account-secret
     command: >
@@ -96,7 +96,7 @@ services:
       - PNPM_STORE_DIR=/pnpm/store
       - PORT=4013
       - NODE_ENV=development
-      - MONGO_URI=mongodb+srv://samuel_db_user:pXos4q3JXjQPMHVN@pipelines.oib7xg1.mongodb.net/?appName=Pipelines
+      - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/default}
       - USER_JWT_SECRET=dev-user-secret
       - ACCOUNT_JWT_SECRET=dev-account-secret
     command: >
@@ -117,7 +117,7 @@ services:
       - PNPM_STORE_DIR=/pnpm/store
       - PORT=4012
       - NODE_ENV=development
-      - MONGO_URI=mongodb+srv://samuel_db_user:pXos4q3JXjQPMHVN@pipelines.oib7xg1.mongodb.net/?appName=Pipelines
+      - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/default}
       - USER_JWT_SECRET=dev-user-secret
       - ACCOUNT_JWT_SECRET=dev-account-secret
       - UPLOADS_DIR=/data/uploads
