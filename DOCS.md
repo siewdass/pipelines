@@ -15,21 +15,31 @@
             │                              │
             ▼                              ▼
 ┌───────────────────────┐   ┌──────────────────────────────┐
-│  Management (:4000)   │   │  Storage (:4001)             │
-│  Express + Mongo      │◄──┤  Express + Socket.IO         │
-│  Auth, Projects,      │   │  User Auth, CRUD,            │
-│  Users, Assemble      │   │  Uploads, Realtime           │
+│  Management (:4000)   │   │  Identity (:4010)            │
+│  Express + Mongo      │   │  Express + Mongo             │
+│  Accounts, Projects,  │──►│  User Auth (signup/signin),  │
+│  Assemble             │   │  Users/Roles/Permissions     │
 └───────────┬───────────┘   └──────────────┬───────────────┘
             │                              │
-            ▼                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      MongoDB (:27017)                       │
-│                                                             │
-│  default DB: accounts, projects, origins, schemas           │
-│  project DBs: users, roles, permissions, builds,            │
-│               sources, prompts, <collections>               │
-└─────────────────────────────────────────────────────────────┘
+            │       ┌──────────────────────┼──────────────────────┐
+            ▼       ▼                      ▼                      ▼
+┌───────────────────────┐   ┌──────────────────────────────┐   ┌───────────────┐
+│  Storage (:4001)      │   │  Assets (:4012)              │   │  MongoDB      │
+│  Express              │   │  Express + Multer            │   │  (Atlas)      │
+│  Inquiry/Mutation     │   │  Upload/GET/DELETE           │   │  default DB:  │
+│  (protected)          │   │  (public/private, allowlist) │   │  accounts,    │
+└───────────┬───────────┘   └──────────────┬───────────────┘   │  projects     │
+            │                              │                    │  project DBs: │
+            │       ┌──────────────────────┼────────────────────┼───────────────┘
+            ▼       ▼                      ▼                    ▼
+┌───────────────────────┐   ┌────────────────────────┐        ┌───────────────┐
+│  Events (:4013)       │   │  Volume assets_uploads │        │  users, roles,│
+│  Socket.IO (no HTTP)  │   │                        │        │  permissions, │
+│  Realtime (protected) │   │                        │        │  builds, ...  │
+└───────────────────────┘   └────────────────────────┘        └───────────────┘
 ```
+
+Nota: el loader del Runtime sirve como gateway de desarrollo — inyecta `window.PIPELINES = { token, identity, storage, assets, events }` y el SDK apunta a `storage` (inquiry/mutation), `identity` (auth), `assets` (archivos) y `events` (realtime). En producción un proxy (nginx) enruta los cuatro; el realtime conecta directo a `events`.
 
 ## Service Responsibilities
 
@@ -58,8 +68,7 @@ Express + native MongoDB driver. Handles all management operations.
 
 **Routes:**
 - `/authentication/*` — Account register/login
-- `/project/*` — Project CRUD, origins, email settings, token management
-- `/user/*` — Users, roles, permissions CRUD
+- `/project/*` — Project CRUD, origins, email settings, token management (crear proyecto llama a `POST {identity}/user/seed`)
 - `/database/*` — Schema listing, document fetching with association expansion
 - `/source/*` — Source code versioning
 - `/assemble/*` — AI code generation (Mistral/Groq), source compilation (esbuild)
@@ -67,19 +76,52 @@ Express + native MongoDB driver. Handles all management operations.
 **Middleware:**
 - Account JWT validation (project management)
 - Project JWT validation (project-scoped operations)
-- User JWT validation (user-scoped operations)
 - Origin validation (production: reject unregistered, development: allow all)
+
+### Identity (port 4010) — User Auth & Permissions
+
+Microservicio de usuarios/roles/permisos extraído de management.
+
+**Endpoints:**
+- `/auth/signup`, `/auth/signin` — User auth within a project (JWT con `permissions` embebidas)
+- `/user`, `/user/:id`, etc. — CRUD de usuarios (13 rutas)
+- `/user/roles`, `/user/roles/permissions` — CRUD de roles y permisos
+- `/user/seed` — Seed del admin delegado por management (escribe en la DB del proyecto)
+
+**Primer login:** si el usuario no tiene password, el signin lo hashea y guarda (`firstLogin: true` en la respuesta).
 
 ### Storage (port 4001) — Runtime Data Layer
 
 What end-user apps (built via Assemble) use. Separate from the management API.
 
 **Endpoints:**
-- `/auth/signup`, `/auth/signin` — User auth within a project
 - `/inquiry/index`, `/inquiry/retrieve` — Read operations (filters, sort, pagination, nested expansion)
 - `/mutation/upsert`, `/mutation/purge` — Write operations (with audit, unique checks, cascading)
-- `/assets/upload`, `/assets/:id`, `DELETE /assets/:id` — File management
-- Socket.IO — Realtime pub/sub with dual-token auth
+
+**Acceso por source (`schemas`):** `public` → cualquiera puede leer/escribir (sin permisos); `private` → se exige token de usuario con `permissions[source][read|write]` (wildcard `*` = all_access) según la operación; sin usuario o sin permiso → 403.
+
+**Fuentes protegidas:** `user`, `users`, `role`, `roles`, `permission`, `permissions`, `assets` son rechazadas con 403 en inquiry/mutation.
+
+### Events (port 4013) — Realtime
+
+SocketCluster 20 (SC) sin Express (HTTP plano). El SDK de las apps conecta directo a `events` (vía `window.PIPELINES.events`).
+
+- RPC `authenticate { projectToken, userToken }` — decodifica JWT account/user, liga el socket al proyecto y guarda sus permisos
+- Canales nativos `{projectId}:{source}:{channel}` (source vacío → `{projectId}::{channel}`); el subscribe requiere que el `projectId` del canal coincida con el del socket autenticado; `useSubscription({ channel, source })` hace `socket.subscribe(channelName)`
+- RPC `publish { channel, input, source }` — si hay `source`, valida acceso `write`, persiste (`saveAndPrune`, máx 1000 docs por canal, campo `_channelId`) y emite a todos los suscritos al canal
+- Acceso por source (`schemas`): `public` → cualquiera; `private` → permiso `read` (subscribe) o `write` (publish)
+- Fuentes protegidas: publish (RPC) y subscribe (inbound middleware) con `source` protegida se bloquean
+
+### Assets (port 4012) — File Management
+
+Microservicio de archivos con multer + diskStorage (volumen `assets_uploads`).
+
+**Endpoints:**
+- `POST /assets/upload` — Multipart (`file`, `access`). Requiere user con `assets:write`. `access` default `public`.
+- `GET /assets/:id` — Público sin auth; privado requiere `Authorization: Bearer <userJWT>` o `?token=<userJWT>` (para `<img>`).
+- `DELETE /assets/:id` — Requiere user con `assets:write`.
+
+**Allowlist de mimetypes:** `image/*`, `video/*`, `audio/*`, PDF, Office (Word/Excel/PPT + openxml), `text/*`, CSV. `kind` se deriva (`image|video|audio|document`); tipos no permitidos → 400.
 
 ### Runtime (port 4002) — App Server
 
@@ -224,11 +266,13 @@ Studio opens preview iframe →
 
 ```
 Built app (in browser) →
-  User auth: POST /auth/signin → Storage (x-project-id header)
+  User auth: POST /auth/signin → Identity (Authorization/x-project-id)
   Data ops: POST /mutation/upsert, /inquiry/retrieve → Storage
-  Realtime: Socket.IO subscribe → Storage
-  Assets: POST /assets/upload → Storage
+  Realtime: Socket.IO subscribe → Events
+  Assets: POST /assets/upload, GET/DELETE /assets/:id → Assets
 ```
+
+Endpoint routing de las apps: `window.PIPELINES` inyecta `identity`, `storage`, `assets` y `events`; el SDK usa `authApi` (identity) para signup/signin, `api` (storage) para inquiry/mutation, `socket` (events) para realtime y `assets` para archivos.
 
 ## Authentication Flow
 
@@ -242,8 +286,9 @@ Two token types:
 - Project-scoped operations in Studio
 - End-user app authentication (sent as `x-project-id` header)
 
-**User JWT** — Created per user within a project. Contains `userId` + `projectId`. Used for:
+**User JWT** — Created per user within a project via Identity signin. Contains `userId`, `email` and `permissions` embedded. Used for:
 - CRUD operations on project data via Storage
+- File operations via Assets
 - Sent as `Authorization: Bearer <token>` header
 
 ## Database Isolation

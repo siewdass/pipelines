@@ -11,8 +11,8 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/authentication': { target: 'http://management:4000', changeOrigin: true },
-      '/auth': { target: 'http://storage:4001', changeOrigin: true },
-      '/assets': { target: 'http://storage:4001', changeOrigin: true },
+      '/auth': { target: 'http://identity:4010', changeOrigin: true },
+      '/assets': { target: 'http://assets:4012', changeOrigin: true },
       '/project': {
         target: 'http://management:4000',
         changeOrigin: true,
@@ -22,8 +22,10 @@ export default defineConfig({
           }
         }
       },
-      '/user': { target: 'http://management:4000', changeOrigin: true },
+      '/user': { target: 'http://identity:4010', changeOrigin: true },
       '/origin': { target: 'http://management:4000', changeOrigin: true },
+      '/inquiry': { target: 'http://storage:4001', changeOrigin: true },
+      '/mutation': { target: 'http://storage:4001', changeOrigin: true },
       '/database': { target: 'http://management:4000', changeOrigin: true },
       '/assemble': { target: 'http://management:4000', changeOrigin: true },
       '/email': { target: 'http://management:4000', changeOrigin: true },

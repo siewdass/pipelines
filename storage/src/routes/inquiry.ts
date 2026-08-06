@@ -1,14 +1,38 @@
 import { Router, type Router as RouterType } from 'express'
 import { getContext } from '../services/db'
 import { getOptions, getProjection, upload, serialize } from '../services/inquiry'
+import { isProtectedSource } from '../services/protected'
+import { getSourceAccess, type SourceAccess } from '../services/access'
+import { hasPermission, getUser } from '../middleware/permissions'
 
 export const inquiryRouter: RouterType = Router()
+
+function assertSourceAllowed(source: string, res: any, access: 'read'): boolean {
+	if (isProtectedSource(source)) {
+		res.status(403).json({ error: `Source '${source}' is protected` })
+		return false
+	}
+	return true
+}
+
+async function assertAccess(req: any, res: any, source: string, sourceAccess: SourceAccess, access: 'read' | 'write'): Promise<boolean> {
+	if (sourceAccess !== 'private') return true
+	const user = getUser(req)
+	if (!user || !hasPermission(user.permissions, source, access)) {
+		res.status(403).json({ error: `Permission denied: ${source}:${access}` })
+		return false
+	}
+	return true
+}
 
 inquiryRouter.post('/index', async (req, res) => {
 	try {
 		const { source, output, options } = req.body
+		if (!assertSourceAllowed(source, res, 'read')) return
 		const projectId = (req as any).projectId as string
 		const { db } = await getContext(projectId)
+		const sourceAccess = await getSourceAccess(db, source)
+		if (!(await assertAccess(req, res, source, sourceAccess, 'read'))) return
 		const col = db.collection(source)
 		const { filter } = getOptions(options ?? {})
 		const { projection, nested } = getProjection(output)
@@ -30,8 +54,11 @@ inquiryRouter.post('/index', async (req, res) => {
 inquiryRouter.post('/retrieve', async (req, res) => {
 	try {
 		const { source, output, options } = req.body
+		if (!assertSourceAllowed(source, res, 'read')) return
 		const projectId = (req as any).projectId as string
 		const { db } = await getContext(projectId)
+		const sourceAccess = await getSourceAccess(db, source)
+		if (!(await assertAccess(req, res, source, sourceAccess, 'read'))) return
 		const col = db.collection(source)
 		const { filter, sort, pagination } = getOptions(options ?? {})
 		const { projection, nested } = getProjection(output)

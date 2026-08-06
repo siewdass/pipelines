@@ -3,7 +3,6 @@ import rateLimit from 'express-rate-limit'
 import { config } from './config'
 import { authRouter } from './routes/auth'
 import { projectRouter } from './routes/project'
-import { userRouter } from './routes/user'
 import { databaseRouter } from './routes/database'
 import { sourceRouter } from './routes/source'
 import { assembleRouter } from './routes/assemble'
@@ -35,7 +34,6 @@ app.use('/authentication/account/register', authLimiter)
 app.use('/authentication/account/login', authLimiter)
 app.use('/authentication', authRouter)
 app.use('/project', projectRouter)
-app.use('/user', userRouter)
 app.use('/database', databaseRouter)
 app.use('/source', sourceRouter)
 app.use('/assemble', assembleRouter)

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { api, reconnect } from './'
+import { authApi, reconnect } from './'
 
 interface AuthenticationState {
 	isLogged: boolean;
@@ -16,13 +16,13 @@ export const useAuthentication = create<AuthenticationState>((set) => ({
 	isLogged: !!window.localStorage.getItem('token'),
 	loggedUser: undefined,
 	signup: async (email, password, name) => {
-		const response = await api.post('/authentication/signup', { email, password, name })
+		const response = await authApi.post('/auth/signup', { email, password, name })
 		if (!response.data.success) {
 			throw new Error(response.data.message || 'Registration failed')
 		}
 	},
 	signin: async (email, password) => {
-		const response = await api.post('/authentication/signin', { email, password })
+		const response = await authApi.post('/auth/signin', { email, password })
 		if (response.data.success) {
 			const { token, user } = response.data
 			window.localStorage.setItem('token', token)

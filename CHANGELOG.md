@@ -5,6 +5,25 @@ Verificar la fecha actual antes de agregar una nueva entrada.
 
 ---
 
+## 2026-08-03
+
+- Added: Microservicio `events` (port 4013, sin express): realtime extraído de storage — socket.io con `setupRealtime(httpServer)` plano, auth por handshake (`projectToken`/`userToken`), rooms por source/channel, persistencia (`saveAndPrune`/`fetchRecent`), fuentes protegidas
+- Added: Permisos opcionales en storage: inquiry (`read`) y mutation (`write`) resuelven `permissions[source]` (wildcard `*` = all_access); sin token → público, con token sin permiso → 403 (`middleware/user.ts` + `middleware/permissions.ts`)
+- Added: `window.PIPELINES = { token, identity, storage, assets, events }` inyectado por el runtime (/html y loader.js) y en el HTML descargado (ProjectAssemble); `events` = `EVENTS_URL` en runtime y `VITE_EVENTS_URL` en studio
+- Changed: SDK `api` → `getPipelines().storage` (antes `data`); `socket` → `getPipelines().events` o `http://localhost:4013` (cableado directo, sin proxy)
+- Changed: Storage queda con solo inquiry + mutation (se mantiene el nombre `storage`); se eliminan `routes/auth.ts`, `routes/assets.ts`, `services/realtime*.ts` y `middleware/user.ts` antiguo
+- Removed: deps de storage `bcryptjs`, `express-rate-limit`, `multer`, `socket.io` (+ types)
+- Changed: `docker-compose.yml` añade servicio `events` (4013) + `EVENTS_URL` en runtime; storage sin `UPLOADS_DIR` ni volumen `storage_uploads`
+- Added: Microservicio `identity` (port 4010): signup/signin de usuarios, CRUD de usuarios/roles/permisos, `POST /user/seed` delegado por management al crear proyecto
+- Added: Primer login: usuario sin password lo define al entrar (flag `firstLogin` en el signin)
+- Added: Microservicio `assets` (port 4012): upload/GET/DELETE con multer, permisos `assets:read`/`assets:write`, `access` public/private (`?token=` para privado), allowlist de mimetypes con derivación de `kind`
+- Added: Studio proxy de vite a `identity:4010`, `assets:4012`, `storage:4001` (/inquiry, /mutation)
+- Added: `storage/src/services/protected.ts` — fuentes protegidas (`user`, `users`, `role`, `roles`, `permission`, `permissions`, `assets`) rechazadas con 403 en inquiry/mutation y realtime
+- Changed: Management ya no escribe usuarios/roles/permisos (delegado a identity); `routes/user.ts` eliminado
+- Changed: Storage pierde auth de usuarios (migrado a identity); SDK usa `authApi` → `/auth/signup|signin`
+- Changed: `docker-compose.yml` añade servicios identity y assets + volumen `assets_uploads`; management con `IDENTITY_URL`
+- Removed: SDK `BASE_URL = http://localhost:8000` (puerto muerto)
+
 ## 2026-07-24
 
 - Added: Management como servicio principal (port 4000)

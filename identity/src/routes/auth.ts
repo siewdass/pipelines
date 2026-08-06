@@ -25,7 +25,7 @@ authRouter.post('/signup', async (req, res) => {
 			password: hashed,
 			name,
 			roles: [],
-			firstLogin: false,
+			firstLogin: true,
 			createdAt: new Date(),
 		} as any)
 
@@ -48,14 +48,24 @@ authRouter.post('/signin', async (req, res) => {
 			return
 		}
 
-		const match = await comparePassword(password, found.password)
-		if (!match) {
-			res.status(401).json({ error: 'Invalid credentials' })
-			return
+		const wasFirstLogin = found.firstLogin === true
+		if (!found.password) {
+			const hashed = await hashPassword(password)
+			await users.updateOne({ _id: found._id as any }, { $set: { password: hashed } })
+		} else {
+			const match = await comparePassword(password, found.password)
+			if (!match) {
+				res.status(401).json({ error: 'Invalid credentials' })
+				return
+			}
 		}
 
-		const token = generateToken({ id: found._id, email: found.email }, 'user')
+		if (wasFirstLogin) {
+			await users.updateOne({ _id: found._id as any }, { $set: { firstLogin: false } })
+		}
+
 		const permissions = await flattenPermissions(projectId, found.roles || [])
+		const token = generateToken({ id: found._id, email: found.email, permissions }, 'user')
 
 		res.json({
 			success: true,
@@ -66,6 +76,7 @@ authRouter.post('/signin', async (req, res) => {
 				email: found.email,
 				name: found.name,
 				permissions,
+				firstLogin: wasFirstLogin,
 			},
 		})
 	} catch (err: any) {

@@ -37,7 +37,6 @@ projectRouter.post('/create', async (req, res) => {
 		const { db } = await getContext('default')
 		const projects = db.collection('projects')
 		const origins = db.collection('origins')
-		const accounts = db.collection('accounts')
 
 		const _id = uuidv4()
 		const token = jwt.sign({ projectId: _id, accountId }, config.accountJwtSecret)
@@ -63,36 +62,17 @@ projectRouter.post('/create', async (req, res) => {
 			} as any)
 		}
 
-		const RoleModel = db.collection('roles')
-		const PermissionModel = db.collection('permissions')
-		const UserModel = db.collection('users')
-
-		const allPermission = await PermissionModel.insertOne({
-			_id: uuidv4(),
-			name: 'all_access',
-			description: 'Full administrative access (*) to all resources',
-			read: true,
-			write: true,
-			resources: [ '*' ],
-		} as any)
-
-		const adminRole = await RoleModel.insertOne({
-			_id: uuidv4(),
-			name: 'admin',
-			description: 'Project Administrator with full privileges',
-			permissions: [ allPermission.insertedId ],
-		} as any)
-
-		const creatorAccount = await accounts.findOne({ _id: accountId })
-		if (creatorAccount) {
-			await UserModel.insertOne({
-				_id: uuidv4(),
-				email: creatorAccount.email,
-				password: creatorAccount.password,
-				name: creatorAccount.name,
-				roles: [ adminRole.insertedId ],
-				firstLogin: false,
-			} as any)
+		try {
+			await fetch(`${config.identityUrl}/user/seed`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'project-id': token,
+				},
+				body: JSON.stringify({ accountId }),
+			})
+		} catch (err: any) {
+			console.error('[Management] Failed to seed admin user:', err.message)
 		}
 
 		res.json({ _id, name, description, token, status: 'active', message: 'Project created successfully' })

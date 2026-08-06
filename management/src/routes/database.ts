@@ -46,6 +46,7 @@ databaseRouter.get('/tables', async (req, res) => {
 			return {
 				id: schema._id,
 				name: schema.name || collectionName,
+				access: schema.access || 'public',
 				associations: schema.associations || {},
 				count,
 				sizeKb,
@@ -54,6 +55,28 @@ databaseRouter.get('/tables', async (req, res) => {
 		}))
 
 		res.json({ collections: enrichedSchemas })
+	} catch (err: any) {
+		res.status(400).json({ error: err.message })
+	}
+})
+
+databaseRouter.patch('/tables/:source', async (req, res) => {
+	try {
+		const projectId = (req as any).projectId
+		const { db } = await getContext(projectId)
+		const { access, name } = req.body
+		if (access !== 'public' && access !== 'private') {
+			res.status(400).json({ error: "access must be 'public' or 'private'" })
+			return
+		}
+		const source = req.params.source
+		const schemasCol = db.collection('schemas')
+		await schemasCol.updateOne(
+			{ _id: source as any },
+			{ $set: { _id: source as any, name: name ?? source, access } },
+			{ upsert: true }
+		)
+		res.json({ success: true, access })
 	} catch (err: any) {
 		res.status(400).json({ error: err.message })
 	}

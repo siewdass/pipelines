@@ -1,6 +1,6 @@
 import { useMutation as useMutationRQ } from '@tanstack/react-query'
 import { z } from 'zod'
-import { api, socket } from './'
+import { api } from './'
 
 /**
  * Configuration for data persistence operations.
@@ -22,7 +22,6 @@ export const MutationParamsSchema = z.object({
 	source: z.string(),
 	type: z.enum([ 'upsert', 'purge' ]),
 	options: MutationOptionsSchema.optional(),
-	refresh: z.union([ z.string(), z.array(z.string()) ]).optional(),
 })
 
 export type MutationParams = z.infer<typeof MutationParamsSchema>;
@@ -40,18 +39,10 @@ export interface MutationResponse {
  */
 export function useMutation<T = unknown>(config: MutationParams) {
 	MutationParamsSchema.parse(config)
-	const { source, type, options = {}, refresh = [] } = config
-	const refreshKeys = Array.isArray(refresh) ? refresh : [ refresh ]
+	const { source, type, options = {} } = config
 
 	const mutation = useMutationRQ<MutationResponse, unknown, T>({
 		mutationFn: (input: T) => api.post(`/mutation/${type}`, { source, input, options }).then(r => r.data),
-		onSuccess: (data: MutationResponse) => {
-			if (data.success) {
-				refreshKeys.forEach(source => {
-					socket.emit(`refresh:${source}`)
-				})
-			}
-		},
 		onError: (err: any) => {
 			console.error(`Mutation ${type} error on ${source}:`, err.response?.data?.message || err.message)
 		},

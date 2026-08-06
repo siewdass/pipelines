@@ -5,4 +5,5 @@ export const config = {
 	userJwtSecret: process.env.USER_JWT_SECRET || 'dev-user-secret',
 	mistralApiKey: process.env.MISTRAL_API_KEY || '',
 	groqApiKey: process.env.GROQ_API_KEY || '',
+	identityUrl: process.env.IDENTITY_URL || 'http://localhost:4010',
 }

@@ -1,0 +1,22 @@
+{
+  "name": "events",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.16.0",
+    "socketcluster-server": "^20.0.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/uuid": "^10.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "~5.7.3"
+  }
+}

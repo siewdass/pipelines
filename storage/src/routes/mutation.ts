@@ -2,14 +2,39 @@ import { Router, type Router as RouterType } from 'express'
 import { v4 as uuidv4 } from 'uuid'
 import { getContext } from '../services/db'
 import { getOptions, download } from '../services/mutation'
+import { isProtectedSource } from '../services/protected'
+import { getSourceAccess, ensureSourceRegistered, type SourceAccess } from '../services/access'
+import { hasPermission, getUser } from '../middleware/permissions'
 
 export const mutationRouter: RouterType = Router()
+
+function assertSourceAllowed(source: string, res: any): boolean {
+	if (isProtectedSource(source)) {
+		res.status(403).json({ error: `Source '${source}' is protected` })
+		return false
+	}
+	return true
+}
+
+async function assertAccess(req: any, res: any, source: string, sourceAccess: SourceAccess, access: 'read' | 'write'): Promise<boolean> {
+	if (sourceAccess !== 'private') return true
+	const user = getUser(req)
+	if (!user || !hasPermission(user.permissions, source, access)) {
+		res.status(403).json({ error: `Permission denied: ${source}:${access}` })
+		return false
+	}
+	return true
+}
 
 mutationRouter.post('/upsert', async (req, res) => {
 	try {
 		const { source, input, options } = req.body
+		if (!assertSourceAllowed(source, res)) return
 		const projectId = (req as any).projectId as string
 		const { db } = await getContext(projectId)
+		const sourceAccess = await getSourceAccess(db, source)
+		if (!(await assertAccess(req, res, source, sourceAccess, 'write'))) return
+		await ensureSourceRegistered(db, source)
 		const settings = getOptions(options ?? {})
 		const collection = db.collection(source)
 		const { _id, ...data } = input || {}
@@ -53,8 +78,11 @@ mutationRouter.post('/upsert', async (req, res) => {
 mutationRouter.post('/purge', async (req, res) => {
 	try {
 		const { source, input } = req.body
+		if (!assertSourceAllowed(source, res)) return
 		const projectId = (req as any).projectId as string
 		const { db } = await getContext(projectId)
+		const sourceAccess = await getSourceAccess(db, source)
+		if (!(await assertAccess(req, res, source, sourceAccess, 'write'))) return
 		const collection = db.collection(source)
 		const ids = Array.isArray(input) ? input : [ input ]
 

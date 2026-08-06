@@ -15,6 +15,27 @@ services:
       - NODE_ENV=development
       - MONGO_URI=mongodb+srv://samuel_db_user:pXos4q3JXjQPMHVN@pipelines.oib7xg1.mongodb.net/?appName=Pipelines
       - ACCOUNT_JWT_SECRET=dev-account-secret
+      - EVENTS_URL=http://localhost:4013
+    command: >
+      sh -c "pnpm install --no-frozen-lockfile --config.allow-builds=true && pnpm dev"
+
+  identity:
+    image: guergeiro/pnpm:22-10-slim
+    working_dir: /app/identity
+    ports: ['4010:4010']
+    volumes:
+      - ./identity:/app/identity
+      - /app/identity/node_modules
+      - pnpm_store:/pnpm/store
+    environment:
+      - CI=true
+      - PNPM_HOME=/pnpm
+      - PNPM_STORE_DIR=/pnpm/store
+      - PORT=4010
+      - NODE_ENV=development
+      - MONGO_URI=mongodb+srv://samuel_db_user:pXos4q3JXjQPMHVN@pipelines.oib7xg1.mongodb.net/?appName=Pipelines
+      - USER_JWT_SECRET=dev-user-secret
+      - ACCOUNT_JWT_SECRET=dev-account-secret
     command: >
       sh -c "pnpm install --no-frozen-lockfile --config.allow-builds=true && pnpm dev"
 
@@ -22,6 +43,7 @@ services:
     image: guergeiro/pnpm:22-10-slim
     working_dir: /app/management
     ports: ['4000:4000']
+    depends_on: [identity]
     volumes:
       - ./management:/app/management
       - pnpm_store:/pnpm/store
@@ -34,6 +56,7 @@ services:
       - MONGO_URI=mongodb+srv://samuel_db_user:pXos4q3JXjQPMHVN@pipelines.oib7xg1.mongodb.net/?appName=Pipelines
       - USER_JWT_SECRET=dev-user-secret
       - ACCOUNT_JWT_SECRET=dev-account-secret
+      - IDENTITY_URL=http://identity:4010
       - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
       - GROQ_API_KEY=${GROQ_API_KEY:-}
     command: >
@@ -47,12 +70,52 @@ services:
       - ./storage:/app/storage
       - /app/storage/node_modules
       - pnpm_store:/pnpm/store
-      - storage_uploads:/data/uploads
     environment:
       - CI=true
       - PNPM_HOME=/pnpm
       - PNPM_STORE_DIR=/pnpm/store
       - PORT=4001
+      - NODE_ENV=development
+      - MONGO_URI=mongodb+srv://samuel_db_user:pXos4q3JXjQPMHVN@pipelines.oib7xg1.mongodb.net/?appName=Pipelines
+      - USER_JWT_SECRET=dev-user-secret
+      - ACCOUNT_JWT_SECRET=dev-account-secret
+    command: >
+      sh -c "pnpm install --no-frozen-lockfile --config.allow-builds=true && pnpm dev"
+
+  events:
+    image: guergeiro/pnpm:22-10-slim
+    working_dir: /app/events
+    ports: ['4013:4013']
+    volumes:
+      - ./events:/app/events
+      - /app/events/node_modules
+      - pnpm_store:/pnpm/store
+    environment:
+      - CI=true
+      - PNPM_HOME=/pnpm
+      - PNPM_STORE_DIR=/pnpm/store
+      - PORT=4013
+      - NODE_ENV=development
+      - MONGO_URI=mongodb+srv://samuel_db_user:pXos4q3JXjQPMHVN@pipelines.oib7xg1.mongodb.net/?appName=Pipelines
+      - USER_JWT_SECRET=dev-user-secret
+      - ACCOUNT_JWT_SECRET=dev-account-secret
+    command: >
+      sh -c "pnpm install --no-frozen-lockfile --config.allow-builds=true && pnpm dev"
+
+  assets:
+    image: guergeiro/pnpm:22-10-slim
+    working_dir: /app/assets
+    ports: ['4012:4012']
+    volumes:
+      - ./assets:/app/assets
+      - /app/assets/node_modules
+      - pnpm_store:/pnpm/store
+      - assets_uploads:/data/uploads
+    environment:
+      - CI=true
+      - PNPM_HOME=/pnpm
+      - PNPM_STORE_DIR=/pnpm/store
+      - PORT=4012
       - NODE_ENV=development
       - MONGO_URI=mongodb+srv://samuel_db_user:pXos4q3JXjQPMHVN@pipelines.oib7xg1.mongodb.net/?appName=Pipelines
       - USER_JWT_SECRET=dev-user-secret
@@ -79,4 +142,4 @@ services:
 
 volumes:
   pnpm_store:
-  storage_uploads:
+  assets_uploads:

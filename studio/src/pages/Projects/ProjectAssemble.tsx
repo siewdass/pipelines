@@ -89,7 +89,7 @@ export default function ProjectAssemble() {
   <title>Pipelines | ${project.name}</title>
 </head>
 <body style="background-color: #000; margin: 0;">
-  <script>window.PIPELINES = "${project.token}"; window.PIPELINES_API = "${baseUrl}";<\/script>
+  <script>window.PIPELINES = { token: "${project.token}", identity: "${baseUrl}", storage: "${baseUrl}", assets: "${baseUrl}", events: "${import.meta.env.VITE_EVENTS_URL || baseUrl}" };<\/script>
   <script src="${baseUrl}/serve/loader.js?project-id=${project.token}"><\/script>
 </body>
 </html>`;

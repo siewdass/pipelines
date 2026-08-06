@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect } from 'react'
 import { z } from 'zod'
-import { api, socket, queryClient } from './'
+import { api } from './'
 
 /**
  * Advanced recursive options for data filtering, sorting, and pagination.
@@ -53,14 +52,6 @@ export function useInquiry<T = unknown>(config: InquiryParams) {
 		retry: 3,
 		staleTime: 60000,
 	})
-
-	useEffect(() => {
-		const handler = () => {
-			queryClient.invalidateQueries({ queryKey: [ source ], exact: false })
-		}
-		socket.on(`refresh:${source}`, handler)
-		return () => { socket.off(`refresh:${source}`, handler) }
-	}, [ source ])
 
 	return [ query.data, query.isLoading, query.refetch ] as [InquiryResponse<T>, boolean, typeof query.refetch]
 }

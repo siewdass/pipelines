@@ -10,7 +10,7 @@ Estado actual del proyecto. Lo que está hecho y lo que falta.
 - [x] Docker Compose con 4 servicios + MongoDB
 - [x] Healthchecks, volumes, hot-reload en desarrollo
 - [x] NODE_ENV configurado en todos los servicios
-- [x] .env.example por cada servicio (management, storage, runtime, studio)
+- [x] .env.example por cada servicio (management, storage, runtime, studio, identity, assets, events)
 
 ### Management (port 4000)
 - [x] Autenticación de cuentas (register/login)
@@ -25,15 +25,34 @@ Estado actual del proyecto. Lo que está hecho y lo que falta.
 - [x] bcryptjs reemplaza bcrypt (evita compilación nativa)
 
 ### Storage (port 4001)
-- [x] Auth de usuarios dentro de proyectos (signup/signin)
 - [x] CRUD con asociaciones (one-to-one, one-to-many, many-to-many)
-- [x] Upload/descarga de archivos
-- [x] Socket.IO realtime con auth dual
+- [x] Fuentes protegidas (user, role, permission, assets) bloqueadas en inquiry/mutation con 403
+- [x] Permisos opcionales: sin token → público; con token sin permiso de la source → 403 (inquiry read, mutation write)
+
+### Events (port 4013)
+- [x] Microservicio de realtime extraído de storage (SocketCluster 20, sin express)
+- [x] Auth por RPC `authenticate` (`projectToken`/`userToken`), canales nativos `{projectId}:{source}:{channel}`, subscribe ligado al projectId del socket
+- [x] Persistencia con prune (1000 docs por canal) y fallback a broadcast si Mongo cae
+- [x] Acceso por source (`schemas`): `public` → cualquiera; `private` → permiso `read`/`write`; fuentes protegidas bloqueadas en publish y subscribe
+
+### Identity (port 4010)
+- [x] Microservicio de usuarios/roles/permisos extraído de management
+- [x] Signup/signin de usuarios con JWT (permissions embebidas)
+- [x] Primer login: usuario sin password lo define al entrar (flag `firstLogin`)
+- [x] CRUD de usuarios, roles y permisos (13 rutas)
+- [x] Seed del admin delegado por management (`POST /user/seed`) que escribe en la DB del proyecto
+
+### Assets (port 4012)
+- [x] Microservicio de archivos con multer + diskStorage (volumen `assets_uploads`)
+- [x] Upload/GET/DELETE con permisos (`assets:write` / `assets:read`)
+- [x] `access` public/private (default public); privado exige header Authorization o `?token=` (para `<img>`)
+- [x] Allowlist de mimetypes (image/video/audio, PDF/Office, text/*) → 400 si no aplica
 
 ### Runtime (port 4002)
 - [x] Sirve bundles compilados (runtime.js, loader.js, app code)
-- [x] loader.js acepta `baseUrl` query param para evitar ERR_NAME_NOT_RESOLVED
-- [x] HTML shell dinámico con Bootstrap
+- [x] `window.PIPELINES = { token, identity, storage, assets, events }` inyectado en /html y loader.js
+- [x] SDK: `api`→storage, `authApi`→identity, socket→events (endpoints configurables vía window.PIPELINES)
+- [x] Red: `socketcluster-client` (sin `socket.io-client`), sin `refresh`, RPCs `authenticate`/`publish`
 
 ### Studio (port 4003)
 - [x] Sistema de autenticación (login/registro de cuentas)
@@ -51,6 +70,7 @@ Estado actual del proyecto. Lo que está hecho y lo que falta.
 - [x] Descarga de index.html para despliegue
 - [x] Toaster position top-center
 - [x] Formularios con layout horizontal correcto (flex: 1 en campos)
+- [x] Proxy de vite a identity (4010), storage (4001) y assets (4012)
 
 ---
 
@@ -64,7 +84,12 @@ Estado actual del proyecto. Lo que está hecho y lo que falta.
 - [ ] Tests de integración (E2E)
 
 ### Storage
-- [ ] Reemplazar Socket.IO por SocketCluster (renombrar y reimplementar el servicio de realtime)
+- [x] Acceso por source public/private (colección `schemas` como metadata)
+- [x] Realtime movido a `events` (eliminado Socket.IO/realtime-gateway de storage)
+
+### Events
+- [x] Migrado de Socket.IO a SocketCluster 20 (server y cliente, sin `refresh`)
+- [ ] Tests de integración (E2E) para realtime
 
 ### Studio
 - [ ] UI para mutaciones manuales complejas (/mutation/upsert, purge masivos)

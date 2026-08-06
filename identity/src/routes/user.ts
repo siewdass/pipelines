@@ -1,40 +1,66 @@
 import { Router, type Router as RouterType } from 'express'
 import { getContext } from '../services/db'
-import { verifyToken } from '../services/auth'
 import { config } from '../config'
 import { v4 as uuidv4 } from 'uuid'
 
 export const userRouter: RouterType = Router()
 
-userRouter.use((req, res, next) => {
-	const token = (req.headers['x-project-id'] || req.headers['project-id']) as string
-	if (!token) {
-		res.status(401).json({ error: 'Project token is missing' })
-		return
-	}
+userRouter.post('/seed', async (req, res) => {
 	try {
-		const payload = verifyToken(token, config.accountJwtSecret)
-		const id = (payload.id || payload.projectId) as string
-    ;(req as any).projectId = id
-		next()
-	} catch {
-		res.status(401).json({ error: 'Invalid project token' })
-	}
-})
+		const projectId = (req as any).projectId as string
+		const { accountId } = req.body
+		if (!accountId) {
+			res.status(400).json({ error: 'accountId is required' })
+			return
+		}
 
-userRouter.use((req, res, next) => {
-	const auth = req.headers.authorization as string
-	if (!auth) {
-		next()
-		return
-	}
-	try {
-		const token = auth.replace('Bearer ', '').trim()
-		const payload = verifyToken(token, config.userJwtSecret)
-    ;(req as any).userId = payload.id
-		next()
-	} catch {
-		next()
+		const { db: defaultDb } = await getContext('default')
+		const accounts = defaultDb.collection('accounts')
+		const creatorAccount = await accounts.findOne({ _id: accountId })
+		if (!creatorAccount) {
+			res.status(404).json({ error: 'Account not found' })
+			return
+		}
+
+		const { db } = await getContext(projectId)
+		const users = db.collection('users')
+		const existing = await users.findOne({ email: creatorAccount.email })
+		if (existing) {
+			res.json({ success: true, message: 'Admin already seeded', id: existing._id })
+			return
+		}
+
+		const roles = db.collection('roles')
+		const permissions = db.collection('permissions')
+
+		const allPermission = await permissions.insertOne({
+			_id: uuidv4(),
+			name: 'all_access',
+			description: 'Full administrative access (*) to all resources',
+			read: true,
+			write: true,
+			resources: [ '*' ],
+		} as any)
+
+		const adminRole = await roles.insertOne({
+			_id: uuidv4(),
+			name: 'admin',
+			description: 'Project Administrator with full privileges',
+			permissions: [ allPermission.insertedId ],
+		} as any)
+
+		const adminUser = await users.insertOne({
+			_id: uuidv4(),
+			email: creatorAccount.email,
+			password: creatorAccount.password,
+			name: creatorAccount.name,
+			roles: [ adminRole.insertedId ],
+			firstLogin: true,
+		} as any)
+
+		res.json({ success: true, message: 'Admin seeded', id: adminUser.insertedId })
+	} catch (err: any) {
+		res.status(400).json({ error: err.message })
 	}
 })
 
@@ -84,12 +110,12 @@ userRouter.patch('/roles/permissions/:id', async (req, res) => {
 		const { id } = req.params
 		const { db } = await getContext(projectId)
 		const permissions = db.collection('permissions')
-		const result = await permissions.updateOne({ _id: id }, { $set: req.body })
+		const result = await permissions.updateOne({ _id: id as any }, { $set: req.body })
 		if (result.matchedCount === 0) {
 			res.status(404).json({ error: 'Permission not found' })
 			return
 		}
-		const updated = await permissions.findOne({ _id: id })
+		const updated = await permissions.findOne({ _id: id as any })
 		res.json({ success: true, permission: updated })
 	} catch (err: any) {
 		res.status(400).json({ error: err.message })
@@ -102,7 +128,7 @@ userRouter.delete('/roles/permissions/:id', async (req, res) => {
 		const { id } = req.params
 		const { db } = await getContext(projectId)
 		const permissions = db.collection('permissions')
-		await permissions.deleteOne({ _id: id })
+		await permissions.deleteOne({ _id: id as any })
 		res.json({ success: true })
 	} catch (err: any) {
 		res.status(400).json({ error: err.message })
@@ -150,12 +176,12 @@ userRouter.patch('/roles/:id', async (req, res) => {
 		const { id } = req.params
 		const { db } = await getContext(projectId)
 		const roles = db.collection('roles')
-		const result = await roles.updateOne({ _id: id }, { $set: req.body })
+		const result = await roles.updateOne({ _id: id as any }, { $set: req.body })
 		if (result.matchedCount === 0) {
 			res.status(404).json({ error: 'Role not found' })
 			return
 		}
-		const updated = await roles.findOne({ _id: id })
+		const updated = await roles.findOne({ _id: id as any })
 		res.json({ success: true, role: updated })
 	} catch (err: any) {
 		res.status(400).json({ error: err.message })
@@ -168,7 +194,7 @@ userRouter.delete('/roles/:id', async (req, res) => {
 		const { id } = req.params
 		const { db } = await getContext(projectId)
 		const roles = db.collection('roles')
-		await roles.deleteOne({ _id: id })
+		await roles.deleteOne({ _id: id as any })
 		res.json({ success: true })
 	} catch (err: any) {
 		res.status(400).json({ error: err.message })
@@ -216,7 +242,7 @@ userRouter.get('/:id', async (req, res) => {
 		const { id } = req.params
 		const { db } = await getContext(projectId)
 		const users = db.collection('users')
-		const user = await users.findOne({ _id: id }, { projection: { password: 0 } })
+		const user = await users.findOne({ _id: id as any }, { projection: { password: 0 } })
 		if (!user) {
 			res.status(404).json({ error: 'User not found' })
 			return
@@ -233,12 +259,12 @@ userRouter.patch('/:id', async (req, res) => {
 		const { id } = req.params
 		const { db } = await getContext(projectId)
 		const users = db.collection('users')
-		const result = await users.updateOne({ _id: id }, { $set: req.body })
+		const result = await users.updateOne({ _id: id as any }, { $set: req.body })
 		if (result.matchedCount === 0) {
 			res.status(404).json({ error: 'User not found' })
 			return
 		}
-		const updated = await users.findOne({ _id: id }, { projection: { password: 0 } })
+		const updated = await users.findOne({ _id: id as any }, { projection: { password: 0 } })
 		res.json({ success: true, user: updated })
 	} catch (err: any) {
 		res.status(400).json({ error: err.message })
@@ -251,7 +277,7 @@ userRouter.delete('/:id', async (req, res) => {
 		const { id } = req.params
 		const { db } = await getContext(projectId)
 		const users = db.collection('users')
-		await users.deleteOne({ _id: id })
+		await users.deleteOne({ _id: id as any })
 		res.json({ success: true })
 	} catch (err: any) {
 		res.status(400).json({ error: err.message })

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { z } from 'zod'
-import { socket, reconnect } from './'
+import { socket, reconnect, getProjectId, buildChannelName } from './'
 
 /**
  * Valid parameters for a real-time subscription.
@@ -20,29 +20,46 @@ export type SubscriptionParams = z.infer<typeof SubscriptionParamsSchema>;
 export function useSubscription<T = unknown>(config: SubscriptionParams) {
 	SubscriptionParamsSchema.parse(config)
 	const { channel, source } = config
-	const [ subscribe, setSubscribe ] = useState<T | undefined>()
+	const [ data, setData ] = useState<T | undefined>()
 
 	useEffect(() => {
-		reconnect()
-		const eventName = source || channel
-		socket.emit('subscribe', { source, channel })
+		const projectId = getProjectId()
+		if (!projectId) return
 
-		const handler = (payload: unknown) => {
-			setSubscribe(prev => {
-				if (Array.isArray(prev) || Array.isArray(payload)) {
-					if (Array.isArray(payload)) return payload as unknown as T
-					return [ ...((prev as unknown[]) || []), payload ] as unknown as T
+		const channelName = buildChannelName(projectId, source, channel)
+
+		let active = true
+		let consumer: any
+
+		reconnect().then(() => {
+			if (!active) return
+
+			const scChannel = socket.subscribe(channelName)
+			consumer = scChannel.createConsumer()
+
+			const loop = async () => {
+				while (active) {
+					const { value, done } = await consumer.next()
+					if (done) break
+					if (value === undefined) continue
+					setData(prev => {
+						if (Array.isArray(prev) || Array.isArray(value)) {
+							if (Array.isArray(value)) return value as unknown as T
+							return [ ...((prev as unknown[]) || []), value ] as unknown as T
+						}
+						return value as T
+					})
 				}
-				return payload as T
-			})
-		}
+			}
+			loop()
+		})
 
-		socket.on(eventName, handler)
 		return () => {
-			socket.off(eventName, handler)
-			socket.emit('unsubscribe', { source, channel })
+			active = false
+			consumer?.kill?.()
+			socket.unsubscribe(channelName)
 		}
 	}, [ source, channel ])
 
-	return subscribe
+	return data
 }

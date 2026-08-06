@@ -32,9 +32,12 @@ The services will be available at:
 |---------|-----|-------------|
 | Studio | http://localhost:4003 | Frontend UI (React/Vite) |
 | Management | http://localhost:4000 | Backend API (Express) |
-| Storage | http://localhost:4001 | Runtime data layer for built apps |
+| Storage | http://localhost:4001 | Runtime data layer (inquiry/mutation) for built apps |
+| Identity | http://localhost:4010 | User auth, users/roles/permissions |
+| Assets | http://localhost:4012 | File management for built apps |
+| Events | http://localhost:4013 | Realtime (Socket.IO) for built apps |
 | Runtime | http://localhost:4002 | Serves compiled app bundles |
-| MongoDB | localhost:27017 | Database |
+| MongoDB | Atlas | Database |
 
 ## Stopping
 
@@ -53,7 +56,10 @@ docker compose down -v
 ```
 pipelines/
   management/     Backend API (Express + MongoDB driver)
-  storage/        Runtime data layer (CRUD, auth, realtime for built apps)
+  storage/        Runtime data layer (inquiry/mutation for built apps)
+  identity/       User auth + users/roles/permissions
+  assets/         File management for built apps
+  events/         Realtime (Socket.IO) for built apps
   runtime/        Serves compiled app bundles + React SDK
   studio/         Frontend UI (React + Vite)
 ```
@@ -62,13 +68,19 @@ pipelines/
 
 **Studio** (`:4003`) — React/Vite frontend. Uses React Query, Zustand, Tailwind CSS. Proxies API calls via Vite dev server to the appropriate backend.
 
-**Management** (`:4000`) — Express backend. Handles account auth, project management, user/roles/permissions CRUD, AI code generation (Assemble), source compilation, database queries, and schema management.
+**Management** (`:4000`) — Express backend. Handles account auth, project management, AI code generation (Assemble), source compilation, database queries, and schema management. Delegates user/roles/permissions to Identity.
 
-**Storage** (`:4001`) — The runtime data layer that end-user apps (built via Assemble) use for user authentication, CRUD operations, file uploads, and realtime via Socket.IO.
+**Identity** (`:4010`) — User auth within projects (signup/signin with JWT + permissions) and CRUD of users, roles, and permissions. Management calls `POST /user/seed` here when creating a project.
 
-**Runtime** (`:4002`) — Serves compiled app bundles. When an app is built, this service generates the HTML shell, loads the React SDK (runtime.js), fetches the compiled code from MongoDB, and mounts it in the browser.
+**Storage** (`:4001`) — The runtime data layer that end-user apps use for inquiry and mutation. Protected sources (`user`, `role`, `permission`, `assets`) are rejected with 403. Permission checks are optional: no user token → public, token without permission for the source → 403.
 
-**MongoDB** (`:27017`) — Shared database. Each project gets its own isolated database.
+**Assets** (`:4012`) — File management for built apps: upload/GET/DELETE with public/private access, permission checks (`assets:write`/`assets:read`), and a mimetype allowlist.
+
+**Events** (`:4013`) — Realtime for built apps via SocketCluster 20 (no Express): subscribe/publish per source/channel, and persistence with pruning (1000 docs per channel).
+
+**Runtime** (`:4002`) — Serves compiled app bundles. When an app is built, this service generates the HTML shell (injecting `window.PIPELINES = { token, identity, storage, assets, events }`), loads the React SDK (runtime.js), fetches the compiled code from MongoDB, and mounts it in the browser.
+
+**MongoDB** (Atlas) — Shared database. Each project gets its own isolated database.
 
 ## Environment Variables
 
@@ -81,12 +93,13 @@ Internal variables (set in docker-compose.yml, no need to change for local dev):
 
 | Variable | Description |
 |----------|-------------|
-| `PORT` | Service port (4000-4002) |
+| `PORT` | Service port (4000-4013) |
 | `NODE_ENV` | `development` or `production` |
 | `MONGO_URI` | MongoDB connection string |
 | `ACCOUNT_JWT_SECRET` | Secret for account JWT tokens |
 | `USER_JWT_SECRET` | Secret for user JWT tokens |
-| `UPLOADS_DIR` | File upload directory (Storage) |
+| `EVENTS_URL` | Events base URL injected into `window.PIPELINES.events` (Runtime) |
+| `UPLOADS_DIR` | File upload directory (Assets) |
 
 ## Development
 

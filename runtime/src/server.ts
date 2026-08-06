@@ -10,6 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const PORT = parseInt(process.env.PORT || '4002', 10)
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/default'
 const ACCOUNT_JWT_SECRET = process.env.ACCOUNT_JWT_SECRET || 'dev-account-secret'
+const EVENTS_URL = process.env.EVENTS_URL || ''
 
 const app = express()
 
@@ -88,12 +89,12 @@ serveRouter.get('/loader.js', (req, res) => {
     \`;
     document.body.insertAdjacentHTML('afterbegin', preloaderHtml);
 
-    var api = window.PIPELINES_API || '${baseUrl}';
+    var api = (window.PIPELINES && window.PIPELINES.storage) || '${baseUrl}';
     const scripts = [
       { src: "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4", name: "Tailwind" },
       { src: "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap", type: 'link', name: 'Fonts' },
       { src: api + "/serve/runtime.js?v=" + Date.now(), name: "Engine" },
-      { src: api + "/serve?project-id=" + window.PIPELINES, name: "App" }
+      { src: api + "/serve?project-id=" + window.PIPELINES.token, name: "App" }
     ];
 
     const status = document.getElementById("preloader-status");
@@ -136,7 +137,7 @@ serveRouter.get('/loader.js', (req, res) => {
     });
   }
 
-  window.PIPELINES = "${token}";
+  window.PIPELINES = { token: "${token}", identity: "${baseUrl}", storage: "${baseUrl}", assets: "${baseUrl}", events: "${EVENTS_URL || baseUrl}" };
   load();
 })();
 `
@@ -159,7 +160,7 @@ serveRouter.get('/html', (req, res) => {
   <title>Pipelines | App</title>
 </head>
 <body style="background-color: #000; margin: 0;">
-  <script>window.PIPELINES = "${token}"; window.PIPELINES_API = "${baseUrl}";</script>
+  <script>window.PIPELINES = { token: "${token}", identity: "${baseUrl}", storage: "${baseUrl}", assets: "${baseUrl}", events: "${EVENTS_URL || baseUrl}" };</script>
   <script src="${baseUrl}/serve/loader.js?project-id=${token}"></script>
 </body>
 </html>`

@@ -7,7 +7,7 @@ import {
   HiOutlinePuzzlePiece, 
   HiOutlineBolt 
 } from "react-icons/hi2";
-import { useQuery } from "../../hooks/useFetch";
+import { useQuery, useMutate } from "../../hooks/useFetch";
 import ComponentCard from "../../components/common/ComponentCard";
 
 export default function ProjectTables() {
@@ -17,6 +17,7 @@ export default function ProjectTables() {
   // Fetch project details
   const [project, projectLoading] = useQuery<any>(`project-${id}`, `/project/${id}`);
   const [tablesData, tablesLoading] = useQuery<any>(`tables-${id}`, `/database/tables`);
+  const [updateTable, tableUpdating] = useMutate<any, any>('patch', `/database/tables`, `tables-${id}`);
 
   const loading = projectLoading || tablesLoading;
 
@@ -63,9 +64,28 @@ export default function ProjectTables() {
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/10">
                         <HiOutlineTableCells className="size-6" />
                       </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Total Storage</span>
-                        <span className="text-sm font-bold text-gray-700 dark:text-gray-200">{table.sizeKb} KB</span>
+                      <div className="flex flex-col items-end gap-2">
+                        <button
+                          onClick={() =>
+                            updateTable({
+                              overrideUrl: `/database/tables/${table.id}`,
+                              access: table.access === 'private' ? 'public' : 'private',
+                            })
+                          }
+                          disabled={tableUpdating}
+                          className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition-colors disabled:opacity-50 ${
+                            table.access === 'private'
+                              ? 'bg-red-50 text-red-500 hover:bg-red-100 dark:bg-red-500/10'
+                              : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400'
+                          }`}
+                          title={table.access === 'private' ? 'Private source - requires permissions to read/write' : 'Public source - readable/writable by anyone'}
+                        >
+                          {table.access === 'private' ? 'Locked' : 'Public'}
+                        </button>
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Total Storage</span>
+                          <span className="text-sm font-bold text-gray-700 dark:text-gray-200">{table.sizeKb} KB</span>
+                        </div>
                       </div>
                     </div>
 
