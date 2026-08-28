@@ -32,7 +32,7 @@ Estado actual del proyecto. Lo que está hecho y lo que falta.
 ### Events (port 4013)
 - [x] Microservicio de realtime extraído de storage (SocketCluster 20, sin express)
 - [x] Auth por RPC `authenticate` (`projectToken`/`userToken`), canales nativos `{projectId}:{source}:{channel}`, subscribe ligado al projectId del socket
-- [x] Persistencia con prune (1000 docs por canal) y fallback a broadcast si Mongo cae
+- [x] Persistencia con prune (1000 docs por canal); sin fallback broadcast (fail-closed: si Mongo cae, publish/subscribe se bloquean)
 - [x] Acceso por source (`schemas`): `public` → cualquiera; `private` → permiso `read`/`write`; fuentes protegidas bloqueadas en publish y subscribe
 
 ### Identity (port 4010)
@@ -72,6 +72,20 @@ Estado actual del proyecto. Lo que está hecho y lo que falta.
 - [x] Formularios con layout horizontal correcto (flex: 1 en campos)
 - [x] Proxy de vite a identity (4010), storage (4001) y assets (4012)
 
+### Catalog (nuevo, Fase 1 — solo datos JSON)
+- [x] Builders → JSON en `catalog/data/` (gitignored): continents (7), countries (250), states (5308), cities (156025), currencies (179), languages (368), timezones (315), phoneCodes (229)
+- [x] Formato único `{ _id, name, code, parentCode? }`; `_id` = uuid v5 determinista (`uuidv5("tipo:code")`)
+- [x] `parentCode` como única relación jerárquica (country→continente, state→país, city→state); 100% referencial
+- [x] `languages` con variantes por región en el `code` (`es_ES`/`es_US`), nombre en inglés default
+- [x] `timezones` con `name` amigable (mainCities) y `code` IANA; `phoneCodes` agrupados por dial (`+1` → United States)
+- [x] Fuentes: `world-countries`, `@countrystatecity/countries`, `currency-codes`, `@cospired/i18n-iso-languages`, `@vvo/tzdb`
+- [x] Runner `pnpm build` (--all) / `pnpm build:type --type=<name>`; tsc y eslint limpios
+
+### Catalog (Fase 2 — seed a MongoDB + API REST)
+- [x] Seed `pnpm seed`: importa `catalog/data/*.json` a MongoDB (`mongodb://localhost:27017/catalog`), upsert por `_id` (uuid v5) con índices `code`/`parentCode`
+- [x] API REST (Express, :4014): `GET /?type=` con filtros `parentCode` (jerarquía), `code`, `name` (regex) y paginación `limit`/`skip`; `GET /` (tipos con conteo); `GET /health`
+- [x] CORS abierto (datos públicos de solo lectura)
+
 ---
 
 ## Pendiente
@@ -79,29 +93,22 @@ Estado actual del proyecto. Lo que está hecho y lo que falta.
 ### Management
 - [x] Rate limiting en endpoints públicos (login, registro)
 - [x] Auto-build en primer prompt
-- [ ] Logs estructurados (Winston o Pino en vez de console.log)
-- [ ] Tests unitarios (Jest)
-- [ ] Tests de integración (E2E)
+- [ ] Módulo de logs en management, persistidos y visibles desde Studio (no winston/pino a nivel de cliente)
 
 ### Storage
 - [x] Acceso por source public/private (colección `schemas` como metadata)
 - [x] Realtime movido a `events` (eliminado Socket.IO/realtime-gateway de storage)
 
-### Events
-- [x] Migrado de Socket.IO a SocketCluster 20 (server y cliente, sin `refresh`)
-- [ ] Tests de integración (E2E) para realtime
-
 ### Studio
 - [ ] UI para mutaciones manuales complejas (/mutation/upsert, purge masivos)
 - [ ] Importar/exportar esquemas y datos
-- [ ] Catálogos jerárquicos dependientes pre-cargados (Países → Estados → Ciudades)
 - [ ] Dashboard con métricas reales (actualmente usa datos placeholder)
 - [ ] Versionado del runtime y mostrar versión en la UI
-- [ ] Branding "Powered by Pipelines" en apps generadas
 
-### Infraestructura
-- [x] ESLint v10 flat config con reglas de estilo TS
-- [ ] Dockerfiles optimizados para producción (multi-stage builds)
-- [ ] CI/CD (GitHub Actions): tests + lint en cada PR
-- [ ] Scripts de seeding para base de datos local
-- [ ] Despliegue a producción (frontend → Vercel/Netlify, backend → Render/Railway/AWS)
+### Runtime
+- [ ] Branding "Powered by Pipelines" en apps generadas (agregar al runtime/loader)
+
+### Catalog
+- [ ] Resolución de idioma por IP/locale en la API (Accept-Language)
+- [ ] Localizar countries/states con el mismo patrón de `languages` (variantes por región) cuando haya fuente
+- [ ] Catálogo personalizado (el cliente define catálogos propios vía management/API)

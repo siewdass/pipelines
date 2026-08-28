@@ -34,7 +34,7 @@
             ▼       ▼                      ▼                    ▼
 ┌───────────────────────┐   ┌────────────────────────┐        ┌───────────────┐
 │  Events (:4013)       │   │  Volume assets_uploads │        │  users, roles,│
-│  Socket.IO (no HTTP)  │   │                        │        │  permissions, │
+│  SocketCluster 20     │   │                        │        │  permissions, │
 │  Realtime (protected) │   │                        │        │  builds, ...  │
 └───────────────────────┘   └────────────────────────┘        └───────────────┘
 ```
@@ -139,6 +139,23 @@ Serves compiled app bundles. Two components:
 - `window.Interface` — UI components (Form, Table, Dialog, Toast, etc.)
 - `window.View` — Router
 - `window.Bootstrap(App)` — Mounts the app
+
+### Catalog (Fase 1 — solo datos)
+
+Paquete `catalog/` que genera 8 catálogos normalizados como JSON en `catalog/data/` (gitignored) con `pnpm build` (--all) / `pnpm build:type --type=<name>`:
+
+- Continentes (7), países (250), estados (5308), ciudades (156025), monedas (179), idiomas (368), timezones (315), códigos telefónicos (229)
+- Formato único `{ _id, name, code, parentCode? }`; `_id` = uuid v5 determinista (`uuidv5("tipo:code")`) → salida estable/idempotente
+- `parentCode` como única relación jerárquica (country→continente, state→país, city→state), con integridad referencial validada (0 huérfanos)
+- `languages` con variantes por región en el `code` (`es_ES`/`es_US`); `timezones` con `name` amigable (mainCities) y `code` IANA; `phoneCodes` agrupados por dial (`+1` → United States)
+
+**Fase 2 (listo):** `pnpm seed` importa los JSON a MongoDB (`mongodb://localhost:27017/catalog`, upsert por `_id`, índices `code`/`parentCode`) y API REST (Express, :4014, CORS abierto de solo lectura) con todo en `/`:
+
+- `GET /` — tipos disponibles con conteo de docs
+- `GET /?type=countries` — listado con filtros `?parentCode=` (jerarquía: countries→continente, states→país, cities→state), `?name=` (regex) y paginación `limit`/`skip`
+- `GET /?type=countries&code=MX` — documento por código
+
+**Pendiente:** resolución de idioma por IP/locale (Accept-Language).
 
 ### Runtime SDK Reference
 
@@ -268,7 +285,7 @@ Studio opens preview iframe →
 Built app (in browser) →
   User auth: POST /auth/signin → Identity (Authorization/x-project-id)
   Data ops: POST /mutation/upsert, /inquiry/retrieve → Storage
-  Realtime: Socket.IO subscribe → Events
+  Realtime: SocketCluster subscribe → Events
   Assets: POST /assets/upload, GET/DELETE /assets/:id → Assets
 ```
 
@@ -296,3 +313,4 @@ Two token types:
 Each project gets its own MongoDB database via `mongoose.createConnection().useDb(projectId)`:
 - **Default DB** (`default`): accounts, projects, origins, schemas
 - **Project DB** (`<projectId>`): users, roles, permissions, builds, sources, prompts, custom collections
+- **Catalog DB** (`catalog`): catálogos globales (importada con `pnpm seed` desde `catalog/data/`)

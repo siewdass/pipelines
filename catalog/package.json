@@ -1,0 +1,29 @@
+{
+  "name": "catalog",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "build": "tsx scripts/build.ts --all",
+    "build:type": "tsx scripts/build.ts --type",
+    "seed": "tsx src/seed.ts",
+    "dev": "tsx watch src/index.ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "mongoose": "^8.16.0"
+  },
+  "devDependencies": {
+    "@cospired/i18n-iso-languages": "^4.2.0",
+    "@countrystatecity/countries": "^1.0.7",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.0.0",
+    "@vvo/tzdb": "^6.0.0",
+    "currency-codes": "^2.1.0",
+    "tsx": "^4.19.0",
+    "typescript": "~5.7.3",
+    "uuid": "^11.1.0",
+    "world-countries": "^5.0.0"
+  }
+}

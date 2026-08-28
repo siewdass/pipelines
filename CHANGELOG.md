@@ -5,6 +5,27 @@ Verificar la fecha actual antes de agregar una nueva entrada.
 
 ---
 
+## 2026-08-11
+
+- Added: `catalog` Fase 2 — seed `pnpm seed` importa `catalog/data/*.json` a MongoDB (`mongodb://localhost:27017/catalog`, upsert por `_id`, índices `code`/`parentCode`)
+- Added: API REST del catálogo (Express, port 4014, CORS abierto de solo lectura) con todo en `/`: `GET /` (tipos + conteos), `GET /?type=` con filtros `parentCode`/`code`/`name` y paginación `limit`/`skip`
+- Note: resolución de idioma por IP/locale y localización de countries/states quedan pendientes (TODO)
+
+## 2026-08-06
+
+- Changed: `events` migrado de Socket.IO a SocketCluster 20 — `socketcluster-server@^20` (attach, sin Express, path `/socketcluster/`) y cliente `socketcluster-client@^20`; auth por RPC `authenticate`, canales `{projectId}:{source}:{channel}`, persistencia `saveAndPrune` y fail-closed (si Mongo cae, publish/subscribe se bloquean, sin fallback a broadcast)
+- Changed: `docker-compose.yml` — `MONGO_URI` como variable de entorno (`${MONGO_URI:-mongodb://localhost:27017/default}`), documentada en `.env.example` raíz; local por defecto, Atlas opcional
+
+## 2026-08-06
+
+- Added: Microservicio `catalog` (Fase 1, solo datos): 8 builders en `catalog/scripts/` que generan JSON en `catalog/data/` (gitignored) — `continents` (7), `countries` (250), `states` (5308), `cities` (156025), `currencies` (179), `languages` (368), `timezones` (315), `phoneCodes` (229)
+- Added: Formato único de catálogo `{ _id, name, code, parentCode? }`; `_id` = uuid v5 determinista (`uuidv5("tipo:code")`) → salida estable/idempotente
+- Added: `parentCode` como única relación jerárquica (country→continente, state→país, city→state) con integridad referencial validada (0 huérfanos)
+- Added: `languages` con variantes por región en el `code` (`es_ES`/`es_US`, ~184 × 2), nombre en inglés por defecto
+- Added: `timezones` con `name` amigable (mainCities) y `code` IANA (`America/Mexico_City`); `phoneCodes` agrupados por dial compartido con representante por área (`+1` → United States)
+- Added: Runner `pnpm build` (--all) / `pnpm build:type --type=<name>`; devDeps: `world-countries`, `@countrystatecity/countries`, `currency-codes`, `@cospired/i18n-iso-languages`, `@vvo/tzdb`, `uuid`, `tsx`, `typescript`
+- Note: `@countrystatecity/states|cities` no existen en npm — el paquete `@countrystatecity/countries` incluye countries+states+cities; `@vvo/tzdb` no incluye zonas UTC/GMT/Etc (solo 315 IANA reales)
+
 ## 2026-08-03
 
 - Added: Microservicio `events` (port 4013, sin express): realtime extraído de storage — socket.io con `setupRealtime(httpServer)` plano, auth por handshake (`projectToken`/`userToken`), rooms por source/channel, persistencia (`saveAndPrune`/`fetchRecent`), fuentes protegidas

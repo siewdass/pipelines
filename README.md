@@ -18,6 +18,7 @@ Create a `.env` file in the project root:
 ```env
 MISTRAL_API_KEY=your-mistral-key
 GROQ_API_KEY=your-groq-key
+MONGO_URI=mongodb://localhost:27017/default
 ```
 
 Start all services:
@@ -35,9 +36,9 @@ The services will be available at:
 | Storage | http://localhost:4001 | Runtime data layer (inquiry/mutation) for built apps |
 | Identity | http://localhost:4010 | User auth, users/roles/permissions |
 | Assets | http://localhost:4012 | File management for built apps |
-| Events | http://localhost:4013 | Realtime (Socket.IO) for built apps |
+| Events | http://localhost:4013 | Realtime (SocketCluster 20) for built apps |
 | Runtime | http://localhost:4002 | Serves compiled app bundles |
-| MongoDB | Atlas | Database |
+| MongoDB | Local (default) / Atlas via MONGO_URI | Database |
 
 ## Stopping
 
@@ -59,7 +60,8 @@ pipelines/
   storage/        Runtime data layer (inquiry/mutation for built apps)
   identity/       User auth + users/roles/permissions
   assets/         File management for built apps
-  events/         Realtime (Socket.IO) for built apps
+  events/         Realtime (SocketCluster 20) for built apps
+  catalog/        Catalog data (JSON data + REST API :4014; not in docker-compose)
   runtime/        Serves compiled app bundles + React SDK
   studio/         Frontend UI (React + Vite)
 ```
@@ -80,7 +82,7 @@ pipelines/
 
 **Runtime** (`:4002`) — Serves compiled app bundles. When an app is built, this service generates the HTML shell (injecting `window.PIPELINES = { token, identity, storage, assets, events }`), loads the React SDK (runtime.js), fetches the compiled code from MongoDB, and mounts it in the browser.
 
-**MongoDB** (Atlas) — Shared database. Each project gets its own isolated database.
+**MongoDB** (local por defecto; Atlas si `MONGO_URI` apunta) — Shared database. Each project gets its own isolated database.
 
 ## Environment Variables
 
